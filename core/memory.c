@@ -49,6 +49,8 @@ struct page {
 	struct page *next;
 } __packed;
 
+
+
 #define HASH_TABLE_SIZE	8
 
 #define SLAB_MEM_BASE (511UL * 1024 * 1024 * 1024)
@@ -176,10 +178,11 @@ static void *__malloc(size_t size)
 {
 	void *mem;
 
+	// 先从 hash table 里面分配
 	mem = malloc_from_hash_table(size);
 	if (mem != NULL)
 		return mem;
-
+	// 没有，再从 slab heap 里面分配
 	return malloc_from_slab_heap(size);
 }
 
@@ -188,19 +191,22 @@ void *malloc(size_t size)
 	void *mem;
 
 	ASSERT(size != 0);
+	// 对齐
 	size = get_slab_alloc_size(size);
 
 	spin_lock(&mm_lock);
+	// 分配
 	mem =  __malloc(size);
 	spin_unlock(&mm_lock);
-
+	// 检查
 	if (!mem) {
 		pr_err("malloc fail for 0x%x\n");
 		dump_stack(NULL, NULL);
 	}
-
+	// 返回
 	return mem;
 }
+
 
 void *zalloc(size_t size)
 {
@@ -224,6 +230,7 @@ static inline void add_used_page(struct page *page)
 	used_page_head = page;
 }
 
+// 这里不只是寻找，相当于从链表中删除了 addr 对应的 strut page
 static struct page *find_used_page(void *addr)
 {
 	struct page *head = used_page_head;
@@ -246,11 +253,13 @@ static struct page *find_used_page(void *addr)
 	return NULL;
 }
 
+// 将 page 头插到 free_page_head
 static inline void __free_page(struct page *page)
 {
 	page->next = free_page_head;
 	free_page_head = page;
 }
+
 
 void free_pages(void *addr)
 {

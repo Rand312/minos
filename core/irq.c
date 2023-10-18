@@ -130,10 +130,10 @@ void __irq_enable(uint32_t irq, int enable)
 	if (enable) {
 		irq_chip->irq_unmask(irq);
 		irq_desc->flags &= ~IRQ_FLAGS_MASKED;
-	 } else {
+	} else {
 		irq_chip->irq_mask(irq);
 		irq_desc->flags |= IRQ_FLAGS_MASKED;
-	 }
+	}
 	spin_unlock_irqrestore(&irq_desc->lock, flags);
 }
 
