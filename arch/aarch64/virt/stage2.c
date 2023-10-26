@@ -208,7 +208,7 @@ static inline uint64_t stage2_page_attr(unsigned long flags)
 		break;
 	}
 
-	if (!(flags & __VM_EXEC))
+	if (!(flags & __VM_EXEC))  //如果不能执行，给 XN 标志
 		pte |= S2_XN;
 
 	if (flags & __VM_PFNMAP)
@@ -223,6 +223,7 @@ static inline uint64_t stage2_page_attr(unsigned long flags)
 	return pte;
 }
 
+//取消 addr - end 之间的映射
 static void stage2_unmap_pte_range(struct mm_struct *vs, pte_t *ptep,
 		unsigned long addr, unsigned long end)
 {
@@ -262,6 +263,7 @@ static void stage2_unmap_pmd_range(struct mm_struct *vs, pmd_t *pmdp,
 	do {
 		next = stage2_pmd_addr_end(addr, end);
 		if (!stage2_pmd_none(*pmd)) {
+			//如果是 huge block，直接将 pmd 清零即可
 			if (stage2_pmd_huge(*pmd)) {
 				stage2_pmd_clear(pmd);
 			} else {
@@ -322,6 +324,7 @@ static int stage2_map_pte_range(struct mm_struct *vs, pte_t *ptep, unsigned long
 	return 0;
 }
 
+//
 static inline bool stage2_pmd_huge_page(pmd_t old_pmd, unsigned long start,
 		unsigned long phy, size_t size, unsigned long flags)
 {
@@ -438,6 +441,7 @@ static int stage2_map_pud_range(struct mm_struct *vs, unsigned long start,
 	return 0;
 }
 
+// 每个虚拟机在 EL2 级别有一个页表？
 static inline int stage2_ipa_to_pa(struct mm_struct *vs,
 		unsigned long va, phy_addr_t *pa)
 {

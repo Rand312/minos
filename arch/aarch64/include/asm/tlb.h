@@ -144,6 +144,8 @@ static inline void flush_tlb_ipa_guest(unsigned long ipa, size_t size)
 	 * step 1 - flush stage2 tlb for va range
 	 * step 2 - flush all stage1 tlb for this VM
 	 */
+
+	// 根据地址 ipa 地址刷新 stage 2 的 tlb entry
 	while (ipa < end) {
 		asm volatile("tlbi ipas2e1is, %0;" : : "r"
 				(ipa >> PAGE_SHIFT) : "memory");

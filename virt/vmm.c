@@ -120,6 +120,7 @@ static struct vmm_area *__alloc_vmm_area_entry(unsigned long base, size_t size)
 	return va;
 }
 
+//将新 vmm_area 加入到 mm->list 链表当中去
 static int __add_free_vmm_area(struct mm_struct *mm, struct vmm_area *area)
 {
 	struct vmm_area *tmp, *next, *va = area;
@@ -411,6 +412,7 @@ static void dump_vmm_areas(struct mm_struct *mm)
 		pr_debug("[VA] 0x%p->0x%p\n", va->start, va->end);
 }
 
+//将 vmid 为 vm->vmid 但是位于 vm0 的内存 归还给 vm0
 static void release_vmm_area_in_vm0(struct vm *vm)
 {
 	struct vm *vm0 = get_host_vm();
