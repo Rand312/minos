@@ -21,6 +21,7 @@
 #include <minos/mm.h>
 #include <minos/smp.h>
 
+// 初始化事件结构体
 void event_init(struct event *event, int type, void *pdata)
 {
 	event->type = type;
@@ -36,6 +37,7 @@ void event_init(struct event *event, int type, void *pdata)
 	}
 }
 
+// 等待事件，没有休眠之类的？？？？
 void __wait_event(void *ev, int mode, uint32_t to)
 {
 	struct task *task = current;
@@ -59,6 +61,7 @@ void __wait_event(void *ev, int mode, uint32_t to)
 	 * may wake up this process, which may case dead lock
 	 * with current design.
 	 */
+	//设置任务状态
 	do_not_preempt();
 	task->state = TASK_STATE_WAIT_EVENT;
 	task->pend_state = TASK_STATE_PEND_OK;
@@ -66,6 +69,7 @@ void __wait_event(void *ev, int mode, uint32_t to)
 	task->delay = (to == -1 ? 0 : to);
 }
 
+// 从链表中移除 event 
 int remove_event_waiter(struct event *ev, struct task *task)
 {
 	if (task->event_list.next == NULL) {
@@ -78,6 +82,7 @@ int remove_event_waiter(struct event *ev, struct task *task)
 	}
 }
 
+// 从链表中获取一个 event
 static inline struct task *get_event_waiter(struct event *ev)
 {
 	struct task *task;
@@ -95,6 +100,7 @@ static inline struct task *get_event_waiter(struct event *ev)
  * num - the number need to wake ? <= 0 means, wakeup all.
  * will return the number of task which have been wake.
  */
+// 获取一个 event，然后执行唤醒操作
 int __wake_up_event_waiter(struct event *ev, void *msg,
 		int pend_state, int opt)
 {
@@ -119,6 +125,7 @@ int __wake_up_event_waiter(struct event *ev, void *msg,
 	return cnt;
 }
 
+// 设置当前 task 的 pend_state 为 TASK_STATE_PEND_OK
 void event_pend_down(void)
 {
 	struct task *task = current;

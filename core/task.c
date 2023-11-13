@@ -22,19 +22,23 @@
 
 static DEFINE_SPIN_LOCK(tid_lock);
 static DECLARE_BITMAP(tid_map, OS_NR_TASKS);
+//该 OS 对应的 task table
 struct task *os_task_table[OS_NR_TASKS];
 static LIST_HEAD(task_list);
 
 /* idle task needed be static defined */
+// 定义与 CPU 个数相同的 idle task
 struct task idle_tasks[NR_CPUS];
 static DEFINE_PER_CPU(struct task *, idle_task);
 
+// 使用do{...}while(0)构造后的宏定义不会受到大括号、分号等的影响，总是会按你期望的方式调用运行
 #define TASK_INFO_INIT(__ti, task) 		\
 	do {					\
 		(__ti)->preempt_count = 0; 	\
 		(__ti)->flags = 0;		\
 	} while (0)
 
+// 分配 task id
 static int alloc_tid(void)
 {
 	int tid = -1;
@@ -77,11 +81,13 @@ static int tid_early_init(void)
 }
 early_initcall(tid_early_init);
 
+// task 时间片到了，
 static void task_timeout_handler(unsigned long data)
 {
 	struct task *task = (struct task *)data;
 
 	wake_up_timeout(task);
+	// 设置 __TIF_NEED_RESCHED 标志
 	set_need_resched();
 }
 
@@ -124,6 +130,7 @@ static void task_init(struct task *task, char *name,
 		sprintf(task->name, "task%d", tid);
 }
 
+// 创建一个 task，主要是 task 结构体相关的一些资源
 static struct task *do_create_task(char *name,
 				  task_func_t func,
 				  uint32_t ssize,
@@ -140,12 +147,13 @@ static struct task *do_create_task(char *name,
 	/*
 	 * allocate the task's kernel stack
 	 */
+	// 分配一个 task 结构体
 	task = zalloc(sizeof(struct task));
 	if (!task) {
 		pr_err("no more memory for task\n");
 		return NULL;
 	}
-
+	// 分配栈空间
 	stack = get_free_pages(PAGE_NR(stk_size));
 	if (!stack) {
 		pr_err("no more memory for task stack\n");
@@ -153,6 +161,7 @@ static struct task *do_create_task(char *name,
 		return NULL;
 	}
 
+	// 初始化 task 结构体
 	task_init(task, name, stack, stk_size, prio, tid, aff, opt, arg);
 
 	return task;
@@ -163,6 +172,7 @@ static void task_create_hook(struct task *task)
 	do_hooks((void *)task, NULL, OS_HOOK_CREATE_TASK);
 }
 
+// 
 void task_exit_from_user(gp_regs *regs)
 {
        struct task *task = current;
@@ -195,19 +205,25 @@ void task_return_to_user(gp_regs *regs)
 		task->return_to_user(task, regs);
 }
 
+// 释放 task
 void do_release_task(struct task *task)
 {
+	// 释放 task，目前是空函数？？？
 	arch_release_task(task);
+	//释放栈空间
 	free_pages(task->stack_bottom);
+	// 释放 task 结构体
 	free(task);
 
 	/*
 	 * this function can not be called at interrupt
 	 * context, use release_task is more safe
 	 */
+	// 释放该 tid
 	release_tid(task->tid);
 }
 
+// 创建 task
 struct task *__create_task(char *name,
 			task_func_t func,
 			uint32_t stk_size,
@@ -219,24 +235,29 @@ struct task *__create_task(char *name,
 	struct task *task;
 	int tid;
 
+	// 设置该 task 的 CPU 亲和性
 	if ((aff >= NR_CPUS) && (aff != TASK_AFF_ANY)) {
 		pr_warn("task %s afinity will set to 0x%x\n",
 				name, TASK_AFF_ANY);
 		aff = TASK_AFF_ANY;
 	}
 
+	// 设置该 task 的 优先级
 	if ((prio >= OS_PRIO_IDLE) || (prio < 0)) {
 		pr_warn("wrong task prio %d fallback to %d\n",
 				prio, OS_PRIO_DEFAULT_6);
 		prio = OS_PRIO_DEFAULT_6;
 	}
 
+	// 分配 tid
 	tid = alloc_tid();
 	if (tid < 0)
 		return NULL;
-
+	
+	// 当前 task 不可被抢占
 	preempt_disable();
 
+	// 创建一个 task 结构体，初始化 task 结构体
 	task = do_create_task(name, func, stk_size, prio,
 			tid, aff, opt, arg);
 	if (!task) {
@@ -245,24 +266,30 @@ struct task *__create_task(char *name,
 		return NULL;
 	}
 
+	// 创建 do_hooks ？？？？？
 	task_create_hook(task);
 
 	/*
 	 * vcpu task will have it own arch_init_task function which
 	 * is called arch_init_vcpu()
 	 */
+	// 
 	if (!(task->flags & TASK_FLAGS_VCPU))
 		arch_init_task(task, (void *)func, 0, task->pdata);
 
 	/*
 	 * start the task if need auto started.
 	 */
+	// 如果没有设置自动开始
 	if (!(task->flags & TASK_FLAGS_NO_AUTO_START))
+		// 将该 task 加入到某个 pcpu 的 read_list
 		task_ready(task, 0);
 
+	// 允许该 task 抢占了
 	preempt_enable();
 
 	if (os_is_running())
+		//调度
 		sched();
 
 	return task;
@@ -294,14 +321,16 @@ int create_idle_task(void)
 	int tid = OS_NR_TASKS - 1 - aff;
 	struct pcpu *pcpu = get_pcpu();
 
-	task = get_cpu_var(idle_task);
+	task = get_cpu_var(idle_task);  //获取当前cpu对应的idle_task结构体指针
 	BUG_ON(!request_tid(tid), "tid is wrong for idle task cpu%d\n", tid);
 
 	sprintf(task_name, "idle/%d", aff);
 
+	// 初始化该 idle_task
 	task_init(task, task_name, NULL, 0, OS_PRIO_IDLE,
 			tid, aff, TASK_FLAGS_IDLE, NULL);
 
+	// 汇编中已经将 idle_stack 设置好了
 	task->stack_top = (void *)ptov(minos_stack_top) -
 		(aff << CONFIG_TASK_STACK_SHIFT);
 	task->stack_bottom = task->stack_top - CONFIG_TASK_STACK_SIZE;
@@ -311,11 +340,13 @@ int create_idle_task(void)
 	task->run_time = 0;
 
 	pcpu->running_task = task;
+	// 设置当前 task 为该 task，也就是设置 x18 寄存器
 	set_current_task(task);
 
 	/* call the hooks for the idle task */
 	task_create_hook(task);
 
+	// 将该 task 加入到 pcpu 的 ready_list
 	list_add_tail(&pcpu->ready_list[task->prio], &task->state_list);
 	pcpu->local_rdy_grp |= BIT(task->prio);
 	pcpu->idle_task = task;
@@ -323,6 +354,7 @@ int create_idle_task(void)
 	return 0;
 }
 
+// 对OS所有的task做某个操作
 void os_for_all_task(void (*hdl)(struct task *task))
 {
         struct task *task;
@@ -357,6 +389,7 @@ static int __init_text task_early_init(void)
 }
 early_initcall_percpu(task_early_init);
 
+// 创建 per cpu 类型的 task
 int create_percpu_tasks(char *name, task_func_t func, 
 		int prio, unsigned long flags, void *pdata)
 {

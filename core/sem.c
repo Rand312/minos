@@ -48,9 +48,11 @@ int sem_pend(sem_t *sem, uint32_t timeout)
 		spin_unlock_irqrestore(&sem->lock, flags);
 		return 0;
 	}
+	// 将当前 task 加入 EVENT(sem) 的 wait_list
 	__wait_event(TO_EVENT(sem), OS_EVENT_TYPE_SEM, timeout);
 	spin_unlock_irqrestore(&sem->lock, flags);
 
+	// 调度让出 CPU
 	sched();
 
 	switch (task->pend_state) {
@@ -63,6 +65,7 @@ int sem_pend(sem_t *sem, uint32_t timeout)
 	case TASK_STATE_PEND_TO:
 		ret = -ETIMEDOUT;
 	default:
+		// 将 task 从 EVENT(sem) 的 wait_list 中取出
 		spin_lock_irqsave(&sem->lock, flags);
 		remove_event_waiter(TO_EVENT(sem), task);
 		spin_unlock_irqrestore(&sem->lock, flags);

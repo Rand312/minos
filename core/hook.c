@@ -51,6 +51,7 @@ int register_hook(hook_func_t fn, enum hook_type type)
 	return 0;
 }
 
+// 创建 hook
 int do_hooks(void *item, void *context, enum hook_type type)
 {
 	int err = 0;

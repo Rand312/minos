@@ -27,6 +27,7 @@ static inline void asm_set_current_task(void *task)
 #ifdef CONFIG_VIRT
 static inline void arch_set_pcpu_data(void *pcpu)
 {
+	// 获取线程 id
 	__asm__ volatile("msr TPIDR_EL2, %0" : : "r" (pcpu));
 }
 

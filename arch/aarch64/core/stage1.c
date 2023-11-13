@@ -511,6 +511,7 @@ phy_addr_t arch_translate_va_to_pa(struct vspace *vs, unsigned long va)
 	return stage1_va_to_pa(vs, va);
 }
 
+// 这里建立的是 stage1 映射
 int arch_host_map(struct vspace *vs, unsigned long start, unsigned long end,
 		unsigned long physical, unsigned long flags)
 {

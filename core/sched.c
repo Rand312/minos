@@ -33,6 +33,7 @@ DEFINE_PER_CPU(struct pcpu *, pcpu);
 
 extern struct task *os_task_table[OS_NR_TASKS];
 
+// 检查当前是否允许调度，处于中断、不可抢占状态都不能调度
 #define sched_check()								\
 	do {									\
 		if (in_interrupt() || (irq_disabled() && !preempt_allowed()))	\
@@ -64,12 +65,14 @@ static inline void sched_update_sched_timer(void)
 	 * enable the sched timer if there are more than one
 	 * ready task on the same prio.
 	 */
+	// 如果有多个相同优先级的 task，开始 cpu 的 sched_timer
 	if ((pcpu->tasks_in_prio[task->prio] > 1))
 		setup_and_start_timer(&pcpu->sched_timer, MILLISECS(task->run_time));
 	else
 		stop_timer(&pcpu->sched_timer);
 }
 
+// 将 task 添加到 ready_list
 static void add_task_to_ready_list(struct pcpu *pcpu,
 		struct task *task, int preempt)
 {
@@ -82,12 +85,15 @@ static void add_task_to_ready_list(struct pcpu *pcpu,
 	 */
 	ASSERT(task->state_list.next == NULL);
 	pcpu->tasks_in_prio[task->prio]++;
-
+	// 如果当前 task 的优先级 == 将要添加的 task 的优先级
 	if (current->prio == task->prio) {
+		// 直接插入到当前 task 的前面
 		list_insert_before(&current->state_list, &task->state_list);
+		//如果该优先级的task刚好只有它们两个，重启 pcpu sched_timer
 		if (pcpu->tasks_in_prio[task->prio] == 2)
 			sched_update_sched_timer();
 	} else {
+		//否则直接将该 task 添加到相应优先级队列的末尾
 		list_add_tail(&pcpu->ready_list[task->prio], &task->state_list);
 	}
 
@@ -98,25 +104,32 @@ static void add_task_to_ready_list(struct pcpu *pcpu,
 		set_need_resched();
 }
 
+// 将
 static void remove_task_from_ready_list(struct pcpu *pcpu, struct task *task)
 {
 	ASSERT(task->state_list.next != NULL);
 
+	// 从链表中删除该 task
 	list_del(&task->state_list);
+	// 如果该task对应的优先级链表空了
 	if (is_list_empty(&pcpu->ready_list[task->prio]))
+		//将相应的位图清零
 		pcpu->local_rdy_grp &= ~BIT(task->prio);
 	mb();
 
+	//相应优先级 task 数量 --
 	pcpu->tasks_in_prio[task->prio]--;
 
 	/*
 	 * check whether need to stop the sched timer.
 	 */
+	//如果移除的task优先级与当前task优先级相同，且移除后只剩下当前 task，重启该 pcpu 的 sched_timer
 	if ((current->prio == task->prio) &&
 			(pcpu->tasks_in_prio[task->prio] == 1))
 		sched_update_sched_timer();
 }
 
+// 发送 SGI 类型中断
 void pcpu_resched(int pcpu_id)
 {
 	send_sgi(CONFIG_MINOS_RESCHED_IRQ, pcpu_id);
@@ -130,11 +143,12 @@ void pcpu_irqwork(int pcpu_id)
 static int select_task_run_cpu(void)
 {
 	/*
-	 * TBD
+	 * TBD to be determined 待确认
 	 */
 	return (NR_CPUS - 1);
 }
 
+// 将 task 添加到 pcpu 的 read_list
 static void percpu_task_ready(struct pcpu *pcpu, struct task *task, int preempt)
 {
 	unsigned long flags;
@@ -144,6 +158,7 @@ static void percpu_task_ready(struct pcpu *pcpu, struct task *task, int preempt)
 	local_irq_restore(flags);
 }
 
+// 将该 task 加入到 pcpu 的 new_list
 static inline void smp_percpu_task_ready(struct pcpu *pcpu,
 		struct task *task, int preempt)
 {
@@ -160,6 +175,7 @@ static inline void smp_percpu_task_ready(struct pcpu *pcpu,
 	pcpu_irqwork(pcpu->pcpu_id);
 }
 
+// 将 task 添加到某个 pcpu 的 read_list 上面
 int task_ready(struct task *task, int preempt)
 {
 	struct pcpu *pcpu, *tpcpu;
@@ -178,6 +194,7 @@ int task_ready(struct task *task, int preempt)
 	 */
 	pcpu = get_pcpu();
 	if (pcpu->pcpu_id != task->cpu) {
+		// 获取该 task 对应的 pcpu
 		tpcpu = get_per_cpu(pcpu, task->cpu);
 		smp_percpu_task_ready(tpcpu, task, preempt);
 	} else {
@@ -189,6 +206,8 @@ int task_ready(struct task *task, int preempt)
 	return 0;
 }
 
+// 设置状态为 TASK_STATE_WAIT_EVENT，记录睡眠事件 delay 到 task->delay
+// 最后在调用 sched 调度
 void task_sleep(uint32_t delay)
 {
 	struct task *task = current;
@@ -208,6 +227,7 @@ void task_sleep(uint32_t delay)
 	sched();
 }
 
+// 设置 task 的状态为 TASK_STATE_SUSPEND，然后调度
 void task_suspend(void)
 {
 	struct task *task = current;
@@ -223,6 +243,7 @@ void task_suspend(void)
 	sched();
 }
 
+// 挑选下一个在 pcpu 上执行的任务
 static struct task *pick_next_task(struct pcpu *pcpu)
 {
 	struct list_head *head;
@@ -237,8 +258,12 @@ static struct task *pick_next_task(struct pcpu *pcpu)
 	mb();
 	ASSERT(task->state != TASK_STATE_READY);
 
+	// 处理当前 task
+	// 如果当前的 task 不是 RUNNING 状态
 	if (!task_is_running(task)) {
+		// 从 read_list 中删除
 		remove_task_from_ready_list(pcpu, task);
+				// 如果当前状态是 STOP，将该 task 添加到 stop_list
                 if (task->state == TASK_STATE_STOP) {
                         list_add_tail(&pcpu->stop_list, &task->state_list);
 			flag_set(&pcpu->kworker_flag, KWORKER_TASK_RECYCLE);
@@ -248,8 +273,10 @@ static struct task *pick_next_task(struct pcpu *pcpu)
 	/*
 	 * get the highest ready task list to running
 	 */
+	// 获取最高优先级
 	prio = ffs_one_table[pcpu->local_rdy_grp];
 	ASSERT(prio != -1);
+	// 获取最高优先级链表的 task
 	head = &pcpu->ready_list[prio];
 
 	/*
@@ -257,21 +284,29 @@ static struct task *pick_next_task(struct pcpu *pcpu)
 	 * task to the end of the ready list.
 	 */
 	ASSERT(!is_list_empty(head));
+	// 将链表节点转化为 task
 	task = list_first_entry(head, struct task, state_list);
+	// 从 ready_list 链表中删除
 	list_del(&task->state_list);
+	// 然后添加到 read_list 的末尾
 	list_add_tail(head, &task->state_list);
 
 	return task;
 }
 
+// 切换 task
 static void switch_to_task(struct task *cur, struct task *next)
-{
+{	
+	// 获取当前的 pcpu
 	struct pcpu *pcpu = get_pcpu();
 	unsigned long now;
 
+	// 保存 cur task 的上下文到 task->cpu_context.fpsimd_state
 	arch_task_sched_out(cur);
+	// call OS_HOOK_TASK_SWITCH_OUT 类型的 hook 函数
 	do_hooks((void *)cur, NULL, OS_HOOK_TASK_SWITCH_OUT);
 
+	// 获取当前时间 
 	now = NOW();
 
 	/* 
@@ -282,12 +317,16 @@ static void switch_to_task(struct task *cur, struct task *next)
 	 * this task. If the task need to wait some event, and
 	 * need request a timeout timer then need setup the timer.
 	 */
+
+	// 如果该 task 状态为 TASK_STATE_WAIT_EVENT，并且设置了 delay，那么开始计时
 	if ((cur->state == TASK_STATE_WAIT_EVENT) && (cur->delay > 0))
 		setup_and_start_timer(&cur->delay_timer,
 				MILLISECS(cur->delay));
+	// 否则如果当前 task 为 RUNNING 状态，那么切换到 READY 状态
 	else if (cur->state == TASK_STATE_RUNNING)
 		cur->state = TASK_STATE_READY;
-
+	
+	// 记录当前 task 上个 CPU 为当前 CPU
 	cur->last_cpu = cur->cpu;
 	cur->run_time = CONFIG_TASK_RUN_TIME;
 	smp_wmb();
@@ -303,21 +342,28 @@ static void switch_to_task(struct task *cur, struct task *next)
 	/*
 	 * change the current task to next task.
 	 */
+	// next task 的状态设置为 TASK_STATE_RUNNING
 	next->state = TASK_STATE_RUNNING;
 	next->ti.flags &= ~__TIF_TICK_EXHAUST;
+	// next task 的 cpu 设置为当前 pcpu 的 id
 	next->cpu = pcpu->pcpu_id;
+	// 设置“当前” task 为 next task
 	set_current_task(next);
 	pcpu->running_task = next;
 
+	//恢复 next task 的上下文
 	arch_task_sched_in(next);
+	//call 类型为 OS_HOOK_TASK_SWITCH_TO hook 函数
 	do_hooks((void *)next, NULL, OS_HOOK_TASK_SWITCH_TO);
 
 	next->ctx_sw_cnt++;
 	next->wait_event = 0;
+	// 设置开始时间
 	next->start_ns = now;
 	smp_wmb();
 }
 
+// 时间片到了，need resched
 static void sched_tick_handler(unsigned long data)
 {
 	struct task *task = current;
@@ -326,16 +372,20 @@ static void sched_tick_handler(unsigned long data)
 	 * mark this task has used its running ticket, and the sched
 	 * timer is off.
 	 */
+	// 标志着该 task 的时间片用完了
 	task->ti.flags |= __TIF_TICK_EXHAUST;
+	// 需要重新调度，设置 __TIF_NEED_RESCHED 标志
 	set_need_resched();
 }
 
+// sched 系统调用，只是一条 svc #0 指令
 static void inline sys_sched(void)
 {
 	sched_check();
 	arch_sys_sched();
 }
 
+// 调用 sys_sched
 void sched(void)
 {
 	/*
@@ -349,29 +399,34 @@ void sched(void)
 	} while (need_resched());
 }
 
+// 是否允许 sched
 static inline int sched_allowed(void)
 {
 	return preempt_allowed() && !irq_disabled();
 }
 
+// 条件 resched
 void cond_resched(void)
 {
 	if (need_resched() && sched_allowed())
 		sched();
 }
 
+// 进入 hardirq 上下文
 void irq_enter(gp_regs *regs)
 {
 	current_task_info->flags |= __TIF_HARDIRQ_MASK;
 	wmb();
 }
 
+// 退出 hardirq 上下文
 void irq_exit(gp_regs *regs)
 {
 	current_task_info->flags &= ~__TIF_HARDIRQ_MASK;
 	wmb();
 }
 
+// 任务退出，设置当前任务状态为 STOP，然后 sched
 void task_exit(int errno)
 {
 	set_current_state(TASK_STATE_STOP, 0);
@@ -393,35 +448,45 @@ static inline int __exception_return_handler(void)
 	 * 2 - __TIF_DONOT_PREEMPT is set, it will call sched() at
 	 *    once.
 	 */
+	// 如果不需要 resched 或者 不允许抢占 或者 不要抢占？？？
 	if (!(ti->flags & __TIF_NEED_RESCHED) || (ti->preempt_count > 0) ||
 			(ti->flags & __TIF_DONOT_PREEMPT))
+		// 那么就再 run 一下
 		goto task_run_again;
 
+	// 否则设置 need resched 标志
 	ti->flags &= ~__TIF_NEED_RESCHED;
 
+	// 挑选 next task
 	next = pick_next_task(pcpu);
+	// 如果挑选的就是当前 task
 	if ((next == task))
 		goto task_run_again;
-
+	
+	// 切换 task
 	switch_to_task(task, next);
 
 	return 0;
 
 task_run_again:
+	// 清除掉当前 task 时间片已经到了的标志 TIF_TICK_EXHAUST
 	if (test_and_clear_bit(TIF_TICK_EXHAUST, &ti->flags))
 		return -EAGAIN;
 	else
 		return -EACCES;
 }
 
+// 这是啥 handler ？？？？？？？？
 void exception_return_handler(void)
 {
 	int ret = __exception_return_handler();
 
+	// 只要不是执行出错，那么这里都会重新开始执行一个 task，所以这里重启 sched_timer
 	if ((ret == 0) || (ret == -EAGAIN))
 		sched_update_sched_timer();
 }
 
+//
 static int irqwork_handler(uint32_t irq, void *data)
 {
 	struct pcpu *pcpu = get_pcpu();
@@ -433,22 +498,28 @@ static int irqwork_handler(uint32_t irq, void *data)
 	 * set to ready state again
 	 */
 	raw_spin_lock(&pcpu->lock);
+	//遍历 pcpu->new_list 上面的每一个 task
 	list_for_each_entry_safe(task, n, &pcpu->new_list, state_list) {
 		/*
 		 * remove it from the new_next.
 		 */
+		// 从 new_list 中删除
 		list_del(&task->state_list);
 
+		// 位于 new_list 上的 task 不应该为 TASK_STATE_RUNNING 状态
 		if (task->state == TASK_STATE_RUNNING) {
 			pr_err("task %s state %d wrong\n",
 				task->name? task->name : "Null", task->state);
 			continue;
 		}
 
+		// 计算需要 resched 的 task 数量
 		need_preempt = task_need_resched(task);
 		preempt += need_preempt;
+		// 清除掉该 task 的 resched 标志
 		task_clear_resched(task);
 
+		// 将该 task 添加到 pcpu 的 ready_list
 		add_task_to_ready_list(pcpu, task, need_preempt);
 		task->state = TASK_STATE_READY;
 

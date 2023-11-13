@@ -25,10 +25,10 @@
 
 .macro clear_ttbr0
 #ifdef CONFIG_VIRT
-	tlbi	alle2
+	tlbi	alle2   // invalid e2 all tlb entries
 #else
-	msr     ARM64_TTBR0, xzr
-	tlbi	vmalle1
+	msr     ARM64_TTBR0, xzr     //xzr 寄存器为 0 值寄存器
+	tlbi	vmalle1   // invalid all e1 tlb entries
 #endif
 .endm
 

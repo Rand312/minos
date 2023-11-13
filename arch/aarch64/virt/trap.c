@@ -34,6 +34,7 @@ static inline void inject_virtual_data_abort(uint32_t esr_value)
 {
 	uint64_t hcr_el2 = read_sysreg(HCR_EL2) | HCR_EL2_VSE;
 
+	//A virtual SError interrupt is pending because of this mechanism.
 	write_sysreg(hcr_el2, HCR_EL2);
 	write_sysreg(esr_value, ESR_EL1);
 	wmb();
@@ -44,6 +45,8 @@ static int unknown_handler(gp_regs *reg, int ec, uint32_t esr_value)
 	return 0;
 }
 
+//WFI一般用于cpuidle
+//WFE的一个典型使用场景，是用在spinlock中
 static int wfi_wfe_handler(gp_regs *reg, int ec, uint32_t esr_value)
 {
 	vcpu_idle(get_current_vcpu());
@@ -140,6 +143,7 @@ static int __arm_svc_handler(gp_regs *reg, int smc)
 	return do_svc_handler(reg, id, args, smc);
 }
 
+// 访问系统寄存器时的 handler
 static int access_system_reg_handler(gp_regs *reg, int ec, uint32_t esr_value)
 {
 	struct esr_sysreg *sysreg = (struct esr_sysreg *)&esr_value;
@@ -221,6 +225,7 @@ static inline bool dabt_isextabt(uint32_t dfsc)
 	}
 }
 
+//Holds the faulting IPA for some aborts on a stage 2 translation taken to EL2.
 static inline unsigned long get_faulting_ipa(unsigned long vaddr)
 {
         uint64_t hpfar = read_sysreg(HPFAR_EL2);

@@ -21,6 +21,7 @@
 
 static struct vspace host_vspace;
 
+//创建 hyp 层的虚拟地址到物理地址的映射
 int create_host_mapping(unsigned long vir, unsigned long phy,
 		size_t size, unsigned long flags)
 {

@@ -190,6 +190,7 @@ static void aarch64_init_kernel_task(struct task *task, gp_regs *regs)
 #endif
 }
 
+// 设置该 task 所需要执行的具体任务 entry
 void arch_init_task(struct task *task, void *entry, void *user_sp, void *arg)
 {
 	gp_regs *regs = stack_to_gp_regs(task->stack_top);
@@ -198,8 +199,8 @@ void arch_init_task(struct task *task, void *entry, void *user_sp, void *arg)
 	task->stack_base = (void *)regs;
 
 	regs->pc = (uint64_t)entry;
-	regs->sp = (uint64_t)user_sp;
-	regs->x18 = (uint64_t)task;
+	regs->sp = (uint64_t)user_sp;   //user_sp 为 0
+	regs->x18 = (uint64_t)task;   // x18 执行 task 结构体本身
 	regs->x0 = (uint64_t)arg;
 
 	aarch64_init_kernel_task(task, regs);
@@ -260,6 +261,10 @@ int __arch_init(void)
 	return 0;
 }
 
+
+// 1、aff0 ：表示一个core中的第几个thread，大多数core都是single-threaded core，所以大多数core中的该值是0.
+// 2、aff1：表示一个cluster中的第几个cpu
+// 3、aff2/aff3：表示系统中的第几个cluster，这个值由SOC厂商给core的输入信号决定
 uint64_t cpuid_to_affinity(int cpuid)
 {
 	int aff0, aff1;

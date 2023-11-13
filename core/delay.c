@@ -20,6 +20,7 @@
 #include <minos/task.h>
 #include <minos/sched.h>
 
+//延时函数
 void udelay(uint32_t us)
 {
 	unsigned long deadline = get_sys_time() + 1000 *

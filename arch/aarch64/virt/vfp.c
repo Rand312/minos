@@ -22,6 +22,8 @@
 #include <virt/vm.h>
 #endif
 
+// 浮点计算虚拟化相关
+
 struct vfp_context {
 	uint64_t regs[64] __align(16);
 #ifdef CONFIG_VIRT
@@ -51,8 +53,11 @@ static void vfp_state_save(struct vcpu *vcpu, void *context)
 	/*
 	 * need write CPTR_EL2 first to enable FPEN
 	 */
+	//当CPTR_EL2寄存器的bit10为0时，FPU相关操作不被trapped，相反为1，则所有意欲访问FPU部件的指令（不管是EL0、EL1还是EL2）都会被trap到EL2
 	c->cptr = read_sysreg(CPTR_EL2);
+	//提供浮点系统状态信息。该寄存器中的字段映射到AArch32 FPSCR中的等效字段。
 	c->fpsr = read_sysreg(FPSR);
+	//控制浮点扩展行为。该寄存器中的字段映射到AArch32 FPSCR中的等效字段。
 	c->fpcr = read_sysreg(FPCR);
 
 	asm volatile("stp q0, q1, [%1, #16 * 0]\n\t"

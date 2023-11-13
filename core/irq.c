@@ -23,11 +23,17 @@
 #include <minos/of.h>
 #include <minos/current.h>
 
+// 每个 CPU 一个专属的 irq 栈
 unsigned long cpu_irq_stack[NR_CPUS];
 
 static struct irq_chip *irq_chip;
 
 static int default_irq_handler(uint32_t irq, void *data);
+
+
+// SGI（Software Generated Interrupts）软件中断
+// PPI（Private Peripheral Interrupts）私有外设中断  27-31，每个 CPU 5 个私有中断，新版的 gic 更多
+// SPI（Shared Peripheral Interrupts）共享外设中断
 
 static struct irq_desc percpu_irq_descs[PERCPU_IRQ_DESC_SIZE] = {
 	[0 ... (PERCPU_IRQ_DESC_SIZE - 1)] = {
@@ -63,6 +69,7 @@ static int default_irq_handler(uint32_t irq, void *data)
 	return 0;
 }
 
+// 执行中断对应的 handler
 static int do_handle_host_irq(int cpuid, struct irq_desc *irq_desc)
 {
 	int ret;
@@ -92,9 +99,11 @@ static inline struct irq_desc *get_irq_desc_cpu(int cpuid, uint32_t irq)
 	if (irq >= MAX_IRQ_COUNT)
 		return NULL;
 
+	// 返回每个CPU的私有中断
 	if (irq < SPI_IRQ_BASE)
 		return &percpu_irq_descs[cpuid * NR_PERCPU_IRQS + irq];
 
+	// 返回共享外设中断
 	return &spi_irq_descs[irq - SPI_IRQ_BASE];
 }
 
@@ -111,6 +120,7 @@ struct irq_desc *get_irq_desc(uint32_t irq)
 	return get_irq_desc_cpu(smp_processor_id(), irq);
 }
 
+// 使能中断
 void __irq_enable(uint32_t irq, int enable)
 {
 	struct irq_desc *irq_desc;
@@ -142,12 +152,14 @@ void irq_dir(uint32_t irq)
 	irq_chip->irq_dir(irq);
 }
 
+// 清空 pending
 void irq_clear_pending(uint32_t irq)
 {
 	if (irq_chip->irq_clear_pending)
 		irq_chip->irq_clear_pending(irq);
 }
 
+// 设置中断的亲和性
 void irq_set_affinity(uint32_t irq, int cpu)
 {
 	struct irq_desc *irq_desc;
@@ -169,6 +181,7 @@ void irq_set_affinity(uint32_t irq, int cpu)
 	spin_unlock(&irq_desc->lock);
 }
 
+// 设置中断的类型
 void irq_set_type(uint32_t irq, int type)
 {
 	struct irq_desc *irq_desc;
@@ -217,6 +230,7 @@ int do_irq_handler(void)
 	return 0;
 }
 
+// translate，获取 hwirq ？？？
 int irq_xlate(struct device_node *node, uint32_t *intspec,
 		unsigned int intsize, uint32_t *hwirq, unsigned long *f)
 {
@@ -228,6 +242,7 @@ int irq_xlate(struct device_node *node, uint32_t *intspec,
 	return -ENOENT;
 }
 
+// 注册 percpu 类型的 irq
 int request_irq_percpu(uint32_t irq, irq_handle_t handler,
 		unsigned long flags, char *name, void *data)
 {
@@ -240,11 +255,14 @@ int request_irq_percpu(uint32_t irq, irq_handle_t handler,
 	if ((irq >= NR_PERCPU_IRQS) || !handler)
 		return -EINVAL;
 
+	// 遍历每个CPU，注册对应的 irq
 	for (i = 0; i < NR_CPUS; i++) {
+		// 获取 per cpu 类型中断对应的 irq_desc
 		irq_desc = get_irq_desc_cpu(i, irq);
 		if (!irq_desc)
 			continue;
-
+		
+		// 初始化 irq_desc 结构体
 		spin_lock_irqsave(&irq_desc->lock, flag);
 		irq_desc->handler = handler;
 		irq_desc->pdata = data;
@@ -253,7 +271,9 @@ int request_irq_percpu(uint32_t irq, irq_handle_t handler,
 		irq_desc->hno = irq;
 
 		/* enable the irq here */
+		// 使能该中断
 		irq_chip->irq_unmask_cpu(irq, i);
+		// irq_desc 中也取消 masked 标志
 		irq_desc->flags &= ~IRQ_FLAGS_MASKED;
 
 		spin_unlock_irqrestore(&irq_desc->lock, flag);
@@ -262,6 +282,7 @@ int request_irq_percpu(uint32_t irq, irq_handle_t handler,
 	return 0;
 }
 
+// 注册普通的 SPI 共享外设
 int request_irq(uint32_t irq, irq_handle_t handler,
 		unsigned long flags, char *name, void *data)
 {
@@ -273,11 +294,12 @@ int request_irq(uint32_t irq, irq_handle_t handler,
 
 	if (!handler)
 		return -EINVAL;
-
+	
+	// 获取该 irq 对应的 irq_desc
 	irq_desc = get_irq_desc(irq);
 	if (!irq_desc)
 		return -ENOENT;
-
+	
 	type = flags & IRQ_FLAGS_TYPE_MASK;
 	flags &= ~IRQ_FLAGS_TYPE_MASK;
 
@@ -290,7 +312,8 @@ int request_irq(uint32_t irq, irq_handle_t handler,
 	/* enable the hw irq and set the mask bit */
 	irq_chip->irq_unmask(irq);
 	irq_desc->flags &= ~IRQ_FLAGS_MASKED;
-
+	
+	// 如果 irq < SPI_IRQ_BASE，要么是 SGI 软件中断，要么是 PPI 私有中断，它们都具有 affinity 属性，设置之
 	if (irq < SPI_IRQ_BASE)
 		irq_desc->affinity = smp_processor_id();
 
@@ -302,6 +325,7 @@ int request_irq(uint32_t irq, irq_handle_t handler,
 	return 0;
 }
 
+// irqchip 芯片初始化
 static void *irqchip_init(struct device_node *node, void *arg)
 {
 	extern unsigned char __irqchip_start;
@@ -326,6 +350,7 @@ static void *irqchip_init(struct device_node *node, void *arg)
 	return node;
 }
 
+// 
 int irq_init(void)
 {
 #ifdef CONFIG_DEVICE_TREE

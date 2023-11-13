@@ -74,6 +74,9 @@ void arch_set_virq_flag(void)
 	dsb();
 }
 
+
+
+//	A virtual FIQ is pending because of this mechanism.
 void arch_set_vfiq_flag(void)
 {
 	uint64_t hcr_el2;
@@ -83,7 +86,7 @@ void arch_set_vfiq_flag(void)
 	write_sysreg(hcr_el2, HCR_EL2);
 	dsb();
 }
-
+//A virtual IRQ is pending because of this mechanism.
 void arch_clear_virq_flag(void)
 {
 	uint64_t hcr_el2;
@@ -128,6 +131,7 @@ void arch_vcpu_init(struct vcpu *vcpu, void *entry, void *arg)
 				AARCH64_SPSR_A;
 }
 
+//VTCR The control register for stage 2 of the EL1&0 translation regime.
 static inline uint64_t generate_vtcr_el2(void)
 {
 	uint64_t value = 0;
@@ -138,23 +142,29 @@ static inline uint64_t generate_vtcr_el2(void)
 	 * and may do not related to physical information
 	 */
 	value |= (24 << 0);	// t0sz = 0x10 40bits vaddr
-	value |= (0x01 << 6);	// SL0: 4kb start at level1
-	value |= (0x1 << 8);	// Normal memory, Inner WBWA
-	value |= (0x1 << 10);	// Normal memory, Outer WBWA
+	value |= (0x01 << 6);	// SL0: 4kb start at level1  开始转换的级数，从第一级开始转换
+	value |= (0x1 << 8);	// Normal memory, Inner WBWA  写回写分配
+	value |= (0x1 << 10);	// Normal memory, Outer WBWA  写回写分配
 	value |= (0x3 << 12);	// Inner Shareable
 
 	// TG0 4K
+	// 配置页面大小，00 表示 4K
 	value |= (0x0 << 14);
 
 	// PS --- pysical size 1TB
+	// Physical address Size for the Second Stage of translation
 	value |= (2 << 16);
 
 	// vmid -- 8bit
+	//If the implementation only supports an 8-bit VMID, this field is RES0. 即如果只支持 8bit 的 vmid，那么这里设置为 0
+	// 设置为 0，即 8bit 模式 8 bit - the upper 8 bits of VTTBR_EL2 and VSTTBR_EL2 are ignored by the hardware, and treated as if they are all zeros, for every purpose except when reading back the register.
+	// 设置为 1，16 bit - the upper 8 bits of VTTBR_EL2 and VSTTBR_EL2 are used for allocation and matching in the TLB.
 	value |= (0x0 << 19);
 
 	return value;
 }
 
+//页表地址 + vmid
 static inline uint64_t generate_vttbr_el2(uint32_t vmid, unsigned long base)
 {
 	return (base | ((uint64_t)vmid << 48));
@@ -184,6 +194,7 @@ void arch_vcpu_state_init(struct vcpu *vcpu, void *c)
 	 * RW : low level is 64bit, when 0 is 32 bit
 	 * VM : enable virtualzation
 	 */
+	//配置每个 guest 的 hcr_el2 寄存器
 	value = read_sysreg64(HCR_EL2);
 	context->hcr_el2 = value | HCR_EL2_VM |
 		     HCR_EL2_TIDCP | HCR_EL2_IMO | HCR_EL2_FMO |

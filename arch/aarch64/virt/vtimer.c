@@ -77,6 +77,7 @@ static void phys_timer_expire_function(unsigned long data)
 	vtimer->cnt_ctl |= CNT_CTL_ISTATUS;
 	vtimer->cnt_cval = 0;
 
+	//如果未禁止
 	if (!(vtimer->cnt_ctl & CNT_CTL_IMASK))
 		send_virq_to_vcpu(vtimer->vcpu, vtimer->virq);
 }
@@ -91,16 +92,20 @@ static void virt_timer_expire_function(unsigned long data)
 	 * if the irq is not mask, the vtimer will trigger
 	 * the hardware irq again.
 	 */
+	//只是唤醒对应的 vcpu，当上下文切换到对应的 vcpu 时，the vtimer 会触发相应的 hardware irq
 	wake(&vtimer->vcpu->vcpu_event);
 }
 
+//https://blog.csdn.net/Roland_Sun/article/details/105547271
+//恢复 vtimer 的上下文
 static void vtimer_state_restore(struct vcpu *vcpu, void *context)
 {
 	struct vtimer_context *c = (struct vtimer_context *)context;
 	struct vtimer *vtimer = &c->virt_timer;
-
+	
+	// 停止该 vtimer 对应的 timer，这里？？？
 	stop_timer(&vtimer->timer);
-
+	// 恢复 offset、control、cval 寄存器的值
 	write_sysreg64(c->offset, ARM64_CNTVOFF_EL2);
 	write_sysreg64(vtimer->cnt_cval, ARM64_CNTV_CVAL_EL0);
 	write_sysreg32(vtimer->cnt_ctl, ARM64_CNTV_CTL_EL0);
@@ -113,15 +118,17 @@ static void vtimer_state_save(struct vcpu *vcpu, void *context)
 	struct vtimer_context *c = (struct vtimer_context *)context;
 	struct vtimer *vtimer = &c->virt_timer;
 
+	// 读取将要保存的 cval、control、offset 寄存器值
 	vtimer->cnt_cval = read_sysreg64(ARM64_CNTV_CVAL_EL0);
 	vtimer->cnt_ctl = read_sysreg32(ARM64_CNTV_CTL_EL0);
-	write_sysreg32(0, CNTV_CTL_EL0);
+	write_sysreg32(0, CNTV_CTL_EL0);  //istatus imask enable
 	isb();
-
+	// 如果当前任务 停止 or 暂停，直接返回？？？ 不需要保存计时器的值？？？
 	if ((task->state == TASK_STATE_STOP) ||
 			(task->state == TASK_STATE_SUSPEND))
 		return;
 
+	// 如果定时器是使能状态 && 没有被屏蔽
 	if ((vtimer->cnt_ctl & CNT_CTL_ENABLE) &&
 		!(vtimer->cnt_ctl & CNT_CTL_IMASK)) {
 		mod_timer(&vtimer->timer, ticks_to_ns(vtimer->cnt_cval +
@@ -129,19 +136,21 @@ static void vtimer_state_save(struct vcpu *vcpu, void *context)
 	}
 }
 
+//初始化 vtimer_context 中的两个 vtimer
 static void vtimer_state_init(struct vcpu *vcpu, void *context)
 {
 	struct vtimer *vtimer;
 	struct arm_virt_data *arm_data = vcpu->vm->arch_data;
 	struct vtimer_context *c = (struct vtimer_context *)context;
 
+	// 虚拟计数器 = 物理计数器 - 偏移
 	if (get_vcpu_id(vcpu) == 0) {
-		vcpu->vm->time_offset = get_sys_ticks();
+		vcpu->vm->time_offset = get_sys_ticks();//vtimer的offset设置为当前ticks
 		arm_data->phy_timer_trap = arm_phy_timer_trap;
 	}
 
 	c->offset = vcpu->vm->time_offset;
-
+	//初始化
 	vtimer = &c->virt_timer;
 	vtimer->vcpu = vcpu;
 	vtimer->virq = vcpu->vm->vtimer_virq;
@@ -159,6 +168,7 @@ static void vtimer_state_init(struct vcpu *vcpu, void *context)
 			(unsigned long)vtimer);
 }
 
+//停止对应的两 vtimer
 static void vtimer_state_stop(struct vcpu *vcpu, void *context)
 {
 	struct vtimer_context *c = (struct vtimer_context *)context;
@@ -167,6 +177,7 @@ static void vtimer_state_stop(struct vcpu *vcpu, void *context)
 	stop_timer(&c->phy_timer.timer);
 }
 
+//处理 Counter-timer Physical Timer Control register
 static inline void
 asoc_handle_cntp_ctl(struct vcpu *vcpu, struct vtimer *vtimer)
 {
@@ -176,6 +187,8 @@ asoc_handle_cntp_ctl(struct vcpu *vcpu, struct vtimer *vtimer)
 	 * is triggered, if the read access is happened in the
 	 * fiq handler, need to clear the interrupt
 	 */
+	//将 istatus 清零
+	//取消该 irq 的 pending 状态
 	if ((vtimer->cnt_ctl & CNT_CTL_ISTATUS) &&
 			(read_sysreg(HCR_EL2) & HCR_EL2_VF)) {
 		vtimer->cnt_ctl &= ~CNT_CTL_ISTATUS;
@@ -191,6 +204,7 @@ static void vtimer_handle_cntp_ctl(struct vcpu *vcpu, int access,
 	struct vtimer_context *c;
 	unsigned long ns;
 
+	//获取对应的 phys_timer
 	c = get_vmodule_data_by_id(vcpu, vtimer_vmodule_id);
 	get_access_vtimer(vtimer, c, access);
 
@@ -206,6 +220,7 @@ static void vtimer_handle_cntp_ctl(struct vcpu *vcpu, int access,
 			v |= vtimer->cnt_ctl & CNT_CTL_ISTATUS;
 		vtimer->cnt_ctl = v;
 
+		//重启或者体质 vtimer
 		if ((vtimer->cnt_ctl & CNT_CTL_ENABLE) &&
 				(vtimer->cnt_cval != 0)) {
 			ns = ticks_to_ns(vtimer->cnt_cval + c->offset);
@@ -216,6 +231,9 @@ static void vtimer_handle_cntp_ctl(struct vcpu *vcpu, int access,
 	}
 }
 
+
+//第一种工作方式：到一个绝对时间之后就触发
+//比较寄存器有64位，如果设置了之后，当系统计数器达到或超过了这个值之后（CVAL<系统计数器），就会触发定时器中断
 static void vtimer_handle_cntp_tval(struct vcpu *vcpu,
 		int access, int read, unsigned long *value)
 {
@@ -242,7 +260,8 @@ static void vtimer_handle_cntp_tval(struct vcpu *vcpu,
 		}
 	}
 }
-
+//第二种工作模式：从现在开始再过一定时间间隔之后触发
+//定时寄存器有32位，如果设置了之后，会将比较寄存器设置成当前系统计数器加上设置的定时寄存器的值（CVAL=系统计数器+TVAL），后面就一样了，当系统计数器达到或超过了这个值后，就会触发定时中断
 static void vtimer_handle_cntp_cval(struct vcpu *vcpu,
 		int access, int read, unsigned long *value)
 {
@@ -265,6 +284,7 @@ static void vtimer_handle_cntp_cval(struct vcpu *vcpu,
 	}
 }
 
+//switch case handler
 static int arm_phy_timer_trap(struct vcpu *vcpu,
 		int reg, int read, unsigned long *value)
 {
@@ -328,14 +348,18 @@ int virtual_timer_irq_handler(uint32_t irq, void *data)
 	 * 2 - Here the logic of idle can be optimized to avoid
 	 *     this situation
 	 */
+	//也就是说，正常情况下，进入 handler 处理时钟中断的时候，istatus = 1
 	value = read_sysreg32(ARM64_CNTV_CTL_EL0);
 	if (!(value & CNT_CTL_ISTATUS)) {
 		pr_debug("vtimer is not trigger\n");
 		return 0;
 	}
 
+	//禁止该 vtimer
 	value = value | CNT_CTL_IMASK;
 	write_sysreg32(value, ARM64_CNTV_CTL_EL0);
 
+	//发送 virq 给对应的 vcpu
+	//vcpu对应的vtimer的中断号记录在 vcpu->vm->vtimer_virq
 	return send_virq_to_vcpu(vcpu, vcpu->vm->vtimer_virq);
 }
