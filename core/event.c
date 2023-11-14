@@ -50,6 +50,7 @@ void __wait_event(void *ev, int mode, uint32_t to)
 	if (mode == OS_EVENT_TYPE_FLAG) {
 		task->flag_node = ev;
 	} else {
+		// 将 task 加入 event 的 wait_list
 		event = (struct event *)ev;
 		list_add_tail(&event->wait_list, &task->event_list);
 	}
@@ -130,12 +131,13 @@ void event_pend_down(void)
 {
 	struct task *task = current;
 
-	task->pend_state = TASK_STATE_PEND_OK;
-	task->wait_event = (unsigned long)NULL;
+	task->pend_state = TASK_STATE_PEND_OK;  //应当表示已完成pend
+	task->wait_event = (unsigned long)NULL; //清空
 	task->wait_type = 0;
 	task->msg = NULL;
 }
 
+// 唤醒某个 event
 long wake(struct event *ev)
 {
 	struct task *task = (struct task *)ev->data;

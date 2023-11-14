@@ -65,7 +65,7 @@ int sem_pend(sem_t *sem, uint32_t timeout)
 	case TASK_STATE_PEND_TO:
 		ret = -ETIMEDOUT;
 	default:
-		// 将 task 从 EVENT(sem) 的 wait_list 中取出
+		// 将 task 从 EVENT(sem) 的 wait_list 中去除
 		spin_lock_irqsave(&sem->lock, flags);
 		remove_event_waiter(TO_EVENT(sem), task);
 		spin_unlock_irqrestore(&sem->lock, flags);
@@ -81,7 +81,7 @@ static int sem_post_opt(sem_t *sem, int pend_state, int opt)
 {
 	unsigned long flags;
 	int ret;
-
+	
 	spin_lock_irqsave(&sem->lock, flags);
 	ret = wake_up_event_waiter(TO_EVENT(sem), NULL, pend_state, opt);
 	if (pend_state != TASK_STATE_PEND_ABORT) {

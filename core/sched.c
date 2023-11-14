@@ -526,6 +526,7 @@ static int irqwork_handler(uint32_t irq, void *data)
 		/*
 		 * if the task has delay timer, cancel it.
 		 */
+		
 		if (task->delay) {
 			stop_timer(&task->delay_timer);
 			task->delay = 0;
@@ -560,6 +561,7 @@ int local_sched_init(void)
 	return 0;
 }
 
+// 初始化 pcpu 的各类 list
 static void pcpu_sched_init(struct pcpu *pcpu)
 {
 	init_list(&pcpu->new_list);
@@ -700,6 +702,7 @@ static int wake_up_common(struct task *task, long pend_state, int event, void *d
 	/*
 	 * find a best cpu to run this task.
 	 */
+	// 将该 task 放入一个
 	task_ready(task, 1);
 	preempt_enable();
 

@@ -51,7 +51,7 @@ int register_hook(hook_func_t fn, enum hook_type type)
 	return 0;
 }
 
-// 创建 hook
+// 执行指定 type 类型的 hook 链上的所有 handler
 int do_hooks(void *item, void *context, enum hook_type type)
 {
 	int err = 0;

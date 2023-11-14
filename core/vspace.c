@@ -19,9 +19,10 @@
 #include <minos/mm.h>
 #include <asm/cpu_feature.h>
 
+
 static struct vspace host_vspace;
 
-//创建 hyp 层的虚拟地址到物理地址的映射
+//XXX 创建 hyp 层的虚拟地址到物理地址的映射
 int create_host_mapping(unsigned long vir, unsigned long phy,
 		size_t size, unsigned long flags)
 {
@@ -68,6 +69,7 @@ int change_host_mapping(unsigned long vir, unsigned long phy,
 	return ret;
 }
 
+// stage1 translate
 unsigned long translate_va_to_pa(struct vspace *vs, unsigned long va)
 {
 	unsigned long addr;
@@ -78,6 +80,7 @@ unsigned long translate_va_to_pa(struct vspace *vs, unsigned long va)
 
 	return addr;
 }
+
 
 void *io_remap(virt_addr_t vir, size_t size)
 {

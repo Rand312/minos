@@ -396,6 +396,7 @@ int create_percpu_tasks(char *name, task_func_t func,
 	struct task *ret;
 	int cpu;
 
+	// 遍历每个在线的 cpu
 	for_each_online_cpu(cpu) {
 		ret = create_task(name, func, TASK_STACK_SIZE, prio, cpu,
 				flags | TASK_FLAGS_PERCPU, pdata);

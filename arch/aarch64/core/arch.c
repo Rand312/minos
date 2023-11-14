@@ -137,6 +137,7 @@ int arch_is_exit_to_user(struct task *task)
 	return !!((regs->pstate & 0xf) != (AARCH64_SPSR_EL2h));
 }
 
+// 
 void arch_task_sched_out(struct task *task)
 {
 	struct cpu_context *c = &task->cpu_context;

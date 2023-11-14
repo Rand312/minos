@@ -133,11 +133,12 @@ void *queue_pend(queue_t *qt, uint32_t timeout)
 		spin_unlock_irqrestore(&qt->lock, flags);
 		return pmsg;
 	}
-
+	// 获取当前 task
 	task = get_current_task();
+	// 将当前 task 加入 EVENT(qt) 的 wait_list
 	__wait_event(TO_EVENT(qt), OS_EVENT_TYPE_QUEUE, timeout);
 	spin_unlock_irqrestore(&qt->lock, flags);
-
+	
 	sched();
 	
 	switch (task->pend_state) {

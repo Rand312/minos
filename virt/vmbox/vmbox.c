@@ -847,6 +847,7 @@ int create_vmbox_controller(struct vm *vm)
 	return __vm_create_vmbox_controller_dynamic(vm);
 }
 
+// 注册平台设备
 int vmbox_register_platdev(struct vmbox_device *vdev, void *dtb, char *type)
 {
 	int node;

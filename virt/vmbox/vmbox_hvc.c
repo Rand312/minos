@@ -39,9 +39,11 @@ struct hvc_ring {
 	char buf[0];
 };
 
+// 
 static int hvc_be_init(struct vm *vm, struct vmbox *vmbox,
 		struct vmbox_device *vdev)
-{
+{	
+	// private data 为 dtb
 	void *dtb = vm->setup_data;
 
 	/*

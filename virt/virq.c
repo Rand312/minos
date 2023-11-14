@@ -35,19 +35,27 @@ static DEFINE_SPIN_LOCK(hvm_irq_lock);
 	} while (0)
 
 
+// 根据 virq 获取对应的 virq_desc 结构体
+// local virq(sgi ppi) 为每个 cpu 拥有的，所以将 local_desc 定义于 vcpu 中
+// spi 为所有该 vm 中的 vcpu 中共享，所以将 vspi_desc 定义与 vm 中
 struct virq_desc *get_virq_desc(struct vcpu *vcpu, uint32_t virq)
 {
 	struct vm *vm = vcpu->vm;
 
+	// if virq < 32
 	if (virq < VM_LOCAL_VIRQ_NR)
+		// 直接返回对应的 virq_desc
 		return &vcpu->virq_struct->local_desc[virq];
 
+	// 如果 virq 大于了最大号数
 	if (virq >= VM_VIRQ_NR(vm->vspi_nr))
 		return NULL;
-
+	
+	// virq-32 即为对应的下标值
 	return &vm->vspi_desc[VIRQ_SPI_OFFSET(virq)];
 }
 
+// 完成 send virq 或者完成其他啥之后，踢 cpu 一脚，提醒 vcpu 该进行某些操作？？？
 static void inline virq_kick_vcpu(struct vcpu *vcpu,
 		struct virq_desc *desc)
 {
@@ -55,6 +63,7 @@ static void inline virq_kick_vcpu(struct vcpu *vcpu,
 			VCPU_KICK_REASON_HIRQ: VCPU_KICK_REASON_VIRQ);
 }
 
+// send virq，主要就是设置 vcpu 中对应的 virq_struct pending 位图
 static int inline __send_virq(struct vcpu *vcpu, struct virq_desc *desc)
 {
 	struct virq_struct *virq_struct = vcpu->virq_struct;
@@ -67,16 +76,20 @@ static int inline __send_virq(struct vcpu *vcpu, struct virq_desc *desc)
 	 *
 	 * SGI need set the irq source.
 	 */
+	//将 virq 设置到 pending_bitmap
 	if (test_and_set_bit(desc->vno, virq_struct->pending_bitmap))
 		return 0;
-
+	
+	// pending_virq ++
 	atomic_inc(&virq_struct->pending_virq);
+	// 如果是 sgi 类型的 virq，设置来源 cpu 为当前 cpu
 	if (desc->vno < VM_SGI_VIRQ_NR)
 		desc->src = get_vcpu_id(get_current_vcpu());
 
 	return 0;
 }
 
+// 发送 virq 给某个 vcpu
 static int send_virq(struct vcpu *vcpu, struct virq_desc *desc)
 {
 	struct vm *vm = vcpu->vm;
@@ -105,6 +118,7 @@ static int send_virq(struct vcpu *vcpu, struct virq_desc *desc)
 		return -EAGAIN;
 	}
 
+	// 实际的 send virq 函数
 	ret = __send_virq(vcpu, desc);
 	if (ret) {
 		pr_warn("send virq to vcpu-%d-%d failed\n",
@@ -117,6 +131,7 @@ static int send_virq(struct vcpu *vcpu, struct virq_desc *desc)
 	return 0;
 }
 
+// 
 static int guest_irq_handler(uint32_t irq, void *data)
 {
 	struct vcpu *vcpu;
@@ -128,15 +143,19 @@ static int guest_irq_handler(uint32_t irq, void *data)
 	}
 
 	/* send the virq to the guest */
+	// 如果 vmid 和 vcpu_id 都没有指定，很随便的话，那么就选择当前的 vcpu
 	if ((desc->vmid == VIRQ_AFFINITY_VM_ANY) &&
 			(desc->vcpu_id == VIRQ_AFFINITY_VCPU_ANY))
 		vcpu = get_current_vcpu();
 	else
+		// 获取 desc 指定的 vcpu
 		vcpu = get_vcpu_by_id(desc->vmid, desc->vcpu_id);
 
+	// send virq 给某 vcpu
 	return send_virq(vcpu, desc);
 }
 
+// 获取中断类型
 uint32_t virq_get_type(struct vcpu *vcpu, uint32_t virq)
 {
 	struct virq_desc *desc;
@@ -148,6 +167,7 @@ uint32_t virq_get_type(struct vcpu *vcpu, uint32_t virq)
 	return desc->type;
 }
 
+// 获取中断使能状况
 uint32_t virq_get_state(struct vcpu *vcpu, uint32_t virq)
 {
 	struct virq_desc *desc;
@@ -159,6 +179,7 @@ uint32_t virq_get_state(struct vcpu *vcpu, uint32_t virq)
 	return !!virq_is_enabled(desc);
 }
 
+// 获取中断 cpu 亲和性
 uint32_t virq_get_affinity(struct vcpu *vcpu, uint32_t virq)
 {
 	struct virq_desc *desc;
@@ -170,6 +191,7 @@ uint32_t virq_get_affinity(struct vcpu *vcpu, uint32_t virq)
 	return desc->vcpu_id;
 }
 
+// 获取中断优先级
 uint32_t virq_get_pr(struct vcpu *vcpu, uint32_t virq)
 {
 	struct virq_desc *desc;
@@ -181,17 +203,22 @@ uint32_t virq_get_pr(struct vcpu *vcpu, uint32_t virq)
 	return desc->pr;
 }
 
+// 该 virq 是否可以 request
 int virq_can_request(struct vcpu *vcpu, uint32_t virq)
 {
 	struct virq_desc *desc;
 
+	// 获取对应 virq_desc 结构体
 	desc = get_virq_desc(vcpu, virq);
+	// 如果为空，virq_desc 以数组的形式存在，这应该是在初始化阶段批量分配的，所以什么时候为空？？？
 	if (!desc)
 		return 0;
 
+	// 是否设置了可以 request 标志
 	return !virq_is_requested(desc);
 }
 
+// 需要暴露给外部使用？？？
 int virq_need_export(struct vcpu *vcpu, uint32_t virq)
 {
 	struct virq_desc *desc;
@@ -206,6 +233,7 @@ int virq_need_export(struct vcpu *vcpu, uint32_t virq)
 	return !virq_is_requested(desc);
 }
 
+// 设置触发类型
 int virq_set_type(struct vcpu *vcpu, uint32_t virq, int value)
 {
 	struct virq_desc *desc;
@@ -220,6 +248,7 @@ int virq_set_type(struct vcpu *vcpu, uint32_t virq, int value)
 	 */
 	if (desc->type != value) {
 		desc->type = value;
+		//如果是 hardware interrupt，只能设置为特定的值？？？
 		if (virq_is_hw(desc)) {
 			if (value)
 				value = IRQ_FLAGS_EDGE_RISING;
@@ -233,6 +262,7 @@ int virq_set_type(struct vcpu *vcpu, uint32_t virq, int value)
 	return 0;
 }
 
+// 设置优先级
 int virq_set_priority(struct vcpu *vcpu, uint32_t virq, int pr)
 {
 	struct virq_desc *desc;
@@ -249,6 +279,7 @@ int virq_set_priority(struct vcpu *vcpu, uint32_t virq, int pr)
 	return 0;
 }
 
+// 设置使能
 int virq_enable(struct vcpu *vcpu, uint32_t virq)
 {
 	struct virq_desc *desc;
@@ -256,8 +287,10 @@ int virq_enable(struct vcpu *vcpu, uint32_t virq)
 	desc = get_virq_desc(vcpu, virq);
 	if (!desc)
 		return -ENOENT;
-
+	
+	//d->flags |= VIRQS_ENABLED;
 	virq_set_enable(desc);
+	//如果是 spi 类型中断，并且对应着实际的 hardware interrupt，芯片级别 irq_chip->irq_unmask(irq);
 	if ((virq > VM_LOCAL_VIRQ_NR) && virq_is_hw(desc))
 		irq_unmask(desc->hno);
 
@@ -271,6 +304,7 @@ int virq_set_fiq(struct vcpu *vcpu, uint32_t virq)
 	desc = get_virq_desc(vcpu, virq);
 	if (!desc)
 		return -ENOENT;
+	// virq_desc 上设置 VIRQS_FIQ 标志
 	__virq_set_fiq(desc);
 
 	return 0;
@@ -296,6 +330,7 @@ int send_virq_to_vcpu(struct vcpu *vcpu, uint32_t virq)
 	return send_virq(vcpu, get_virq_desc(vcpu, virq));
 }
 
+// 发送 virq 给某个 vm
 int send_virq_to_vm(struct vm *vm, uint32_t virq)
 {
 	struct virq_desc *desc;
@@ -363,6 +398,7 @@ void clear_pending_virq(struct vcpu *vcpu, uint32_t irq)
 	virqchip_update_virq(vcpu, desc, VIRQ_ACTION_CLEAR);
 }
 
+// 从 virq_struct->pending_bitmap 获取 irq
 uint32_t get_pending_virq(struct vcpu *vcpu)
 {
 	struct virq_struct *virq_struct = vcpu->virq_struct;

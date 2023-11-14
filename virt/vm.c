@@ -198,6 +198,7 @@ struct vcpu *get_vcpu_by_id(uint32_t vmid, uint32_t vcpu_id)
 	return get_vcpu_in_vm(vm, vcpu_id);
 }
 
+//
 int kick_vcpu(struct vcpu *vcpu, int reason)
 {
 	int mode, ret = 0;

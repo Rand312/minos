@@ -173,7 +173,7 @@ void smp_cpus_up(void)
 	int i, ret, cnt;
 	uint64_t affinity;
 
-	//flush 所有 cache 行
+	// flush 所有 cache 行
 	flush_cache_all();
 	// 遍历 CPU，然后调用 smp_cpu_up
 	for (i = 1; i < CONFIG_NR_CPUS; i++) {

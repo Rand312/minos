@@ -148,20 +148,36 @@
                                             5 bits for guest irq priority */
 
 struct gicv2_context {
-    uint32_t hcr;
-    uint32_t vmcr;
+    uint32_t hcr;      // 包含关于 virtual cpu interface 的一些控制位
+    uint32_t vmcr;     // virtual machine control register
+					   // alias of GICV_CTLR，一些权限控制位
     uint32_t apr;
-    uint32_t lr[64];
+    uint32_t lr[64];   // lr 寄存器，存放发生虚拟中断的一些信息
 };
 
 struct gich_lr {
-	uint32_t vid : 10;
-	uint32_t pid : 10;
-	uint32_t resv : 3;
-	uint32_t pr : 5;
-	uint32_t state : 2;
-	uint32_t grp1 : 1;
-	uint32_t hw : 1;
+	uint32_t vid : 10;  //virtual interrupt id
+
+	uint32_t pid : 10;	// 此 field 根据 hw 值不同而不同
+						// hw=1，此 pid 为实际的 physical integrrupt id
+						// hw=0，bit19表示是否 signal eoi
+								 //bit12-10，如果这是一个 sgi 中断，即 virtual interrupt id < 15，那么此位域表示 requesting cpu id
+
+	uint32_t resv : 3;  //保留
+
+	uint32_t pr : 5;	//该virtual integrrupt 的优先级
+
+	uint32_t state : 2; //指示该中断的状态，invalid、pending、active、pending and active
+
+	uint32_t grp1 : 1;	// 表示该 virtual integrrupt 是否是 group 1 virtual integrrupt
+						// 0 表示这是一个 group 0 virtual interrupt，
+						// 1 表示这是一个 group 1 virtual interrupt，该中断以 virtual irq 的形式触发，而不是 fiq
+
+	uint32_t hw : 1;    //该虚拟中断是否是一个硬件中断，也就是说它是否实际对应着一个物理中断
+						//deactivate 这个虚拟中断也会向对应的物理中断也执行 deactivate 操作
+						//0 表示这是 triggered in software，当 deactivated 的时候不会通知 distributor
+						//1 表示这是一个 hardware integrrupt，当该 virtual interrupt deactivate 时，一个 deactivate interrupt request 会发送给 distributor
+						//而具体的 deactivate 操作，如果 gicv_ctlr.eoimode=0，此deactivate request对应着 写 gicv_eoir 或者 gicv_aeoir 寄存器，否则对应着 写 gicv_dir 寄存器
 };
 
 #endif
