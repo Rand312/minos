@@ -131,7 +131,7 @@ static int send_virq(struct vcpu *vcpu, struct virq_desc *desc)
 	return 0;
 }
 
-// 
+// hw 类型的 virq 将会注册到 hyp，注册时的 handler 便为此 guest_irq_handler，它会将中断路由到某具体的 vcpu
 static int guest_irq_handler(uint32_t irq, void *data)
 {
 	struct vcpu *vcpu;
@@ -424,29 +424,39 @@ uint32_t get_pending_virq(struct vcpu *vcpu)
 	return BAD_IRQ;
 }
 
+// vcpu 是否有 irq 正处于 pending 或者 active 状态中
 int vcpu_has_irq(struct vcpu *vcpu)
 {
 	struct virq_struct *vs = vcpu->virq_struct;
+	// vm->vspi_nr + VM_LOCAL_VIRQ_NR
 	int total = vm_irq_count(vcpu->vm);
 	int pend, active;
 
+	// 查找 pending 位图
 	pend = find_first_bit(vs->pending_bitmap, total);
+	// 查找 active 位图
 	active = find_first_bit(vs->active_bitmap, total);
 
+	// 第一个 irq 的 number 应该要小于总数
 	return (pend < total) || (active < total);
 }
 
+// 更新 virq 的 capability 是吧？？？
 static void update_virq_cap(struct virq_desc *desc, unsigned long flags)
-{
+{	
+	// 在 desc 级别设置 flags
 	desc->flags |= flags;
 
+	// 如果标志带有使能，且该 virq 是一个 hardware interrupt，做芯片级别 unmask
 	if ((flags & VIRQF_ENABLE) && virq_is_hw(desc))
 		irq_unmask(desc->hno);
-
+	
+	// 如果是一个 fiq，在 desc 级别设置 VIRQS_FIQ 标志
 	if (flags & VIRQF_FIQ)
 		__virq_set_fiq(desc);
 }
 
+// virq_struct 初始化
 void vcpu_virq_struct_init(struct vcpu *vcpu)
 {
 	struct virq_struct *virq_struct = vcpu->virq_struct;
@@ -456,9 +466,11 @@ void vcpu_virq_struct_init(struct vcpu *vcpu)
 	virq_struct->active_virq = 0;
 	atomic_set(0, &virq_struct->pending_virq);
 
+	// 所有 desc 重置清零，设置为 0
 	memset(&virq_struct->local_desc, 0,
 		sizeof(struct virq_desc) * VM_LOCAL_VIRQ_NR);
 
+	// 初始化每个 desc，所欲字段设置为默认值
 	for (i = 0; i < VM_LOCAL_VIRQ_NR; i++) {
 		desc = &virq_struct->local_desc[i];
 		virq_clear_hw(desc);
@@ -474,6 +486,7 @@ void vcpu_virq_struct_init(struct vcpu *vcpu)
 	}
 }
 
+// 重置 virq_struct
 void vcpu_virq_struct_reset(struct vcpu *vcpu)
 {
 	struct virq_struct *vs = vcpu->virq_struct;
@@ -484,6 +497,7 @@ void vcpu_virq_struct_reset(struct vcpu *vcpu)
 	vcpu_virq_struct_init(vcpu);
 }
 
+// 注册 virq
 static int __request_virq(struct vcpu *vcpu, struct virq_desc *desc,
 			uint32_t virq, uint32_t hwirq, unsigned long flags)
 {
@@ -493,41 +507,51 @@ static int __request_virq(struct vcpu *vcpu, struct virq_desc *desc,
 		return -EBUSY;
 	}
 
-	desc->vno = virq;
-	desc->hno = hwirq;
-	desc->vcpu_id = get_vcpu_id(vcpu);
-	desc->pr = 0xa0;
-	desc->vmid = get_vmid(vcpu);
-	desc->id = VIRQ_INVALID_ID;
-	desc->state = VIRQ_STATE_INACTIVE;
+	// 设置 desc 字段值
+	desc->vno = virq;  // virq
+	desc->hno = hwirq; // hwirq
+	desc->vcpu_id = get_vcpu_id(vcpu); // vcpu_id
+	desc->pr = 0xa0; // 优先级
+	desc->vmid = get_vmid(vcpu); // vmid
+	desc->id = VIRQ_INVALID_ID; //？？？
+	desc->state = VIRQ_STATE_INACTIVE; //刚注册，inactive
 
 	/* mask the bits in spi_irq_bitmap, if it is a SPI */
+	// 如果大于 VM_LOCAL_VIRQ_NR，则为 SPI 类型的中断
 	if (virq >= VM_LOCAL_VIRQ_NR)
 		set_bit(VIRQ_SPI_OFFSET(virq), vcpu->vm->vspi_map);
 
 	/* if the virq affinity to a hwirq need to request
 	 * the hw irq */
+	// 如果有对应的 hwirq
 	if (hwirq) {
+		// 设置芯片级别的 cpu 亲和性
 		irq_set_affinity(hwirq, vcpu_affinity(vcpu));
+		// 设置 VIRQS_HW 标志
 		virq_set_hw(desc);
+		// 在 hyp 下注册 hwirq 中断
 		request_irq(hwirq, guest_irq_handler, IRQ_FLAGS_VCPU,
 				vcpu->task->name, (void *)desc);
 		irq_mask(desc->hno);
+	// 否则清除 desc 的 VIRQS_HW 标志
 	} else {
 		virq_clear_hw(desc);
 	}
 
+	// 
 	update_virq_cap(desc, flags);
 
 	return 0;
 }
 
+// 注册中断的一个衍生函数
 int request_virq_affinity(struct vm *vm, uint32_t virq, uint32_t hwirq,
 			int affinity, unsigned long flags)
 {
 	struct vcpu *vcpu;
 	struct virq_desc *desc;
 
+	// 获取 vcpu，这里的 affinity 其实就是一个 vcpu_id
 	vcpu = get_vcpu_in_vm(vm, affinity);
 	if (!vcpu) {
 		pr_err("request virq fail no vcpu-%d in vm-%d\n",
@@ -535,20 +559,24 @@ int request_virq_affinity(struct vm *vm, uint32_t virq, uint32_t hwirq,
 		return -EINVAL;
 	}
 
+	// 获取对应的 desc
 	desc = get_virq_desc(vcpu, virq);
 	if (!desc) {
 		pr_err("virq-%d not exist vm-%d", virq, vm->vmid);
 		return -ENOENT;
 	}
 
+	// 注册中断
 	return __request_virq(vcpu, desc, virq, hwirq, flags);
 }
 
+// 查询 vm 支持的最大终端数
 static inline int vm_max_virq_line(struct vm *vm)
 {
 	return (vm_is_host_vm(vm) ? MAX_HVM_VIRQ : MAX_GVM_VIRQ);
 }
 
+// 注册 hardware 类型的中断
 int request_hw_virq(struct vm *vm, uint32_t virq, uint32_t hwirq,
 			unsigned long flags)
 {
@@ -560,11 +588,14 @@ int request_hw_virq(struct vm *vm, uint32_t virq, uint32_t hwirq,
 	}
 }
 
+// 注册普通的 virq
 int request_virq(struct vm *vm, uint32_t virq, unsigned long flags)
-{
+{	
+	// hwirq 设置为 0 便是
 	return request_hw_virq(vm, virq, 0, flags);
 }
 
+// 注册 percpu 类型的 virq
 int request_virq_pervcpu(struct vm *vm, uint32_t virq, unsigned long flags)
 {
 	int ret;
@@ -573,12 +604,15 @@ int request_virq_pervcpu(struct vm *vm, uint32_t virq, unsigned long flags)
 
 	if (virq >= VM_LOCAL_VIRQ_NR)
 		return -EINVAL;
-
+	
+	// 遍历该 vm 中的所有 vcpu
 	vm_for_each_vcpu(vm, vcpu) {
+		// 获取 desc
 		desc = get_virq_desc(vcpu, virq);
 		if (!desc)
 			continue;
-
+		
+		// 注册中断
 		ret = __request_virq(vcpu, desc, virq, 0, flags);
 		if (ret) {
 			pr_err("request percpu virq-%d failed vm-%d\n",
@@ -591,6 +625,7 @@ int request_virq_pervcpu(struct vm *vm, uint32_t virq, unsigned long flags)
 		 * bind to the hw ppi, need to do this, otherwise
 		 * do not need to change it
 		 */
+		
 		desc->vcpu_id = VIRQ_AFFINITY_VCPU_ANY;
 		desc->vmid = VIRQ_AFFINITY_VM_ANY;
 	}
@@ -598,26 +633,32 @@ int request_virq_pervcpu(struct vm *vm, uint32_t virq, unsigned long flags)
 	return 0;
 }
 
+// 分配一个 virq 号
 int alloc_vm_virq(struct vm *vm)
 {
 	int virq;
 	int count = vm->vspi_nr;
 
 	HVM_IRQ_LOCK(vm);
+	// 在 vspi_map 寻找下一个可用的 virq
 	virq = find_next_zero_bit_loop(vm->vspi_map, count, 0);
+	// 如果 virq 在范围内，注册该中断
 	if (virq < count)
 		request_virq(vm, virq + VM_LOCAL_VIRQ_NR, VIRQF_NEED_EXPORT);
 	else
 		virq = -1;
 	HVM_IRQ_UNLOCK(vm);
 
+	// 返回修正后的 virq number，spi 的 id 需要加上 VM_LOCAL_VIRQ_NR 才是该 vm 内全局的 virq
 	return (virq >= 0 ? virq + VM_LOCAL_VIRQ_NR : -1);
 }
 
+// 释放掉该 virq，即清零相应的位图
 void release_vm_virq(struct vm *vm, int virq)
 {
 	struct virq_desc *desc;
 
+	// 减去 VM_LOCAL_VIRQ_NR
 	virq = VIRQ_SPI_OFFSET(virq);
 	if (virq >= vm->vspi_nr)
 		return;
@@ -629,6 +670,7 @@ void release_vm_virq(struct vm *vm, int virq)
 	HVM_IRQ_UNLOCK(vm);
 }
 
+// 
 static int virq_create_vm(void *item, void *args)
 {
 	uint32_t size, vdesc_size, vdesc_bitmap_size, status_bitmap_size;
@@ -643,12 +685,18 @@ static int virq_create_vm(void *item, void *args)
 	 * 3 - vitmap_size(spi_nr)
 	 * 2 - vcpu_nr * bitmap_size * (SGI + PPI + SPI) * 2
 	 */
+	// 获取最大的 vspi 数量
 	vm->vspi_nr = vm_max_virq_line(vm);
+	// 计算需要的 virq_desc 大小
 	vdesc_size = sizeof(struct virq_desc) * vm->vspi_nr;
+	// 对齐
 	vdesc_size = BALIGN(vdesc_size, sizeof(unsigned long));
+	// 根据数量 vspi_nr 计算位图大小
 	vdesc_bitmap_size = BITMAP_SIZE(vm->vspi_nr);
+	// 计算 中断状态 需要的位图，也就是计算 pending_bitmap 和 active_bitmap 大小
 	status_bitmap_size = BITMAP_SIZE(vm->vspi_nr + VM_LOCAL_VIRQ_NR);
 
+	// 需要分配的总大小 = virq_descs + spi_bitmap + pending_bitmap + active_bitmap
 	size = vdesc_size + vdesc_bitmap_size +
 		(status_bitmap_size * vm->vcpu_nr * 2);
 	size = PAGE_BALIGN(size);
@@ -677,6 +725,7 @@ static int virq_create_vm(void *item, void *args)
 	return 0;
 }
 
+// 重置 vm 中所有 virq_desc
 void vm_virq_reset(struct vm *vm)
 {
 	struct virq_desc *desc;
@@ -685,17 +734,18 @@ void vm_virq_reset(struct vm *vm)
 	/* reset the all the spi virq for the vm */
 	for ( i = 0; i < vm->vspi_nr; i++) {
 		desc = &vm->vspi_desc[i];
-		virq_clear_enable(desc);
-		desc->pr = 0xa0;
-		desc->type = 0x0;
+		virq_clear_enable(desc); //屏蔽该 virq
+		desc->pr = 0xa0;   //优先级
+		desc->type = 0x0;  
 		desc->id = VIRQ_INVALID_ID;
 		desc->state = VIRQ_STATE_INACTIVE;
 
-		if (virq_is_hw(desc))
-			irq_mask(desc->hno);
+		if (virq_is_hw(desc))  //如果是 hw interrupt
+			irq_mask(desc->hno); //芯片级屏蔽
 	}
 }
 
+// 销毁 vm 的 vspi_desc 
 static int virq_destroy_vm(void *item, void *data)
 {
 	int i;

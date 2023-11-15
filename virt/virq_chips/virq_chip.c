@@ -23,7 +23,7 @@
 #include <virt/virq.h>
 #include <virt/virq_chip.h>
 
-// 
+// virqchip 芯片级别进入 guest
 static int virqchip_enter_to_guest(void *item, void *data)
 {
 	struct vcpu *vcpu = (struct vcpu *)item;
@@ -38,16 +38,19 @@ static int virqchip_enter_to_guest(void *item, void *data)
 	 * to the vcpu, if there are FIQs inject, the bit 31 will
 	 * set, and other bit indicate how many irq has been injected.
 	 */
+	// 如果 flags == 0，表示说没有 irq 注入到此 vcpu
+	// 如果有注入的 fiq，那么 bit31=1，其他 bits 表示有多少 irq 注入
 	flags = vc->enter_to_guest(vcpu, vc->inc_pdata);
 	if (flags == 0) {
+		// 清空 HCR_EL2 中的 VI VF 标志
 		if (!(vc->flags & VIRQCHIP_F_HW_VIRT))
 			arch_clear_virq_flag();
 	} else {
 		if (!(vc->flags & VIRQCHIP_F_HW_VIRT)) {
 			if (flags & FIQ_HAS_INJECT)
-				arch_set_vfiq_flag();
+				arch_set_vfiq_flag();  // 设置 HCR 的 VF 标志
 			else
-				arch_set_virq_flag();
+				arch_set_virq_flag();  // 设置 HCR 的 VI 标志
 		}
 	}
 

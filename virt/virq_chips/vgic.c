@@ -40,7 +40,7 @@
  *   registers for a single virtual CPU interface.
  */
 
-
+// 进入 guest 
 int vgic_irq_enter_to_guest(struct vcpu *vcpu, void *data)
 {
 	struct virq_struct *vs = vcpu->virq_struct;
