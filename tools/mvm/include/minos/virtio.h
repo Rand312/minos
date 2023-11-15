@@ -59,40 +59,56 @@
 #define u16_to_u32(high, low) \
 	(((unsigned long)(high) << 16) | (low))
 
+
+// 往 vring_desc 表只能够存放 IO 请求，
+// vring_avail 指明哪些 vring_desc 可以使用
+// vring_used 指明哪些 vring_desc 已经被提交给硬件，可以释放了
+
+
 struct vring_used_elem {
-	uint32_t id;
-	uint32_t len;
+	uint32_t id;   // 表示处理完成的 IO 请求在 vring_desc 表中链表头的位置
+	uint32_t len;  // 表示链表的长度
 } __packed;
 
+// 指明 vring_desc 中哪些项已经被递交给硬件
 struct vring_used {
 	uint16_t flags;
-	uint16_t idx;
+	uint16_t idx;   // 指示 ring 数组中下一个可用的位置
 	struct vring_used_elem ring[];
 } __packed;
 
+// 指明 vring_desc 中哪些项是可以使用的，意思是说哪些项组成的链表是需要处理的
 struct vring_avail {
-	uint16_t flags;
-	uint16_t idx;
-	uint16_t ring[];
+	uint16_t flags;	   // 标志域
+	uint16_t idx;      // 指向 ring 数组中下一个可用的空闲位置
+	uint16_t ring[];   // 通过 next 域连接起来的链表的表头在 vring_desc 表中的位置，
+					   // 每一项都表示一个空闲链表的表头
 } __packed;
 
-struct vring_desc {
-	uint64_t addr;
-	uint32_t len;
-	uint16_t flags;
-	uint16_t next;
+// 描述虚拟机产生的 IO 请求的地址
+struct vring_desc 
+{
+	uint64_t addr;  //存储 IO 请求在虚拟机内的地址，是一个 GPA 值
+	uint32_t len;   //
+	uint16_t flags; // 指示数据的可读写性，是否是请求的最后一项
+	uint16_t next;  // 每个 IO 请求都可能包含 vring_desc 表中的多行，next 指明这个请求的下一行在哪
+					// 所以通过 next，将一个 IO 请求在 vring_desc 中存储的多行连接成一个链表，
+					// 当 flag = ~VRING_DESC_F_NEXT 的时候，这个链表就到了末尾
 } __packed;
+
+
 
 struct virtio_device;
 
+// 
 struct virt_queue {
 	int ready;
 	unsigned int num;
 	unsigned int iovec_size;
-	struct vring_desc *desc;
-	struct vring_avail *avail;
-	struct vring_used *used;
-	uint16_t last_avail_idx;
+	struct vring_desc *desc;   // desc 表
+	struct vring_avail *avail; // 待处理头结点表
+	struct vring_used *used;   // 已处理的头结点表
+	uint16_t last_avail_idx;   
 	uint16_t avail_idx;
 	uint16_t last_used_idx;
 	uint16_t used_flags;
@@ -127,6 +143,7 @@ struct virtio_device {
 	struct virtio_ops *ops;
 };
 
+// 
 static int inline virtq_has_descs(struct virt_queue *vq)
 {
 	return vq->avail->idx != vq->last_avail_idx;
@@ -162,6 +179,7 @@ virtio_set_feature(struct virtio_device *dev, uint32_t feature)
 	iowrite32(dev->vdev->iomem + VIRTIO_FEATURE_OFFSET(index), value);
 }
 
+// 用于检查 virtio 设备是否支持某个特性
 static int inline virtq_has_feature(struct virt_queue *vq, int fe)
 {
 	return !!(vq->dev->acked_features & (1UL << fe));

@@ -20,6 +20,8 @@
 #include <minos/of.h>
 #include <libfdt/libfdt.h>
 
+// TODO 下面这几种情况具体含义
+
 /*
  * The following cases are considered software programming
  * errors and result in UNPREDICTABLE behavior:
@@ -40,6 +42,8 @@
  *   registers for a single virtual CPU interface.
  */
 
+
+
 // 进入 guest 
 int vgic_irq_enter_to_guest(struct vcpu *vcpu, void *data)
 {
@@ -54,7 +58,9 @@ int vgic_irq_enter_to_guest(struct vcpu *vcpu, void *data)
 	vs->last_fail_virq = 0;
 
 repeat:
+	// 遍历该 vcpu 的 pending_map
 	for_each_set_bit_from(bit, vs->pending_bitmap, size) {
+		// 获取该 virq 对应的 virq_desc
 		virq = get_virq_desc(vcpu, bit);
 		if (virq == NULL) {
 			pr_err("bad virq %d for vm %s\n", bit, vm->name);
@@ -66,11 +72,15 @@ repeat:
 		 * do not send this virq if there is same virq in
 		 * active state, need wait the previous virq done.
 		 */
+		// 如果它也存在于 active_map，continue
+		// 说明这里处理 pending_and_active 中断的方式是不重复 trigger
 		if (test_bit(bit, vs->active_bitmap))
 			continue;
 
 		/* allocate a id for the virq */
+		// 这是分配一个虚拟的 LR 寄存器 ？？？
 		id = find_first_zero_bit(vs->lrs_bitmap, vs->nr_lrs);
+		// 分配失败
 		if (id >= vs->nr_lrs) {
 			pr_err("VM%d no space to send new irq %d\n",
 					vm->vmid, virq->vno);
@@ -81,28 +91,36 @@ repeat:
 		/*
 		 * indicate that FIQ has been inject.
 		 */
+		// 如果存在标志就说明该 FIQ 已经被注入了？？？？？？？？
 		if (virq->flags & VIRQS_FIQ)
 			flags |= FIQ_HAS_INJECT;
 		flags++;
-		virq->id = id;
+		virq->id = id;   // 设置刚分配的 lr_id
 		set_bit(id, vs->lrs_bitmap);
+		
+		// 芯片级别 send_virq，核心是写 gich_lr 寄存器
 		virqchip_send_virq(vcpu, virq);
+		// 状态转移
 		virq->state = VIRQ_STATE_PENDING;
 
 		/*
 		 * mark this virq as pending state and add it
 		 * to the active bitmap.
 		 */
+		// 设置为 active
 		set_bit(bit, vs->active_bitmap);
 		vs->active_virq++;
 
 		/*
 		 * remove this virq from pending bitmap.
 		 */
+		// pending_nr --
 		atomic_dec(&vs->pending_virq);
+		// 清除在 pending map 中的比特位
 		clear_bit(bit, vs->pending_bitmap);
 	}
 
+	// ？？？？？？
 	if ((old != 0) && (vs->last_fail_virq == 0)) {
 		bit = 0;
 		size = old;
@@ -113,13 +131,16 @@ repeat:
 	return flags;
 }
 
+// virq 退出 guest
 int vgic_irq_exit_from_guest(struct vcpu *vcpu, void *data)
 {
 	struct virq_struct *vs = vcpu->virq_struct;
 	struct virq_desc *virq;
 	int bit;
 
+	// 遍历该 vcpu 所有的 active_bitmap，这也就是说，可能出现多个 active interrupt
 	for_each_set_bit(bit, vs->active_bitmap, vm_irq_count(vcpu->vm)) {
+		// 获取对应的 virq_desc
 		virq = get_virq_desc(vcpu, bit);
 		if (virq == NULL) {
 			pr_err("bad active virq %d\n", virq);
@@ -133,7 +154,9 @@ int vgic_irq_exit_from_guest(struct vcpu *vcpu, void *data)
 		 * otherwise add the virq to the pending list
 		 * again
 		 */
+		// 获取状态
 		virq->state = virqchip_get_virq_state(vcpu, virq);
+		//
 		if (virq->state == VIRQ_STATE_INACTIVE) {
 			virqchip_update_virq(vcpu, virq, VIRQ_ACTION_CLEAR);
 			clear_bit(virq->id, vs->lrs_bitmap);
@@ -146,6 +169,7 @@ int vgic_irq_exit_from_guest(struct vcpu *vcpu, void *data)
 	return 0;
 }
 
+// 
 int vgic_generate_virq(uint32_t *array, int virq)
 {
 	array[0] = cpu_to_fdt32(0x0);

@@ -41,6 +41,7 @@ static int virtio_devices_nr = VM_MAX_VIRTIO_DEVICES;
 static uint64_t virtio_iomem_base = VM_VIRTIO_IOMEM_BASE;
 static int virtio_device_index;
 
+
 static void *hv_virtio_mmio_init(struct vm *vm, uint64_t gbase)
 {
 	int ret = 0;
@@ -53,6 +54,7 @@ static void *hv_virtio_mmio_init(struct vm *vm, uint64_t gbase)
 	 *
 	 * then map the 4K memory into this process's memory space
 	 */
+	
 	ret = ioctl(vm->vm_fd, IOCTL_VIRTIO_MMIO_INIT, args);
 	if (ret || !args[0] || !args[1]) {
 		pr_err("virtio mmio init failed in hypervisor\n");
@@ -65,6 +67,7 @@ static void *hv_virtio_mmio_init(struct vm *vm, uint64_t gbase)
 	return map_base;
 }
 
+// hypervisor 一侧创建 virtio device
 static int hv_create_virtio_device(struct vm *vm, uint64_t *gbase, void **hbase)
 {
 	uint64_t __gbase;
@@ -88,11 +91,13 @@ static int hv_create_virtio_device(struct vm *vm, uint64_t *gbase, void **hbase)
 	return 0;
 }
 
+// 寻找当前请求的下一个 vring_desc 结构体，返回其在 vring_descs 表中的下标
 static inline int next_desc(struct vring_desc *desc)
 {
 	return (!(desc->flags & VRING_DESC_F_NEXT)) ? -1 : desc->next;
 }
 
+// 翻译 vring_desc 结构体
 static void translate_desc(struct vring_desc *desc, int index,
 		struct iovec *iov, int iov_size)
 {
@@ -101,10 +106,12 @@ static void translate_desc(struct vring_desc *desc, int index,
 		return;
 	}
 
+	// 将 vring_desc 中记录的 len 和 addr 提取出来，填进 iov 数组
 	iov[index].iov_len = desc->len;
 	iov[index].iov_base = (void *)gpa_to_hvm_va(desc->addr);
 }
 
+// 
 static int get_indirect_buf(struct vring_desc *desc, int index,
 		struct iovec *iov, int iov_size, unsigned int *in,
 		unsigned int *out)
@@ -194,6 +201,7 @@ void virtq_disable_notify(struct virt_queue *vq)
 		virtq_update_used_flags(vq);
 }
 
+// 获取 
 int virtq_get_descs(struct virt_queue *vq,
 		struct iovec *iov, unsigned int iov_size,
 		unsigned int *in_num, unsigned int *out_num)
@@ -214,7 +222,8 @@ int virtq_get_descs(struct virt_queue *vq,
 	count = (uint16_t)((uint32_t)avail_idx - last_avail_idx);
 	if (count == 0)
 		return vq->num;
-
+	
+	// 
 	if (count > vq->num) {
 		pr_err("avail ring out of range %d %d\n",
 				avail_idx, last_avail_idx);
