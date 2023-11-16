@@ -64,23 +64,28 @@
 #define stage1_pmd_value(pmdp)		(*(pmdp))
 #define stage1_pte_value(ptep)		(*(ptep))
 
+// 获取对应部分的 index 值
 #define stage1_pgd_index(addr)		((((addr) & S1_PHYSICAL_MASK) >> S1_PGD_SHIFT) & (PTRS_PER_S1_PGD - 1))
 #define stage1_pud_index(addr)		((((addr) & S1_PHYSICAL_MASK) >> S1_PUD_SHIFT) & (PTRS_PER_S1_PUD - 1))
 #define stage1_pmd_index(addr)		((((addr) & S1_PHYSICAL_MASK) >> S1_PMD_SHIFT) & (PTRS_PER_S1_PMD - 1))
 #define stage1_pte_index(addr)		((((addr) & S1_PHYSICAL_MASK) >> S1_PTE_SHIFT) & (PTRS_PER_S1_PTE - 1))
 
+// 获取指定 index 的表项地址
 #define stage1_pgd_offset(pgdp, addr)		((pgd_t *)(pgdp) + stage1_pgd_index((unsigned long)addr))
 #define stage1_pud_offset(pudp, addr)		((pud_t *)(pudp) + stage1_pud_index((unsigned long)addr))
 #define stage1_pmd_offset(pmdp, addr)		((pmd_t *)(pmdp) + stage1_pmd_index((unsigned long)addr))
 #define stage1_pte_offset(ptep, addr)		((pte_t *)(ptep) + stage1_pte_index((unsigned long)addr))
 
+// 判断是否是大页
 #define stage1_pud_huge(pud)			((pud) && ((pud) & 0x03) == S1_DES_BLOCK)
 #define stage1_pmd_huge(pmd)			((pmd) && ((pmd) & 0x03) == S1_DES_BLOCK)
 
+// 获取对应级别的页表地址
 #define stage1_pud_table_addr(pgd)		(pud_t *)(unsigned long)((pgd) & S1_PHYSICAL_MASK)
 #define stage1_pmd_table_addr(pud)		(pmd_t *)(unsigned long)((pud) & S1_PHYSICAL_MASK)
 #define stage1_pte_table_addr(pmd)		(pte_t *)(unsigned long)((pmd) & S1_PHYSICAL_MASK)
 
+// 判断表项是否为空
 #define stage1_pgd_none(pgd)			((pgd) == 0)
 #define stage1_pud_none(pud)			((pud) == 0)
 #define stage1_pmd_none(pmd)			((pmd) == 0)
@@ -130,6 +135,7 @@ static void *stage1_get_free_page(unsigned long flags)
 	return get_free_page();
 }
 
+// 使得某数按照 map_size 进行对齐
 static unsigned long stage1_xxx_addr_end(unsigned long start, unsigned long end, size_t map_size)
 {
 	unsigned long boundary = (start + map_size) & ~((unsigned long)map_size - 1);
@@ -263,19 +269,25 @@ static inline pte_t stage1_pte_attr(unsigned long phy, unsigned long flags)
 	return pte;
 }
 
+// 取消一页的映射
 static void stage1_unmap_pte_range(struct vspace *vs, pte_t *ptep,
 		unsigned long addr, unsigned long end)
 {
 	pte_t *pte;
 
+	// 获取地址 addr 对应的页表项地址
 	pte = stage1_pte_offset(ptep, addr);
 
+
 	do {
+		// 如果该页表项不为空，那么将该页表项清零
 		if (!stage1_pte_none(*pte))
 			stage1_set_pte(pte, 0);
+	// 对 start ~ end 之间的所有页表项做上述循环操作，但是对于起始地址为 end 的页不取消映射
 	} while (pte++, addr += PAGE_SIZE, addr != end);
 }
 
+// 取消一个 pmd 的页表映射
 static void stage1_unmap_pmd_range(struct vspace *vs, pmd_t *pmdp,
 		unsigned long addr, unsigned long end)
 {
@@ -283,21 +295,30 @@ static void stage1_unmap_pmd_range(struct vspace *vs, pmd_t *pmdp,
 	pmd_t *pmd;
 	pte_t *ptep;
 
+	// 获取地址 addr 对应的 pmd 表项
 	pmd = stage1_pmd_offset(pmdp, addr);
 
 	do {
+		// 获取下一个 pmd 区域起始地址
 		next = stage1_pmd_addr_end(addr, end);
+		// 如果当前 pmd 表项不为空
 		if (!stage1_pmd_none(*pmd)) {
+			// 如果该 pmd 区域为一整个大页，直接将 pmd 项清 0
 			if (stage1_pmd_huge(*pmd)) {
 				stage1_pmd_clear(pmd);
 			} else {
+				// 从 pmd 中记录的物理地址获取 pte 表（最后一级页表）
 				ptep = (pte_t *)ptov(stage1_pte_table_addr(*pmd));
+				// 取消 pmd 区域所有页表映射
 				stage1_unmap_pte_range(vs, ptep, addr, next);
 			}
 		}
+	// 对 addr ~ end 之间所有的 pmd 区域都执行上述操作
 	} while (pmd++, addr = next, addr != end);
 }
 
+// 类似上述 pmd 操作，此函数取消 addr ~ end 之间所有的 pud 映射
+// 为什么从这开始要 flush tlb 了？？？？？？？？？？？
 static int stage1_unmap_pud_range(struct vspace *vs, unsigned long addr, unsigned long end)
 {
 	unsigned long next;
@@ -318,6 +339,7 @@ static int stage1_unmap_pud_range(struct vspace *vs, unsigned long addr, unsigne
 	return 0;
 }
 
+// 建立页表映射，pte 级别，对 start ~ end 之间所有的页进行映射
 static int stage1_map_pte_range(struct vspace *vs, pte_t *ptep, unsigned long start,
 		unsigned long end, unsigned long physical, unsigned long flags)
 {
@@ -338,6 +360,7 @@ static int stage1_map_pte_range(struct vspace *vs, pte_t *ptep, unsigned long st
 	return 0;
 }
 
+// 判断当前 pmd 是否为大页
 static inline bool stage1_pmd_huge_page(pmd_t old_pmd, unsigned long start,
 		unsigned long phy, size_t size, unsigned long flags)
 {
@@ -350,6 +373,7 @@ static inline bool stage1_pmd_huge_page(pmd_t old_pmd, unsigned long start,
 	return true;
 }
 
+// 建立 pmd 级别的页表映射
 static int stage1_map_pmd_range(struct vspace *vs, pmd_t *pmdp, unsigned long start,
 		unsigned long end, unsigned long physical, unsigned long flags)
 {
@@ -361,6 +385,7 @@ static int stage1_map_pmd_range(struct vspace *vs, pmd_t *pmdp, unsigned long st
 	size_t size;
 	int ret;
 
+	// 获取 addr 对应的 pmd 表项
 	pmd = stage1_pmd_offset(pmdp, start);
 	do {
 		next = stage1_pmd_addr_end(start, end);
@@ -370,20 +395,29 @@ static int stage1_map_pmd_range(struct vspace *vs, pmd_t *pmdp, unsigned long st
 		/*
 		 * virtual memory need to map as PMD huge page
 		 */
+		// 如果要映射成大页，直接设置 pmd 表项完事儿
 		if (stage1_pmd_huge_page(old_pmd, start, physical, size, flags)) {
 			attr = stage1_pmd_attr(physical, flags);
 			stage1_set_pmd(pmd, attr);
+		// 
 		} else {
+			// 如果原来的 pmd 表项是空的
 			if (stage1_pmd_none(old_pmd)) {
+				// 获取一页
 				ptep = (pte_t *)stage1_get_free_page(flags);
 				if (!ptep)
 					return -ENOMEM;
+				// 初始化清零
 				memset(ptep, 0, PAGE_SIZE);
+				// 填充 pmd 表项，地址指向新分配的页面
 				stage1_pmd_populate(pmd, (unsigned long)ptep, flags);
+			// 否则原来的pmd 表项非空
 			} else {
+				// 直接获取 pmd 指向的 pte 级页表地址
 				ptep = (pte_t *)ptov(stage1_pte_table_addr(old_pmd));
 			}
 
+			// 调用 stage1_map_pte_range，对 start ~ next 之间的所有页面建立映射
 			ret = stage1_map_pte_range(vs, ptep, start, next, physical, flags);
 			if (ret)
 				return ret;
@@ -393,6 +427,7 @@ static int stage1_map_pmd_range(struct vspace *vs, pmd_t *pmdp, unsigned long st
 	return 0;
 }
 
+// 建立 pud 映射
 static int stage1_map_pud_range(struct vspace *vs, unsigned long start,
 		unsigned long end, unsigned long physical, unsigned long flags)
 {
@@ -425,6 +460,8 @@ static int stage1_map_pud_range(struct vspace *vs, unsigned long start,
 	return 0;
 }
 
+// 获取地址 va 对应的叶子表项
+// 如果是大页，那么 pmd 就是叶子节点，否则就是 pte
 static int stage1_get_leaf_entry(struct vspace *vs,
 		unsigned long va, pmd_t **pmdpp, pte_t **ptepp)
 {
@@ -432,25 +469,30 @@ static int stage1_get_leaf_entry(struct vspace *vs,
 	pmd_t *pmdp;
 	pte_t *ptep;
 
+	// 获取地址 va 对应的 pud 指针
 	pudp = stage1_pud_offset(vs->pgdp, va);
 	if (stage1_pud_none(*pudp))
 		return -ENOMEM;
-
+	
+	// 再获取地址 va 对应的 pmd 指针
 	pmdp = stage1_pmd_offset(stage1_pmd_table_addr(*pudp), va);
 	if (stage1_pmd_none(*pmdp))
 		return -ENOMEM;
 
+	// 如果是大页，说明地址 va 对应的 pmd 就是叶子节点了，返回它的地址
 	if (stage1_pmd_huge(*pmdp)) {
 		*pmdpp = pmdp;
 		return 0;
 	}
 
+	// 否则 pte 肯定是叶子节点了，获取地址 va 对应的 pte 表项
 	ptep = stage1_pte_offset(stage1_pte_table_addr(*pmdp), va);
 	*ptepp = ptep;
 
 	return 0;
 }
 
+// 更改映射，就是将叶子结点表项的内容更改为 phy | flags
 int arch_host_change_map(struct vspace *vs, unsigned long vir,
 		unsigned long phy, unsigned long flags)
 {
@@ -458,24 +500,33 @@ int arch_host_change_map(struct vspace *vs, unsigned long vir,
 	pmd_t *pmdp = NULL;
 	pte_t *ptep = NULL;
 
+	// 获取地址 vir 对应的叶子表象
 	ret = stage1_get_leaf_entry(vs, vir, &pmdp, &ptep);
 	if (ret)
 		return ret;
-
+	
+	// 如果是大页，即如果叶子节点是 pmd 表项
 	if (pmdp && !ptep) {
+		// 将该 pmd 表项清 0
 		stage1_set_pmd(pmdp, 0);
+		// flush tlb
 		flush_tlb_va_range(vir, S1_PMD_SIZE);
+		// 重新设置 pmd 表项内容为 phy
 		stage1_set_pmd(pmdp, stage1_pmd_attr(phy, flags));
 		return 0;
 	}
 
+	// 否则叶子结点为普通的 pte 表项
 	stage1_set_pte(ptep, 0);
+	// flush tlb
 	flush_tlb_va_range(vir, S1_PTE_SIZE);
+	// 重新设置 pte 表项内容为 phy
 	stage1_set_pte(ptep, stage1_pte_attr(phy, flags));
 
 	return 0;
 }
 
+// stage1 的地址转换，将 va 转换为 pa
 static inline phy_addr_t stage1_va_to_pa(struct vspace *vs, unsigned long va)
 {
 	unsigned long pte_offset = va & ~S1_PTE_MASK;
@@ -485,20 +536,25 @@ static inline phy_addr_t stage1_va_to_pa(struct vspace *vs, unsigned long va)
 	pmd_t *pmdp;
 	pte_t *ptep;
 
+	// 获取地址 va 对应的 pud 指针
 	pudp = stage1_pud_offset(vs->pgdp, va);
 	if (stage1_pud_none(*pudp))
 		return 0;
-
+	
+	// 获取地址 va 对应的 pmd 指针
 	pmdp = stage1_pmd_offset(ptov(stage1_pmd_table_addr(*pudp)), va);
 	if (stage1_pmd_none(*pmdp))
 		return 0;
-
+	
+	// 如果是大页，那么转换后的物理地址就是 pmd 表项中记录的内容 + 偏移量
 	if (stage1_pmd_huge(*pmdp)) {
 		phy = ((*pmdp) & S1_PHYSICAL_MASK) + pmd_offset;
 		return 0;
 	}
 
+	// 否则是普通的 4K 页面，获取 pte 页表项
 	ptep = stage1_pte_offset(ptov(stage1_pte_table_addr(*pmdp)), va);
+	// 转换后的物理地址为 pte 中记录的页框地址 + 偏移量
 	phy = *ptep & S1_PHYSICAL_MASK;
 	if (phy == 0)
 		return 0;
@@ -506,12 +562,13 @@ static inline phy_addr_t stage1_va_to_pa(struct vspace *vs, unsigned long va)
 	return phy + pte_offset;
 }
 
+// 
 phy_addr_t arch_translate_va_to_pa(struct vspace *vs, unsigned long va)
 {
 	return stage1_va_to_pa(vs, va);
 }
 
-// 这里建立的是 stage1 映射
+// 建立 stage1 的映射
 int arch_host_map(struct vspace *vs, unsigned long start, unsigned long end,
 		unsigned long physical, unsigned long flags)
 {
@@ -522,6 +579,7 @@ int arch_host_map(struct vspace *vs, unsigned long start, unsigned long end,
 	ASSERT(physical < S1_PHYSICAL_MAX);
 	ASSERT(IS_PAGE_ALIGN(start) && IS_PAGE_ALIGN(end) && IS_PAGE_ALIGN(physical));
 
+	// 直接调用 pud 映射
 	return stage1_map_pud_range(vs, start, end, physical, flags);
 }
 

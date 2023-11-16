@@ -39,6 +39,8 @@ static unsigned long free_blocks;
 #define mm_to_vm(__mm) container_of((__mm), struct vm, mm)
 #define VMA_SIZE(vma) ((vma)->end - (vma)->start)
 
+// 对 guest 创建 mapping，vir 映射到 phy，映射大小为 size，标志为 flags
+// 是 stage2 层次的映射
 static int __create_guest_mapping(struct mm_struct *mm, virt_addr_t vir,
 		phy_addr_t phy, size_t size, unsigned long flags)
 {
@@ -120,7 +122,7 @@ static struct vmm_area *__alloc_vmm_area_entry(unsigned long base, size_t size)
 	return va;
 }
 
-//将新 vmm_area 加入到 mm->list 链表当中去
+// 将新 vmm_area 加入到 mm->list 链表当中去
 static int __add_free_vmm_area(struct mm_struct *mm, struct vmm_area *area)
 {
 	struct vmm_area *tmp, *next, *va = area;
@@ -139,6 +141,7 @@ repeat:
 	 * check whether this two vmm_area can merged to one
 	 * vmm_area and do the action
 	 */
+	// 遍历 mm 中所有的 vmm_area 结构体
 	list_for_each_entry_safe(tmp, next, &mm->vmm_area_free, list) {
 		if (va->start == tmp->end) {
 			va->start = tmp->start;

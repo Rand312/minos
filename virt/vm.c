@@ -41,11 +41,13 @@
 
 static struct vm *host_vm;
 
+// 定义 64 个虚拟机指针实例指针 
 struct vm *vms[CONFIG_MAX_VM];
 int total_vms = 0;
 LIST_HEAD(vm_list);
 
 static DEFINE_SPIN_LOCK(vms_lock);
+// 定义 vmid bitmap
 static DECLARE_BITMAP(vmid_bitmap, CONFIG_MAX_VM);
 
 static int aff_current;
@@ -55,17 +57,22 @@ DEFINE_SPIN_LOCK(affinity_lock);
 
 #define VM_NR_CPUS_CLUSTER 256
 
+// 检查 vcpu 是否离线，即当前 vcpu 的标志是否为 VCPU_STATE_SUSPEND
 static inline int vcpu_is_offline(struct vcpu *vcpu)
 {
 	return check_vcpu_state(vcpu, VCPU_STATE_SUSPEND);
 }
 
+// 
 static void vcpu_online(struct vcpu *vcpu)
 {
+	// 确保此 vcpu 是离线的
 	ASSERT(vcpu_is_offline(vcpu));
+	// 将该 vcpu 对应的 task 添加到某个 pcpu read_list 上面去
 	task_ready(vcpu->task, 0);
 }
 
+// affinity 转换为 vcpu_id 
 static int inline affinity_to_vcpuid(struct vm *vm, unsigned long affinity)
 {
 	int aff0, aff1;
@@ -74,7 +81,7 @@ static int inline affinity_to_vcpuid(struct vm *vm, unsigned long affinity)
 	 * how to handle big-little soc ? usually the hvm's
 	 * cpu map is as same as the true hardware, so here
 	 * if the VM is the VM0, the affinity is as same as
-	 * the real hardware.
+	 * the real hardware.  hvm = vm0
 	 *
 	 * Can be different with real hardware ? TBD.
 	 */
@@ -87,14 +94,16 @@ static int inline affinity_to_vcpuid(struct vm *vm, unsigned long affinity)
 	return (aff1 * VM_NR_CPUS_CLUSTER) + aff0;
 }
 
+// power on vcpu
 int vcpu_power_on(struct vcpu *caller, unsigned long affinity,
 		unsigned long entry, unsigned long unsed)
 {
 	int cpuid;
 	struct vcpu *vcpu;
 
+	// 获取 vcpu_id
 	cpuid = affinity_to_vcpuid(caller->vm, affinity);
-
+	// 获取 vcpu 指针
 	vcpu = get_vcpu_in_vm(caller->vm, cpuid);
 	if (!vcpu) {
 		pr_err("no such:%d->0x%x vcpu for this VM %s\n",
@@ -102,11 +111,14 @@ int vcpu_power_on(struct vcpu *caller, unsigned long affinity,
 		return -ENOENT;
 	}
 
+	// 正确状态：如果当前 vcpu 处于离线状态
 	if (vcpu_is_offline(vcpu)) {
 		pr_notice("vcpu-%d of vm-%d power on 0x%p\n",
 				vcpu->vcpu_id, vcpu->vm->vmid, entry);
+		// 调用 os->ops->vcpu_power_on 方法
 		os_vcpu_power_on(vcpu, ULONG(entry));
 		vcpu_online(vcpu);
+	// 错误状态：当前 vcpu 处于非离线状态
 	} else {
 		pr_err("vcpu_power_on : invalid vcpu state %d\n");
 		return -EINVAL;
@@ -115,6 +127,7 @@ int vcpu_power_on(struct vcpu *caller, unsigned long affinity,
 	return 0;
 }
 
+// 
 void vcpu_context_save(struct task *task)
 {
 	save_vcpu_vmodule_state(task_to_vcpu(task));
@@ -125,8 +138,10 @@ void vcpu_context_restore(struct task *task)
 	restore_vcpu_vmodule_state(task_to_vcpu(task));
 }
 
+// 当前 vcpu 是否可以 idle
+// 不能 idle 的情况：处于非离线状态、task 需要 freeze | stop、vcpu 中有 irq 正处于 pending | active
 static int vcpu_can_idle(struct vcpu *vcpu)
-{
+{	
 	if (vcpu->vm->state != VM_STATE_ONLINE)
 		return 0;
 
@@ -139,11 +154,13 @@ static int vcpu_can_idle(struct vcpu *vcpu)
 	return 1;
 }
 
+// 
 int vcpu_idle(struct vcpu *vcpu)
 {
 	return wait_event(&vcpu->vcpu_event, vcpu_can_idle(vcpu), 0);
 }
 
+// vcpu suspend，也就是 idle
 int vcpu_suspend(struct vcpu *vcpu, gp_regs *c,
 		uint32_t state, unsigned long entry)
 {
@@ -155,17 +172,20 @@ int vcpu_suspend(struct vcpu *vcpu, gp_regs *c,
 	return vcpu_idle(vcpu);
 }
 
+// vcpu off，设置 task 标志位：TIF_NEED_FREEZE
 int vcpu_off(struct vcpu *vcpu)
 {
 	task_need_freeze(vcpu->task);
 	return 0;
 }
 
+//
 static int vm_check_vcpu_affinity(int vmid, uint32_t *aff, int nr)
 {
 	int i;
 	uint64_t mask = 0;
 
+	// 
 	for (i = 0; i < nr; i++) {
 		if (aff[i] >= VM_MAX_VCPU)
 			return -EINVAL;
@@ -179,6 +199,7 @@ static int vm_check_vcpu_affinity(int vmid, uint32_t *aff, int nr)
 	return 0;
 }
 
+// 根据 vcpu_id 获取 vm 中的 vcpu 指针
 struct vcpu *get_vcpu_in_vm(struct vm *vm, uint32_t vcpu_id)
 {
 	if (vcpu_id >= vm->vcpu_nr)
@@ -187,6 +208,7 @@ struct vcpu *get_vcpu_in_vm(struct vm *vm, uint32_t vcpu_id)
 	return vm->vcpus[vcpu_id];
 }
 
+// 根据 vmid 和 vcpu_id 获取 vcpu 指针
 struct vcpu *get_vcpu_by_id(uint32_t vmid, uint32_t vcpu_id)
 {
 	struct vm *vm;
@@ -198,7 +220,7 @@ struct vcpu *get_vcpu_by_id(uint32_t vmid, uint32_t vcpu_id)
 	return get_vcpu_in_vm(vm, vcpu_id);
 }
 
-//
+// 
 int kick_vcpu(struct vcpu *vcpu, int reason)
 {
 	int mode, ret = 0;
@@ -210,6 +232,7 @@ int kick_vcpu(struct vcpu *vcpu, int reason)
 	 * if the vcpu is in stop state, only the BootCPU
 	 * can wake up it. this will be another path.
 	 */
+	// 唤醒 vcpu
 	ret = wake(&vcpu->vcpu_event);
 
 	/*
@@ -246,6 +269,7 @@ int kick_vcpu(struct vcpu *vcpu, int reason)
 	return ret;
 }
 
+// 释放 vcpu 
 static void inline release_vcpu(struct vcpu *vcpu)
 {
 	/*
@@ -271,18 +295,22 @@ static void inline release_vcpu(struct vcpu *vcpu)
 	free(vcpu);
 }
 
+// 分配 vcpu
 static struct vcpu *alloc_vcpu(void)
 {
 	struct vcpu *vcpu;
 
+	// zalloc 分配 vcpu 结构体
 	vcpu = zalloc(sizeof(*vcpu));
 	if (!vcpu)
 		return NULL;
-
+	
+	// 分配 virq_struct 结构体
 	vcpu->virq_struct = zalloc(sizeof(struct virq_struct));
 	if (!vcpu->virq_struct)
 		goto free_vcpu;
 
+	// 初始化 vmcs_irq 为 -1，这是？？？？？？？？
 	vcpu->vmcs_irq = -1;
 	return vcpu;
 
@@ -292,6 +320,7 @@ free_vcpu:
 	return NULL;
 }
 
+// 
 static void vcpu_return_to_user(struct task *task, gp_regs *regs)
 {
 	struct vcpu *vcpu = (struct vcpu *)task->pdata;
@@ -318,6 +347,7 @@ static void vcpu_exit_from_user(struct task *task, gp_regs *regs)
 	vcpu->mode = IN_ROOT_MODE;
 }
 
+// 创建 vcpu，
 static struct vcpu *create_vcpu(struct vm *vm, uint32_t vcpu_id)
 {
 	char name[64];
@@ -327,20 +357,24 @@ static struct vcpu *create_vcpu(struct vm *vm, uint32_t vcpu_id)
 	/* generate the name of the vcpu task */
 	memset(name, 0, 64);
 	sprintf(name, "%s-vcpu-%d", vm->name, vcpu_id);
+	// 创建 vcpu 对应的 task
 	task = create_vcpu_task(name, vm->entry_point,
 			vm->vcpu_affinity[vcpu_id], 0, NULL);
 	if (task == NULL)
 		return NULL;
 
+	// 设置进入退出 guest 的方法
 	task->return_to_user = vcpu_return_to_user;
 	task->exit_from_user = vcpu_exit_from_user;
 
+	// 分配一个 vcpu
 	vcpu = alloc_vcpu();
 	if (!vcpu) {
 		do_release_task(task);
 		return NULL;
 	}
 
+	// 初始化 vcpu 字段
 	task->pdata = vcpu;
 	vcpu->task = task;
 	vcpu->vcpu_id = vcpu_id;
@@ -350,14 +384,16 @@ static struct vcpu *create_vcpu(struct vm *vm, uint32_t vcpu_id)
 	if (vm->flags & VM_FLAGS_32BIT)
 		task->flags |= TASK_FLAGS_32BIT;
 
+	// 初始该 vcpu 的 virq_struct 
 	vcpu_virq_struct_init(vcpu);
 	vm->vcpus[vcpu_id] = vcpu;
 	event_init(&vcpu->vcpu_event, OS_EVENT_TYPE_NORMAL, task);
 
+	// 更新 vcpus 数组
 	vcpu->next = NULL;
 	if (vcpu_id != 0)
 		vm->vcpus[vcpu_id - 1]->next = vcpu;
-
+	
 	return vcpu;
 }
 
@@ -378,6 +414,7 @@ out:
 
 	return vmid;
 }
+
 
 static int vcpu_affinity_init(void)
 {
@@ -491,6 +528,7 @@ int request_vm_virqs(struct vm *vm, int base, int nr)
 	return 0;
 }
 
+// 加载 vm 对应的 image 文件
 static int load_vm_image(struct vm *vm)
 {
 	void *addr = (void *)ptov(vm->load_address);
@@ -503,6 +541,7 @@ static int load_vm_image(struct vm *vm)
 	pr_notice("copying %s to 0x%x\n", ramdisk_file_name(vm->kernel_file),
 			vm->load_address);
 
+	// 获取镜像文件大小
 	size = ramdisk_file_size(vm->kernel_file);
 	ret = create_host_mapping(ULONG(addr), ULONG(vm->load_address),
 			PAGE_BALIGN(size), VM_NORMAL | VM_HUGE);
@@ -546,6 +585,7 @@ int start_guest_vm(struct vm *vm)
 		return -ENOENT;
 	}
 
+	// 切换 vm 状态
 	state = cmpxchg(&vm->state, VM_STATE_OFFLINE,
 			VM_STATE_ONLINE);
 	if (state != VM_STATE_OFFLINE) {
@@ -776,6 +816,7 @@ int vm_vcpus_init(struct vm *vm)
 		}
 	}
 
+	// 对该 vm 中所有的 vcpu 执行相应的 hook
 	vm_for_each_vcpu(vm, vcpu) {
 		do_hooks(vcpu, NULL, OS_HOOK_VCPU_INIT);
 		os_vcpu_power_on(vcpu, (unsigned long)vm->entry_point);

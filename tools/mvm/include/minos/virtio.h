@@ -72,7 +72,7 @@ struct vring_used_elem {
 
 // 指明 vring_desc 中哪些项已经被递交给硬件
 struct vring_used {
-	uint16_t flags;
+	uint16_t flags; 
 	uint16_t idx;   // 指示 ring 数组中下一个可用的位置
 	struct vring_used_elem ring[];
 } __packed;
@@ -88,8 +88,8 @@ struct vring_avail {
 // 描述虚拟机产生的 IO 请求的地址
 struct vring_desc 
 {
-	uint64_t addr;  //存储 IO 请求在虚拟机内的地址，是一个 GPA 值
-	uint32_t len;   //
+	uint64_t addr;  // 存储 IO 请求在虚拟机内的地址，是一个 GPA 值
+	uint32_t len;   // 当 desc 描述符作为节点连接一个描述符表的时候，描述符项的个数为 len/sizeof(vring_desc)
 	uint16_t flags; // 指示数据的可读写性，是否是请求的最后一项
 	uint16_t next;  // 每个 IO 请求都可能包含 vring_desc 表中的多行，next 指明这个请求的下一行在哪
 					// 所以通过 next，将一个 IO 请求在 vring_desc 中存储的多行连接成一个链表，
@@ -103,17 +103,18 @@ struct virtio_device;
 // 
 struct virt_queue {
 	int ready;
-	unsigned int num;
+	unsigned int num;          // descs 表中表项的个数
 	unsigned int iovec_size;
 	struct vring_desc *desc;   // desc 表
 	struct vring_avail *avail; // 待处理头结点表
 	struct vring_used *used;   // 已处理的头结点表
-	uint16_t last_avail_idx;   
+	uint16_t last_avail_idx;   // 上次写入的最后一个 avail_ring 的索引
+							   // 表示上次最后使用的头结点 desc 下标
 	uint16_t avail_idx;
 	uint16_t last_used_idx;
 	uint16_t used_flags;
 	uint16_t signalled_used;
-	uint16_t signalled_used_valid;
+	uint16_t signalled_used_valid;   // false 表示还没有向前端做任何通知
 	uint16_t vq_index;
 
 	struct virtio_device *dev;

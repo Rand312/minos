@@ -70,6 +70,7 @@ static inline void flush_tlb_va_host(unsigned long va, unsigned long size)
 
 #ifdef CONFIG_VIRT
 	while (va < end) {
+		// TLB Invalidate by VA, EL2, Inner Shareable
 		asm volatile("tlbi vae2is, %0;" : : "r"
 				(va >> PAGE_SHIFT) : "memory");
 		va += PAGE_SIZE;

@@ -237,6 +237,7 @@ static void stage2_unmap_pte_range(struct mm_struct *vs, pte_t *ptep,
 	} while (pte++, addr += PAGE_SIZE, addr != end);
 }
 
+// start ~ end 是否刚好为某个 pmd 区域
 static inline bool is_pmd_range(unsigned long start, unsigned long end)
 {
         if (((start & (S2_PMD_SIZE - 1)) == 0) && ((end - start) == S2_PMD_SIZE))
@@ -326,42 +327,7 @@ static int stage2_map_pte_range(struct mm_struct *vs, pte_t *ptep, unsigned long
 
 //
 static inline bool stage2_pmd_huge_page(pmd_t old_pmd, unsigned long start,
-		unsigned long phy, size_t size, unsigned long flags)
-{
-	if (!(flags & (__VM_HUGE_2M | __VM_HUGE_1G)) || old_pmd)
-		return false;
-
-	if (!IS_BLOCK_ALIGN(start) || !IS_BLOCK_ALIGN(phy) || !(IS_BLOCK_ALIGN(size)))
-		return false;
-
-	return true;
-}
-
-static int stage2_map_pmd_range(struct mm_struct *vs, pmd_t *pmdp, unsigned long start,
-		unsigned long end, unsigned long physical, unsigned long flags)
-{
-	unsigned long next;
-	unsigned long attr;
-	pmd_t *pmd;
-	pmd_t old_pmd;
-	pte_t *ptep;
-	size_t size;
-	int ret;
-
-	pmd = stage2_pmd_offset(pmdp, start);
-	do {
-		next = stage2_pmd_addr_end(start, end);
-		size = next - start;
-		old_pmd = *pmd;
-
-		/*
-		 * virtual memory need to map as PMD huge page
-		 */
-		if (stage2_pmd_huge_page(old_pmd, start, physical, size, flags)) {
-			attr = stage2_block_attr(flags);
-			stage2_set_pmd(pmd, attr | (physical & S2_PMD_MASK));
-		} else {
-			if (old_pmd && stage2_pmd_huge(old_pmd)) {
+		unsigned long phy, size_t size, unsignedarch_guest_mappmd)) {
 				pr_err("stage2: vaddr 0x%x has mapped as huge page\n", start);
 				return -EINVAL;
 			}
@@ -442,6 +408,7 @@ static int stage2_map_pud_range(struct mm_struct *vs, unsigned long start,
 }
 
 // 每个虚拟机在 EL2 级别有一个页表？
+// guest 物理地址到真正物理地址的转换
 static inline int stage2_ipa_to_pa(struct mm_struct *vs,
 		unsigned long va, phy_addr_t *pa)
 {

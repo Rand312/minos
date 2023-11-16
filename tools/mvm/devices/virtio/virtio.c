@@ -126,6 +126,7 @@ static int get_indirect_buf(struct vring_desc *desc, int index,
 		return -EINVAL;
 	}
 
+	// 这个 desc->addr 代表的地址就是 ving_desc 的地址？？？？？
 	in_desc = (struct vring_desc *)gpa_to_hvm_va(desc->addr);
 
 	for (;;) {
@@ -201,7 +202,7 @@ void virtq_disable_notify(struct virt_queue *vq)
 		virtq_update_used_flags(vq);
 }
 
-// 获取 
+// 获取 descs
 int virtq_get_descs(struct virt_queue *vq,
 		struct iovec *iov, unsigned int iov_size,
 		unsigned int *in_num, unsigned int *out_num)
@@ -277,12 +278,14 @@ int virtq_get_descs(struct virt_queue *vq,
 	return head;
 }
 
+// 丢弃 n 个 descs
 void virtq_discard_desc(struct virt_queue *vq, int n)
 {
 	mb();
 	vq->last_avail_idx -= n;
 }
 
+// 向 vring 中添加 count 个 desc
 static int __virtq_add_used_n(struct virt_queue *vq,
 			struct vring_used_elem *heads,
 			unsigned int count)

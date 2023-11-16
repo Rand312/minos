@@ -66,17 +66,17 @@ map_boot_mem:
 	mov	x26, x30
 
 	/* get the base address of free memory */
-	adr	pagetable_base, minos_stack_top
-	ldr	pagetable_base, [pagetable_base]
+	adr	pagetable_base, minos_stack_top    //获取 minos_stack_top 这个符号的地址，赋值给 pagetable_base
+	ldr	pagetable_base, [pagetable_base]   //获取真正的 pagetable 地址
 
 	/* kernel pgd is defined in lds */
-	mov	x1, #0
-	mov	x2, #4096
-	ldr	page_table, = __stage1_page_table
+	// 对pagetable做memset操作
+	mov	x1, #0          //memset 第一个(从零开始)参数
+	mov	x2, #4096       //memset 第二个参数
+	ldr	page_table, = __stage1_page_table  // 获取 __stage1_page_table 的绝对地址，链接后的地址，如果该标号不在本文件中定义，则留下一个重定位符号
 	asm_vtop page_table
 	mov	x0, page_table
 	bl	memset
-
 	// boot memory must at 0 - 4GB space, here will
 	// alloc all the 4GB memory's PUD
 	bl	build_page_table

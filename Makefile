@@ -142,7 +142,7 @@ MINOSINCLUDE    := \
 
 MBUILD_AFLAGS   := -D__ASSEMBLY__
 MBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
-		   -fno-strict-aliasing -fno-common -fshort-wchar \
+		   -fno-strict-aliasing -fno-common -fshort-wchar -fno-PIC \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security -O$(O_LEVEL) -DBUILD_HYPERVISOR \
 		   -std=gnu89 --static -nostdlib -fno-builtin -g $(MINOSINCLUDE)

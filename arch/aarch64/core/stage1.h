@@ -6,7 +6,9 @@
 /*
  * stage 1 VMSAv8-64 Table Descriptors
  */
-#define S1_DES_FAULT		(0b00 << 0)
+
+// 页表项bit0-1 = 00：无效页表项
+#define S1_DES_FAULT		(0b00 << 0)  
 #define S1_DES_BLOCK		(0b01 << 0)	/* level 1/2 */
 #define S1_DES_TABLE		(0b11 << 0)	/* level 0/1/2 */
 #define S1_DES_PAGE		(0b11 << 0)	/* level 3 */
