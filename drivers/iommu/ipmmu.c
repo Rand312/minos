@@ -42,6 +42,7 @@ struct vm_ipmmu {
 
 #define IPMMU_PER_DEV_MAX 4
 
+// 定义 ipmmu 设备结构体
 struct ipmmu_device {
 	struct device_node *node;
 	void *base;

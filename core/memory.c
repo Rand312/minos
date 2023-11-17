@@ -81,8 +81,10 @@ static size_t inline get_slab_alloc_size(size_t size)
 	return BALIGN(size, SLAB_MIN_DATA_SIZE);
 }
 
+// 从 hashtable 中分配内存
 static void *malloc_from_hash_table(size_t size)
-{
+{	
+	// 当前分配的 size 属于哪一个 hash 桶
 	int id = hash_id(size);
 	struct slab_type *st;
 	struct slab_header *sh;
@@ -91,23 +93,29 @@ static void *malloc_from_hash_table(size_t size)
 	 * find the related slab mem id and try to fetch
 	 * a free slab memory from the hash cache.
 	 */
+	
+	// 遍历该 hash 桶指向的链表
 	list_for_each_entry(st, &slab_hash_table[id], list) {
+		//寻找大小相等的节点
 		if (st->size != size)
 			continue;
 
 		if (st->head == NULL)
 			return NULL;
+		
 
 		sh = st->head;
 		st->head = sh->next;
 		sh->magic = SLAB_MAGIC;
 
+		// 返回给“用户”使用的内存起点
 		return ((void *)sh + SLAB_HEADER_SIZE);
 	}
 
 	return NULL;
 }
 
+// 从 slab_heap 中分配内存
 static void *malloc_from_slab_heap(size_t size)
 {
 	unsigned long slab_size;
@@ -118,8 +126,10 @@ static void *malloc_from_slab_heap(size_t size)
 		return NULL;
 	}
 
+	// 计算当前 slab size 总大小
 	slab_size = ULONG(page_base) - ULONG(slab_base);
 	size += SLAB_HEADER_SIZE;
+	// 如果小于要分配的大小，返回空
 	if (slab_size < size) {
 		pr_err("no enough memory for slab 0x%x 0x%x\n",
 				size, slab_size);
@@ -135,6 +145,7 @@ static void *malloc_from_slab_heap(size_t size)
 	return ((void *)sh + SLAB_HEADER_SIZE);
 }
 
+// 释放 addr 处的内存，释放到 hash table
 static void free_slab(void *addr)
 {
 	struct slab_header *header;
@@ -174,6 +185,7 @@ static void free_slab(void *addr)
 	st->head = header;
 }
 
+// malloc 分配内存，先从 hash table 里面分配，再从 slab heap 中分配
 static void *__malloc(size_t size)
 {
 	void *mem;
@@ -260,14 +272,16 @@ static inline void __free_page(struct page *page)
 	free_page_head = page;
 }
 
-
+// 释放页面
 void free_pages(void *addr)
 {
 	struct page *page;
 
 	ASSERT(IS_PAGE_ALIGN(addr) || (addr != NULL));
 	spin_lock(&mm_lock);
+	// 从 used_page_head 中寻找 page
 	page = find_used_page(addr);
+	// 释放
 	if (page)
 		__free_page(page);
 	else
@@ -275,6 +289,7 @@ void free_pages(void *addr)
 	spin_unlock(&mm_lock);
 }
 
+// page_base 向下移来分配实际的页面
 static struct page *alloc_new_pages(int pages, unsigned long align)
 {
 	unsigned long tmp = (unsigned long)page_base;
@@ -282,6 +297,7 @@ static struct page *alloc_new_pages(int pages, unsigned long align)
 	unsigned long base, rbase;
 	struct page *page;
 
+	// page base 向下移动来实际分配页面
 	base = tmp - pages * PAGE_SIZE;
 	base = ALIGN(base, align);
 	if (base < (unsigned long)slab_base) {
@@ -305,6 +321,7 @@ static struct page *alloc_new_pages(int pages, unsigned long align)
 		__free_page(recycle);
 	}
 
+	// 分配 page 结构体来记录页属性
 	page = __malloc(sizeof(struct page));
 	if (!page) {
 		pr_err("can not allocate memory for page\n");
@@ -324,6 +341,7 @@ static struct page *alloc_new_pages(int pages, unsigned long align)
 	return page;
 }
 
+// 
 static struct page *__alloc_pages(int pages, int align)
 {
 	struct page *page = NULL;
@@ -346,6 +364,7 @@ static struct page *__alloc_pages(int pages, int align)
 	/*
 	 * try to get the free page from the free list.
 	 */
+	// 先从 free_page_head 中寻找是否有合适的 page 页面
 	while (tmp) {
 		if ((tmp->cnt == pages) && (tmp->align == align)) {
 			page = tmp;
@@ -356,8 +375,10 @@ static struct page *__alloc_pages(int pages, int align)
 		tmp = tmp->next;
 	}
 
+	// 没有找到的话，直接使得 page_base 向下移动来分配页面
 	if (!page) {
 		page = alloc_new_pages(pages, PAGE_SIZE * align);
+	// 如果在 free_page_head 中找到了合适的 page，直接返回
 	} else {
 		if (prev != NULL) {
 			prev->next = page->next;
@@ -367,6 +388,7 @@ static struct page *__alloc_pages(int pages, int align)
 		}
 	}
 
+	// 向 used_page_head 中记录分配出去的页面
 	add_used_page(page);
 	spin_unlock(&mm_lock);
 
@@ -393,12 +415,13 @@ static void slab_init(void)
 		init_list(&slab_hash_table[i]);
 }
 
+// 确定 slab_base 和 page_base
 static void memory_init(void)
 {
 	slab_base = (void *)BALIGN(ptov(minos_end), 16);
 	page_base = (void *)ptov(minos_start + CONFIG_MINOS_RAM_SIZE);
 	pr_notice("MEM slab 0x%x page 0x%x\n",
-			(unsigned long)slab_base, (unsigned long)page_base);
+			(unsigned long)slab_base, (unsigned long)page_base); 
 	ASSERT(page_base > slab_base);
 }
 
@@ -415,6 +438,7 @@ static void memory_region_init(void)
 	 * check the memory region configruation, each region should
 	 * not overlap with host memory region.
 	 */
+	// 遍历 mem_list 链表中所有的 memory_region
 	list_for_each_entry(re, &mem_list, list) {
 		if (re->type == MEMORY_REGION_TYPE_KERNEL) {
 			if ((re->phy_base >= minos_start) &&

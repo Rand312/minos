@@ -169,10 +169,12 @@ repeat:
 	return 0;
 }
 
+// 释放该 vma 区域中的所有 mem_block
 static void inline release_vmm_area_bk(struct vmm_area *va)
 {
 	struct mem_block *block = va->b_head, *tmp;
 
+	// 遍历该 vma 中的所有 mem_block，然后释放
 	while (block != NULL) {
 		tmp = block->next;
 		block->next = NULL;
@@ -183,6 +185,7 @@ static void inline release_vmm_area_bk(struct vmm_area *va)
 	va->b_head = NULL;
 }
 
+// 释放整个 vma 区域的内存
 static void release_vmm_area_memory(struct vmm_area *va)
 {
 	/*
@@ -191,19 +194,25 @@ static void release_vmm_area_memory(struct vmm_area *va)
 	 * is shareded with other vmm area, not the owner of
 	 * it.
 	 */
+	// 如果该 vma 区域的内存是共享的，不能释放，直接返回
 	if (va->flags & __VM_SHARED)
 		return;
 
+	// 
 	switch (va->flags & VM_MAP_TYPE_MASK) {
 	case VM_MAP_PT:
 		break;
+	// 如果该 vma 区域的内存以 mem_block 的形式存在，调用 release_vmm_area_bk 释放 vma 区域所有 mem_block
 	case VM_MAP_BK:
 		release_vmm_area_bk(va);
 		break;
+	
 	default:
 		if (va->pstart != BAD_ADDRESS) {
+			// 释放共享页？？？？？？？
 			if (va->flags & __VM_SHMEM)
 				free_shmem((void *)va->pstart);
+			// 释放普通的页面，只释放一次？ 这里就是说 一个 vmm_area 结构也就对应这一个 struct page???? 然后里面可能记录了连续的多页？？？？
 			else
 				free_pages((void *)va->pstart);
 			va->pstart = BAD_ADDRESS;
@@ -212,10 +221,13 @@ static void release_vmm_area_memory(struct vmm_area *va)
 	}
 }
 
+// 释放 vma 内存
 int release_vmm_area(struct mm_struct *mm, struct vmm_area *va)
-{
+{	
+	// 释放内存
 	release_vmm_area_memory(va);
 	spin_lock(&mm->lock);
+	// 将该 vma 结构体从 mm->vmm_area_used 链表中移除
 	list_del(&va->list);
 	__add_free_vmm_area(mm, va);
 	spin_unlock(&mm->lock);
@@ -223,12 +235,15 @@ int release_vmm_area(struct mm_struct *mm, struct vmm_area *va)
 	return 0;
 }
 
+
+// 创建 stage2 映射
 static int vmm_area_map_ln(struct mm_struct *mm, struct vmm_area *va)
 {
 	return __create_guest_mapping(mm, va->start,
 			va->pstart, VMA_SIZE(va), va->flags);
 }
 
+// 创建 stage2 block 映射
 static int vmm_area_map_bk(struct mm_struct *mm, struct vmm_area *va)
 {
 	struct mem_block *block = va->b_head;;
@@ -236,6 +251,7 @@ static int vmm_area_map_bk(struct mm_struct *mm, struct vmm_area *va)
 	unsigned long size = VMA_SIZE(va);
 	int ret;
 
+	// 遍历 vma_area 中的所有 block，建立映射
 	while (block) {
 		ret = __create_guest_mapping(mm, base, BFN2PHY(block->bfn),
 				MEM_BLOCK_SIZE, va->flags | VM_HUGE | VM_GUEST);
@@ -252,6 +268,7 @@ static int vmm_area_map_bk(struct mm_struct *mm, struct vmm_area *va)
 	return 0;
 }
 
+// 对 vma_area 中的内存建立映射
 int map_vmm_area(struct mm_struct *mm,
 		struct vmm_area *va, unsigned long pbase)
 {
@@ -274,6 +291,7 @@ int map_vmm_area(struct mm_struct *mm,
 	return ret;
 }
 
+// split 现有的 vma_area 结构体，然后将分出去的内存建立新的 vma_area 结构体，插入到 mm->vmm_area_free 链表中
 static struct vmm_area *__split_vmm_area(struct mm_struct *mm,
 		struct vmm_area *vma, unsigned long base,
 		unsigned long end, int flags)
@@ -291,6 +309,7 @@ static struct vmm_area *__split_vmm_area(struct mm_struct *mm,
 		left = __alloc_vmm_area_entry(vma->start, left_size);
 		if (!left)
 			return NULL;
+		// split 之后插入到 vmm_area_free 链表之中
 		list_add(&mm->vmm_area_free, &left->list);
 	}
 
@@ -317,20 +336,25 @@ out_err_right:
 	return NULL;
 }
 
+// 从现有的 vma_area 中分割出来一部分内存
 static struct vmm_area *__alloc_free_vmm_area(struct mm_struct *mm,
 		struct vmm_area *vma, size_t size,
 		unsigned long mask, int flags)
 {
 	unsigned long base, end;
 
+	// mask 字节对齐
 	base = (vma->start + mask) & ~mask;
 	end = base + size;
+	// 如果 base~end 没有在当前 vma 的区间范围之内
 	if (!((base >= vma->start) && (end <= vma->end)))
 		return NULL;
-
+	
+	// 从当前
 	return __split_vmm_area(mm, vma, base, end, flags);
 }
 
+// 分配一个 vmm_area 
 struct vmm_area *alloc_free_vmm_area(struct mm_struct *mm,
 		size_t size, unsigned long mask, int flags)
 {
@@ -341,10 +365,13 @@ struct vmm_area *alloc_free_vmm_area(struct mm_struct *mm,
 	size = BALIGN(size, PAGE_SIZE);
 
 	spin_lock(&mm->lock);
+	// 遍历当前所有的 vmm_area 结构体
 	list_for_each_entry(va, &mm->vmm_area_free, list) {
+		// 如果当前 vmm_area 记录的内存区域不够内存分配，continue
 		if ((va->end - va->start) < size)
 			continue;
-
+		
+		// 从当前的 vmm_area 分割出一块内存，然后以 vmm_area 记录
 		new = __alloc_free_vmm_area(mm, va, size, mask, flags);
 		if (new)
 			break;
@@ -354,6 +381,7 @@ struct vmm_area *alloc_free_vmm_area(struct mm_struct *mm,
 	return new;
 }
 
+// 从 mm->vmm_area_free 所有的 vmm_list 中，找一个合适的 vmm_area，从中切出一个 vmm_area，此 vmm_area 的 start 为 base，end 为 start+size
 struct vmm_area *split_vmm_area(struct mm_struct *mm,
 		unsigned long base, size_t size, int flags)
 {
@@ -367,7 +395,9 @@ struct vmm_area *split_vmm_area(struct mm_struct *mm,
 	}
 
 	spin_lock(&mm->lock);
+	// 遍历 vmm_area_free 中所有 vma 结构体
 	list_for_each_entry(va, &mm->vmm_area_free, list) {
+		// 如果 [base,end] < [start, end]，break
 		if ((base >= va->start) && (end <= va->end)) {
 			out = va;
 			break;
@@ -387,6 +417,7 @@ exit:
 	return out;
 }
 
+// 请求分配一个 vmm_area，就是从现有的空闲 vmm_area 中切割
 struct vmm_area *request_vmm_area(struct mm_struct *mm,
 		unsigned long base, unsigned long pbase,
 		size_t size, int flags)
@@ -423,21 +454,29 @@ static void release_vmm_area_in_vm0(struct vm *vm)
 	struct vmm_area *va, *n;
 
 	spin_lock(&mm->lock);
+	// 遍历 vm0 正在使用的 vmm_area
 	list_for_each_entry_safe(va, n, &mm->vmm_area_used, list) {
+		// 如果该 vmm_area 属于 vm0，continue，也就是要寻找不属于 vm0 的 vmm_area
 		if (va->vmid != vm->vmid)
 			continue;
-
+		
+		
+		// 找到了，取消该 vmm_area 的 stage2 映射
 		__destroy_guest_mapping(mm, va->start, VMA_SIZE(va));
 
+		// 如果该 vma 不是共享的，释放掉相关页面
 		if (!(va->flags & VM_SHARED))
 			free_pages((void *)va->pstart);
-
+		
+		// 将该 vmm_area 从当前的 vmm_area_used 链表中删除
 		list_del(&va->list);
+		// 将该 vmm_area 添加到 vm0 的 vmm_area_free 链表中，也就相当于归还内存了
 		__add_free_vmm_area(mm, va);
 	}
 	spin_unlock(&mm->lock);
 }
 
+// 取消 vmm_area 内存的映射
 int unmap_vmm_area(struct mm_struct *mm, struct vmm_area *va)
 {
 	int ret;
@@ -449,6 +488,7 @@ int unmap_vmm_area(struct mm_struct *mm, struct vmm_area *va)
 	return ret;
 }
 
+// 释放掉整个 vm 的内存
 void release_vm_memory(struct vm *vm)
 {
 	struct mm_struct *mm = &vm->mm;
@@ -459,6 +499,7 @@ void release_vm_memory(struct vm *vm)
 	 * this VM. this will free the pages which used
 	 * as the PAGE_TABLE, then free to the host.
 	 */
+	// 取消 vm 的内存映射
 	destroy_guest_mapping(mm, 0, VM_IPA_SIZE);
 
 	/*
@@ -468,6 +509,7 @@ void release_vm_memory(struct vm *vm)
 	 * this function will not be called when vm is
 	 * running, do not to require the lock
 	 */
+	// 释放掉所有 vmm_area 对应的内存
 	list_for_each_entry_safe(va, n, &mm->vmm_area_used, list) {
 		release_vmm_area_memory(va);
 		list_del(&va->list);
@@ -480,8 +522,10 @@ void release_vm_memory(struct vm *vm)
 	}
 
 	/* release the vm0's memory belong to this vm */
+	// 归还 vm0 的内存
 	release_vmm_area_in_vm0(vm);
 
+	// 释放所有级别的页表内存，这里因为特殊设计，将所有 page 链起来，所以直接遍历链表释放相关内存即可，不用遍历页表然后释放
 	free_pages((void *)mm->pgdp);
 }
 
@@ -839,15 +883,24 @@ int vmm_has_enough_memory(size_t size)
 	return ((size >> MEM_BLOCK_SHIFT) <= free_blocks);
 }
 
+
+// 释放 block_section 中的 bfn 所在的 block
 static int __vmm_free_memblock(uint32_t bfn)
 {
+	// format block 地址
 	unsigned long base = bfn << MEM_BLOCK_SHIFT;
+	
 	struct block_section *bs = bs_head;
 
+	// 遍历所有 block_section
 	while (bs) {
+		// 该 bfn 所在的 block_section
 		if ((base >= bs->start) && (base < bs->end)) {
+			// 获取该 bfn 所在 block 在对应的 block_seciton 的比特位
 			bfn = (base - bs->start) >> MEM_BLOCK_SHIFT;
+			// 清除该比特位
 			clear_bit(bfn, bs->bitmap);
+			// 更新信息
 			bs->free_blocks += 1;
 			free_blocks += 1;
 			return 0;
@@ -861,6 +914,7 @@ static int __vmm_free_memblock(uint32_t bfn)
 	return -EINVAL;
 }
 
+// 释放掉 block mb
 int vmm_free_memblock(struct mem_block *mb)
 {
 	uint32_t bfn = mb->bfn;
