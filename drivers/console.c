@@ -35,6 +35,7 @@ static sem_t console_sem;
 #define MEM_CONSOLE_IDX(idx)	(idx & (MEM_CONSOLE_SIZE - 1))
 #define BUFIDX(idx)		(idx & (CONSOLE_INBUF_SIZE - 1))
 
+
 static void mem_console_putc(char ch)
 {
 	mem_log_buf[MEM_CONSOLE_IDX(widx++)] = ch;
@@ -49,6 +50,7 @@ DEFINE_CONSOLE(mem_console, "mem-console", NULL,
 
 static struct console *console = &__console_mem_console;
 
+// 遍历 console section，获取 name 对应的 console 指针
 struct console *get_console(char *name)
 {
 	extern unsigned long __console_start;
@@ -92,6 +94,7 @@ char console_getc(void)
 	return console->getc();
 }
 
+// buf 到 console_inbuf
 void console_recv(const char *buf, int cnt)
 {
 	uint32_t widx;
@@ -114,6 +117,7 @@ void console_puts(char *buf, int len)
 	puts(buf, len);
 }
 
+// console_inbuf 到 buf
 int console_gets(char *buf, int max, uint32_t timeout)
 {
 	uint32_t ridx, widx;

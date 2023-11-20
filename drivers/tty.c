@@ -21,6 +21,7 @@
 static LIST_HEAD(tty_list);
 static DEFINE_SPIN_LOCK(tty_lock);
 
+// 分配一个 tty 结构体
 struct tty *alloc_tty(char *name, uint32_t id, int flags)
 {
 	struct tty *tty;
@@ -43,6 +44,7 @@ struct tty *alloc_tty(char *name, uint32_t id, int flags)
 	return tty;
 }
 
+// 将 tty 加入 tty_list
 int register_tty(struct tty *tty)
 {
 	unsigned long iflags;
@@ -57,6 +59,7 @@ int register_tty(struct tty *tty)
 	return 0;
 }
 
+// 从链表中删除 tty，并释放 tty 内存
 int release_tty(struct tty *tty)
 {
 	unsigned long flags;
@@ -73,6 +76,7 @@ int release_tty(struct tty *tty)
 	return 0;
 }
 
+// tty ops
 struct tty *open_tty(char *name)
 {
 	struct tty *tty, *__tty = NULL;

@@ -532,20 +532,24 @@ void release_vm_memory(struct vm *vm)
 unsigned long create_hvm_shmem_map(struct vm *vm,
 			unsigned long phy, uint32_t size)
 {
+
 	struct vm *vm0 = get_host_vm();
 	struct vmm_area *va;
 
+	// 从 vm0 中分配一个 vmm_area
 	va = alloc_free_vmm_area(&vm0->mm, size, PAGE_MASK, VM_GUEST_SHMEM |
 			VM_SHARED | VM_RW);
 	if (!va)
 		return BAD_ADDRESS;
 
+	// 从 vm0 分配出来的 vmm_area 的 vmid 设置为 vmx->vmid
 	va->vmid = vm->vmid;
 	map_vmm_area(&vm0->mm, va, phy);
 
 	return va->start;
 }
 
+// 
 int copy_from_guest(void *target, void __guest *src, size_t size)
 {
 	unsigned long start = (unsigned long)src;
@@ -559,13 +563,16 @@ int copy_from_guest(void *target, void __guest *src, size_t size)
 			copy_size = PAGE_SIZE;
 		if (copy_size > left)
 			copy_size = left;
-
+		
+		// 将 gva 转换为 pa，经过了 stage1 和 stage2 的转换
 		pa = guest_va_to_pa(start, 1);
+		// 创建直接映射
 		ret = create_host_mapping(PAGE_ALIGN(ptov(pa)),
 				PAGE_ALIGN(pa), PAGE_SIZE, VM_RO);
 		if (ret)
 			return ret;
-
+		
+		// 拷贝
 		memcpy(target, (void *)vtop(pa), copy_size);
 		destroy_host_mapping(PAGE_ALIGN(ptov(pa)), PAGE_SIZE);
 
@@ -577,6 +584,7 @@ int copy_from_guest(void *target, void __guest *src, size_t size)
 	return 0;
 }
 
+// 通过 walk pagetable 来进行 stage2 的地址转换
 int translate_guest_ipa(struct mm_struct *mm,
 		unsigned long offset, unsigned long *pa)
 {
@@ -589,6 +597,9 @@ int translate_guest_ipa(struct mm_struct *mm,
 	return ret;
 }
 
+// mm 为 vmx，即 guest_vm->mm
+// hvm_mmap_base，vm0 的 vmm_area->start
+// offset，guest_vm base addr
 static int do_vm_mmap(struct mm_struct *mm, unsigned long hvm_mmap_base,
 		unsigned long offset, unsigned long size)
 {
@@ -605,12 +616,14 @@ static int do_vm_mmap(struct mm_struct *mm, unsigned long hvm_mmap_base,
 	}
 
 	while (size > 0) {
+		// 将 guest physical addr 转换成 physical addr
 		ret = translate_guest_ipa(mm, offset, &pa);
 		if (ret) {
 			pr_err("addr 0x%x has not mapped in vm-%d\n", offset, vm0->vmid);
 			return -EPERM;
 		}
 
+		// 将该段物理内存区域映射到 vm0，使得 vm0 可以访问 guest vm
 		ret = create_guest_mapping(mm0, hvm_mmap_base,
 				pa, MEM_BLOCK_SIZE, VM_NORMAL | VM_RW);
 		if (ret) {
@@ -635,6 +648,8 @@ static int do_vm_mmap(struct mm_struct *mm, unsigned long hvm_mmap_base,
  * offset - the base address need to be mapped
  * size - the size need to mapped
  */
+
+// 将 guest_vm 中 [offset, offset+size) 这一段内存区域对应的物理内存 映射到 vm0 
 struct vmm_area *vm_mmap(struct vm *vm, unsigned long offset, size_t size)
 {
 	struct vm *vm0 = get_host_vm();
@@ -667,6 +682,7 @@ struct vmm_area *vm_mmap(struct vm *vm, unsigned long offset, size_t size)
 	return va;
 }
 
+// 
 static int __alloc_vm_memory(struct mm_struct *mm, struct vmm_area *va)
 {
 	int i, count;
@@ -681,12 +697,14 @@ static int __alloc_vm_memory(struct mm_struct *mm, struct vmm_area *va)
 
 	va->b_head = NULL;
 	va->flags |= VM_MAP_BK;
+	// 计算该 vmm_area 有多少个 mem_block
 	count = VMA_SIZE(va) >> MEM_BLOCK_SHIFT;
 
 	/*
 	 * here get all the memory block for the vm
 	 * TBD: get contiueous memory or not contiueous ?
 	 */
+	// 这里分配所有 mem_block 结构体
 	for (i = 0; i < count; i++) {
 		block = vmm_alloc_memblock();
 		if (!block)
@@ -699,6 +717,7 @@ static int __alloc_vm_memory(struct mm_struct *mm, struct vmm_area *va)
 	return 0;
 }
 
+// 
 int alloc_vm_memory(struct vm *vm)
 {
 	struct mm_struct *mm = &vm->mm;
@@ -713,6 +732,7 @@ int alloc_vm_memory(struct vm *vm)
 			goto out;
 		}
 
+		// 
 		if (map_vmm_area(mm, va, 0)) {
 			pr_err("map memory for vm-%d failed\n", vm->vmid);
 			goto out;
@@ -749,13 +769,16 @@ static void vmm_area_init(struct mm_struct *mm, int bit64)
 #endif
 	}
 
+	// 分配一个初始的 vmm_area
 	va = __alloc_vmm_area_entry(base, size);
 	if (!va)
 		pr_err("failed to alloc free vmm_area\n");
+	// 将 vmm_area 插入到 vmm_area_free 链表
 	else
 		list_add_tail(&mm->vmm_area_free, &va->list);
 }
 
+// 检查 addr 是否在某个 vmm_area 的区域管辖内
 static inline int check_vm_address(struct vm *vm, unsigned long addr)
 {
 	struct vmm_area *va;
@@ -768,6 +791,7 @@ static inline int check_vm_address(struct vm *vm, unsigned long addr)
 	return 1;
 }
 
+// 
 static int vm_memory_init(struct vm *vm)
 {
 	struct memory_region *region;
@@ -928,6 +952,7 @@ int vmm_free_memblock(struct mem_block *mb)
 	return ret;
 }
 
+// 从 block_section 中分配一个 mem_block
 static int get_memblock_from_section(struct block_section *bs, uint32_t *bfn)
 {
 	uint32_t id;
@@ -972,6 +997,7 @@ struct mem_block *vmm_alloc_memblock(void)
 	if (!success)
 		return NULL;
 
+	// 分配 mem_block 结构体
 	mb = malloc(sizeof(struct mem_block));
 	if (!mb) {
 		spin_lock(&bs_lock);
@@ -999,6 +1025,7 @@ void vmm_init(void)
 	 * all the free memory will used as the guest VM
 	 * memory. The guest memory will allocated as block.
 	 */
+	// 对于每一个 memory_region
 	list_for_each_entry(region, &mem_list, list) {
 		if (region->type != MEMORY_REGION_TYPE_NORMAL)
 			continue;
@@ -1016,6 +1043,8 @@ void vmm_init(void)
 		}
 
 		pr_notice("VMM add memory region [0x%lx 0x%lx]\n", start, end);
+
+		// 分配一个 block_section，记录信息
 		bs = malloc(sizeof(struct block_section));
 		ASSERT(bs != NULL);
 		bs->start = start;
@@ -1028,6 +1057,7 @@ void vmm_init(void)
 		/*
 		 * allocate the memory for block bitmap.
 		 */
+		// 分配对应的 bitmap
 		size = BITS_TO_LONGS(bs->free_blocks) * sizeof(long);
 		bs->bitmap = malloc(size);
 		ASSERT(bs->bitmap != NULL);

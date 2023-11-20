@@ -46,30 +46,37 @@ static struct shmem *shmem_head;
 static uint16_t sbid;
 static DEFINE_SPIN_LOCK(shmem_lock);
 
+// 所有的 shmem_block 
 static struct shmem_block *shmem_blocks[MAX_SHMEM_ID];
 
+// 分配一个 shmem block
 static struct shmem_block *alloc_shmem_block(void)
 {
 	struct shmem_block *sb;
 
+	// 先分配一个 shmem_block 结构体
 	sb = zalloc(sizeof(struct shmem_block));
 	if (!sb) {
 		pr_err("no memory for shmem block\n");
 		return NULL;
 	}
 
+	// 分配 mem_block
 	sb->mb = vmm_alloc_memblock();
 	if (sb->mb == NULL) {
 		free(sb);
 		return NULL;
-	}
+	}	
 
+	// 记录信息
 	sb->phy_base = BFN2PHY(sb->mb->bfn);
 	sb->free_pages = PAGES_IN_BLOCK;
 	
 	/*
 	 * mapping this memory block to the host address space.
 	 */
+	
+	// 创建直接映射
 	if (create_host_mapping(ptov(sb->phy_base), ULONG(sb->phy_base),
 			MEM_BLOCK_SIZE, VM_NORMAL_NC | VM_RW | VM_HUGE)) {
 		pr_err("mapping share memory failed\n");
@@ -84,6 +91,7 @@ static struct shmem_block *alloc_shmem_block(void)
 	return sb;
 }
 
+// 从 shmem_block 中分配 pages 数量的页面
 static void *__alloc_shmem(struct shmem_block *sb, int pages, int flags)
 {
 	struct shmem *shmem;
@@ -113,6 +121,7 @@ static void *__alloc_shmem(struct shmem_block *sb, int pages, int flags)
 	return (void *)ptov(addr);
 }
 
+// 分配 pages 数量的共享页面
 void *alloc_shmem(int pages)
 {
 	struct shmem_block *sb;
@@ -125,8 +134,10 @@ void *alloc_shmem(int pages)
 	}
 
 	spin_lock(&shmem_lock);
+	// 遍历当前的 shmem_block
 	for (i = 0; i < sbid; i++) {
 		sb = shmem_blocks[i];
+		// 如果该 shmem_block 可用的页面数量足够，直接从该 shmem_block 中分配共享页面
 		if (sb->free_pages >= pages) {
 			addr = __alloc_shmem(sb, pages, 0);
 			if (addr)
@@ -134,6 +145,7 @@ void *alloc_shmem(int pages)
 		}
 	}
 
+	// 现有的 shmem_block 都无法满足要求，重新分配一个 shmem_block，再在其中分配共享页面
 	if (addr == NULL) {
 		if (sbid >= MAX_SHMEM_ID) {
 			pr_err("can not alloc more shmem block\n");
@@ -154,6 +166,7 @@ out:
 	return addr;
 }
 
+// 释放 shmem 中的共享页面到 shmem_block
 static void free_shmem_in_block(struct shmem *shmem)
 {
 	struct shmem_block *sb;
@@ -167,6 +180,7 @@ static void free_shmem_in_block(struct shmem *shmem)
 	free(shmem);
 }
 
+// 释放共享页面
 void free_shmem(void *addr)
 {
 	struct shmem *shmem, *tmp = NULL;
