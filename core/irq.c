@@ -333,6 +333,7 @@ static void *irqchip_init(struct device_node *node, void *arg)
 	void *s, *e;
 	struct irq_chip *chip;
 
+	// 如果该设备节点不是一个 irq_chip，直接返回
 	if (node->class != DT_CLASS_IRQCHIP)
 		return NULL;
 
@@ -350,10 +351,11 @@ static void *irqchip_init(struct device_node *node, void *arg)
 	return node;
 }
 
-// 
+// 初始化 irq，主要是初始化 irq_chip 节点
 int irq_init(void)
 {
 #ifdef CONFIG_DEVICE_TREE
+	// 遍历所有的 irq_chip，调用 irqchip_init 来初始化此节点
 	of_iterate_all_node(of_root_node, irqchip_init, NULL);
 #endif
 

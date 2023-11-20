@@ -68,18 +68,23 @@ struct console *get_console(char *name)
 	return NULL;
 }
 
+// 初始化 控制台
 void console_init(char *name)
 {
 	int index;
 
+	// 初始化此 console 信号量
 	sem_init(&console_sem, 0);
 
+	// 根据 name 获取 console 指针
 	if (name)
 		console = get_console(name);
+	// 调用该 console、minos 中就是调用该 串口的初始化函数，比如说 __pl011_init
 	if (console->init)
 		console->init(NULL);
 
 	/* flush the string in the memory log buf */
+	// 输出、flush 当前的 mem_log_buf 中的内容
 	for (index = 0; index < MEM_CONSOLE_IDX(widx); index++)
 		console->putc(mem_log_buf[index]);
 }

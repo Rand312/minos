@@ -550,10 +550,12 @@ int local_sched_init(void)
 {
 	struct pcpu *pcpu = get_pcpu();
 
+	// 初始化 pcpu 的 pcpu 的 sched_timer，设置相应的 handler
 	init_timer(&pcpu->sched_timer, sched_tick_handler, (unsigned long)pcpu);
 
 	pcpu->state = PCPU_STATE_RUNNING;
 
+	// 注册两种中断
 	request_irq(CONFIG_MINOS_RESCHED_IRQ, resched_handler,
 			0, "resched handler", NULL);
 	request_irq(CONFIG_MINOS_IRQWORK_IRQ, irqwork_handler,

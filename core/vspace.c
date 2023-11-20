@@ -113,6 +113,7 @@ int io_unmap(virt_addr_t vir, size_t size)
 	return ret;
 }
 
+// 初始化
 int kernel_vspace_init(void)
 {
 	struct vspace *vs = &host_vspace;

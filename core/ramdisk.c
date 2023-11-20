@@ -48,6 +48,7 @@ int ramdisk_init(void)
 		return -EINVAL;
 	}
 
+	// 建立直接映射
 	if (create_host_mapping(start, (unsigned long)ramdisk_start, size, VM_RO)) {
 		pr_err("unable map ramdisk memory\n");
 		return -ENOMEM;

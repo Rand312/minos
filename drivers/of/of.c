@@ -56,6 +56,7 @@ int of_spin_table_init(phy_addr_t *smp_holding)
 		}
 
 		/* get the enable methold content */
+		// 读取 cpu 启动方法，可选自选表或者 psci
 		data = fdt_getprop(dtb_address, node, "enable-method", &len);
 		if (!data || len <= 0)
 			continue;
@@ -403,12 +404,14 @@ int of_device_match(struct device_node *node, char **comp)
 				node->offset, *comp))
 			return 1;
 
+		// 移动到下一个 comp 字符串节点
 		comp++;
 	}
 
 	return 0;
 }
 
+// "递归" 遍历设备树节点，并将其转化为 device_node
 static int __of_parse_device_node(struct device_node *root,
 		struct device_node *pnode)
 {
@@ -419,6 +422,7 @@ static int __of_parse_device_node(struct device_node *root,
 	if (!pnode)
 		return -EINVAL;
 
+	
 	fdt_for_each_subnode(child, data, pnode->offset) {
 		node = alloc_device_node();
 		if (!node)
@@ -455,14 +459,17 @@ static void *__iterate_device_node(struct device_node *node,
 {
 	struct device_node *child, *sibling, *n;
 
+	// 跳出递归条件
 	if (!node)
 		return NULL;
 
 	child = node->child;
+	// func 一般是个初始化函数，这里就是初始化该节点
 	n = func(node, arg);
 	if (n && !loop)
 		return n;
-
+	
+	// 如果有 child，递归调用此函数
 	while (child) {
 		sibling = child->sibling;
 		n = __iterate_device_node(child, func, arg, loop);
@@ -930,16 +937,17 @@ int get_device_irq_index(struct device_node *node, uint32_t *irq,
 	return irq_xlate(node, irqv, irq_cells, irq, flags);
 }
 
+// 初始化启动参数
 int of_init_bootargs(void)
 {
 	void *dtb = dtb_address;
 	int node, len;
 	const void *data = NULL;
-
+	// 寻找 /chosen 节点编号
 	node = fdt_path_offset(dtb, "/chosen");
 	if (node <= 0)
 		return -ENOENT;
-
+	// 获取该 /chosen 节点中的 bootargs 属性
 	data = fdt_getprop(dtb, node, "bootargs", &len);
 	if (!data || (len == 0))
 		return -ENOENT;
@@ -949,6 +957,7 @@ int of_init_bootargs(void)
 	return 0;
 }
 
+// 遍历带有 module 数据的节，需要与该 device_node 匹配的节，返回对应的 module->data
 void *of_device_node_match(struct device_node *node, void *s, void *e)
 {
 	int i, count;
@@ -1010,11 +1019,13 @@ struct device_node *of_parse_device_tree(void *dtb)
 	 * now parse all the node and convert them to the
 	 * device node struct for the hypervisor and vm0 use
 	 */
+	// 开始分析所有节点，并将它们转化为 device_node
 	__of_parse_device_node(node, node);
 
 	return node;
 }
 
+// 分析设备树
 void of_parse_host_device_tree(void)
 {
 	of_root_node = of_parse_device_tree(dtb_address);
@@ -1043,14 +1054,17 @@ int of_get_console_name(char **name)
 	int node,  len;
 	const void *data = NULL;
 
+	// 获取 chosen 节点偏移，chosen 节点主要用来传递数据，比如说其中的 bootargs 来传递启动参数
 	node = fdt_path_offset(dtb, "/chosen");
 	if (node <= 0)
 		return -ENOENT;
 
+	// 获取标准输出，qemu 平台使用 pl011 这个串口作为标准输出
 	data = fdt_getprop(dtb, node, "minos,stdout", &len);
 	if (!data || (len == 0))
 		return -ENOENT;
 
+	// 获取其名称字符串
 	*name = (char *)data;
 	return 0;
 }
@@ -1093,6 +1107,7 @@ int of_get_ramdisk_address(unsigned long *start, unsigned long *end)
 	return 0;
 }
 
+// 读取设备树，设置具体的平台
 void of_setup_platform(void)
 {
 	int len;
@@ -1113,6 +1128,7 @@ void of_setup_platform(void)
 	}
 }
 
+// 记录 dtb_address
 int of_init(void *dtb)
 {
 	if (!dtb || fdt_check_header(dtb)) {

@@ -241,6 +241,7 @@ static int __init_text aarch64_init_percpu(void)
 }
 arch_initcall_percpu(aarch64_init_percpu);
 
+// 读取设备树，设置具体的平台
 int arch_early_init(void)
 {
 #ifdef CONFIG_DEVICE_TREE
@@ -314,32 +315,39 @@ void arch_smp_init(phy_addr_t *smp_h_addr)
 #endif
 }
 
+// 重定位 dtb 地址
 static void *relocate_dtb_address(unsigned long dtb)
 {
 	unsigned long mem_end, relocated_base = dtb;
 	extern unsigned long minos_end;
 	size_t size;
 
+	// 检验 dtb 是否合法
 	ASSERT(!fdt_check_header((void *)dtb));
 
 	/*
 	 * DTB image start address should bigger than minos_end, or
 	 * DTB image should included in minos.bin.
 	 */
+	
 	mem_end = BALIGN(ptov(minos_end), 16);
 	size = fdt_totalsize(dtb);
 	if (dtb < minos_end && (dtb + size) > minos_end)
 		panic("minos data overlaped by dtb image\n");
 
+	// 如果 dtb 在 minos_end 后面
 	if (dtb > mem_end) {
 		pr_notice("relocate dtb from 0x%x to 0x%x\n", dtb, mem_end);
+		// 将 dtb 移动到“紧接” minos 处
 		memmove((void *)mem_end, (void *)dtb, size);
 
 		/*
 		 * call of init again to check and setup the new
 		 * device tree memory address.
 		 */
+		// 重定位后的 dtb 地址为 minos 结尾处(对齐)
 		relocated_base = mem_end;
+		// minos size += size
 		minos_end += size;
 	}
 
@@ -359,14 +367,19 @@ void arch_main(void *dtb)
 #endif
 	pr_notice("DTB address [0x%x]\n", dtb);
 
+	// 重定位 dtb 地址
 	dtb = relocate_dtb_address((unsigned long)dtb);
 
+	// 记录 dtb_address
 	of_init(dtb);
+	// 获取标准输出 名称字符串
 	of_get_console_name(&name);
+	// 初始化 标准输出
 	console_init(name);
 
 	/*
 	 * here start the kernel
 	 */
+	// 启动内核
 	boot_main();
 }

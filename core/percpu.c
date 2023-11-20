@@ -19,12 +19,14 @@
 #include <minos/sched.h>
 #include <minos/mm.h>
 
+// 定义物理 cpu
 struct pcpu pcpus[NR_CPUS];
 unsigned long __cache_line_align percpu_offset[CONFIG_NR_CPUS];
 
 #define PCPU_STAT_OFFLINE	0
 #define PCPU_STAT_ONLINE	1
 
+// 初始化 percpu_offset 值，方便后面通过 get_per_cpu 宏来获取 percpu 值
 void percpu_init(int cpuid)
 {
 	extern unsigned char __percpu_start;
@@ -45,6 +47,7 @@ void percpu_init(int cpuid)
 	}
 }
 
+// 给每个 cpu 分配 stack
 static int percpu_subsystem_init(void)
 {
 	struct pcpu *pcpu = get_pcpu();

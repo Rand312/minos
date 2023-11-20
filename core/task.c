@@ -313,6 +313,7 @@ struct task *create_task(char *name,
 	return __create_task(name, func, stk_size, prio, aff, opt, arg);
 }
 
+// 为当前的 pcpu 创建 idle task
 int create_idle_task(void)
 {
 	struct task *task;

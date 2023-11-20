@@ -23,6 +23,7 @@ extern unsigned char __platform_start;
 extern unsigned char __platform_end;
 struct platform *platform = NULL;
 
+// 设置平台为 name 对应的 platform
 void platform_set_to(const char *name)
 {
 	struct platform **pp;

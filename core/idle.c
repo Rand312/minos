@@ -126,6 +126,7 @@ static void start_system_task(void)
 			OS_PRIO_DEFAULT_1, cpu, 0, NULL);
 	ASSERT(task != NULL);
 
+	// 如果是 cpu0，创建 init_task，init_task 再创建 shell task
 	if (cpu == 0) {
 		pr_notice("create init task...\n");
 		task = create_task("init", init_task, 0x2000,

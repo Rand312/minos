@@ -206,6 +206,7 @@ void smp_cpus_up(void)
 	wmb();
 }
 
+
 void smp_init(void)
 {
 	int i;
@@ -224,6 +225,7 @@ void smp_init(void)
 
 	arch_smp_init(smp_holding_address);
 
+	// 注册 smp call
 	request_irq_percpu(SMP_FUNCTION_CALL_IRQ,
 			smp_function_call_handler, 0,
 			"smp_function_call", NULL);

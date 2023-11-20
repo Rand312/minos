@@ -114,6 +114,7 @@ int bootarg_parse_string(char *name, char **v)
 	return __get_boot_option(name, v, __parse_string);
 }
 
+// 初始化单个启动参数
 static void bootarg_init_one(char *str)
 {
 	struct boot_option *bo;
@@ -133,6 +134,7 @@ static void bootarg_init_one(char *str)
 	boot_options = bo;
 }
 
+// 启动参数初始化， str 为启动参数
 int __init_text bootargs_init(const char *str, int len)
 {
 	char *bootarg;
@@ -143,9 +145,10 @@ int __init_text bootargs_init(const char *str, int len)
 		pr_warn("cmdline size too long information may lost\n");
 
 	len = len > CMDLINE_SIZE ? CMDLINE_SIZE : len;
+	// 拷贝启动参数到 cmdline
 	strncpy(cmdline, str, len);
 	cmdline[len] = 0;
-
+	// 分割启动参数，将它们转化为结构体的形式，并用立链表串起来
 	while ((bootarg = strsep(&tmp, " ")) != NULL)
 		bootarg_init_one(bootarg);
 

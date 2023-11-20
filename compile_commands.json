@@ -30,50 +30,12 @@
       "-D__KERNEL__",
       "-c",
       "-o",
-      "core/bitmap.o",
-      "core/bitmap.c"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/bitmap.c",
-    "output": "/home/ssd/rand/Code/minos/core/bitmap.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__KERNEL__",
-      "-c",
-      "-o",
       "core/bootarg.o",
       "core/bootarg.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/bootarg.c",
-    "output": "/home/ssd/rand/Code/minos/core/bootarg.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/bootarg.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/bootarg.o"
   },
   {
     "arguments": [
@@ -109,9 +71,9 @@
       "core/calltrace.o",
       "core/calltrace.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/calltrace.c",
-    "output": "/home/ssd/rand/Code/minos/core/calltrace.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/calltrace.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/calltrace.o"
   },
   {
     "arguments": [
@@ -147,9 +109,9 @@
       "core/delay.o",
       "core/delay.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/delay.c",
-    "output": "/home/ssd/rand/Code/minos/core/delay.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/delay.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/delay.o"
   },
   {
     "arguments": [
@@ -185,47 +147,9 @@
       "core/event.o",
       "core/event.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/event.c",
-    "output": "/home/ssd/rand/Code/minos/core/event.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__KERNEL__",
-      "-c",
-      "-o",
-      "core/find_bit.o",
-      "core/find_bit.c"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/find_bit.c",
-    "output": "/home/ssd/rand/Code/minos/core/find_bit.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/event.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/event.o"
   },
   {
     "arguments": [
@@ -261,9 +185,9 @@
       "core/flag.o",
       "core/flag.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/flag.c",
-    "output": "/home/ssd/rand/Code/minos/core/flag.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/flag.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/flag.o"
   },
   {
     "arguments": [
@@ -299,47 +223,9 @@
       "core/hook.o",
       "core/hook.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/hook.c",
-    "output": "/home/ssd/rand/Code/minos/core/hook.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__KERNEL__",
-      "-c",
-      "-o",
-      "core/hweight.o",
-      "core/hweight.c"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/hweight.c",
-    "output": "/home/ssd/rand/Code/minos/core/hweight.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/hook.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/hook.o"
   },
   {
     "arguments": [
@@ -375,47 +261,9 @@
       "core/idle.o",
       "core/idle.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/idle.c",
-    "output": "/home/ssd/rand/Code/minos/core/idle.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__KERNEL__",
-      "-c",
-      "-o",
-      "core/init.o",
-      "core/init.c"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/init.c",
-    "output": "/home/ssd/rand/Code/minos/core/init.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/idle.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/idle.o"
   },
   {
     "arguments": [
@@ -451,9 +299,9 @@
       "core/irq.o",
       "core/irq.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/irq.c",
-    "output": "/home/ssd/rand/Code/minos/core/irq.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/irq.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/irq.o"
   },
   {
     "arguments": [
@@ -489,9 +337,9 @@
       "core/mbox.o",
       "core/mbox.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/mbox.c",
-    "output": "/home/ssd/rand/Code/minos/core/mbox.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/mbox.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/mbox.o"
   },
   {
     "arguments": [
@@ -527,9 +375,9 @@
       "core/minos.o",
       "core/minos.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/minos.c",
-    "output": "/home/ssd/rand/Code/minos/core/minos.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/minos.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/minos.o"
   },
   {
     "arguments": [
@@ -565,9 +413,9 @@
       "core/mutex.o",
       "core/mutex.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/mutex.c",
-    "output": "/home/ssd/rand/Code/minos/core/mutex.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/mutex.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/mutex.o"
   },
   {
     "arguments": [
@@ -603,9 +451,9 @@
       "core/percpu.o",
       "core/percpu.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/percpu.c",
-    "output": "/home/ssd/rand/Code/minos/core/percpu.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/percpu.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/percpu.o"
   },
   {
     "arguments": [
@@ -641,9 +489,9 @@
       "core/print.o",
       "core/print.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/print.c",
-    "output": "/home/ssd/rand/Code/minos/core/print.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/print.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/print.o"
   },
   {
     "arguments": [
@@ -679,9 +527,9 @@
       "core/queue.o",
       "core/queue.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/queue.c",
-    "output": "/home/ssd/rand/Code/minos/core/queue.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/queue.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/queue.o"
   },
   {
     "arguments": [
@@ -717,9 +565,9 @@
       "core/ramdisk.o",
       "core/ramdisk.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/ramdisk.c",
-    "output": "/home/ssd/rand/Code/minos/core/ramdisk.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/ramdisk.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/ramdisk.o"
   },
   {
     "arguments": [
@@ -755,9 +603,9 @@
       "core/sched.o",
       "core/sched.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/sched.c",
-    "output": "/home/ssd/rand/Code/minos/core/sched.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/sched.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/sched.o"
   },
   {
     "arguments": [
@@ -793,9 +641,9 @@
       "core/sem.o",
       "core/sem.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/sem.c",
-    "output": "/home/ssd/rand/Code/minos/core/sem.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/sem.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/sem.o"
   },
   {
     "arguments": [
@@ -831,9 +679,9 @@
       "core/smp.o",
       "core/smp.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/smp.c",
-    "output": "/home/ssd/rand/Code/minos/core/smp.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/smp.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/smp.o"
   },
   {
     "arguments": [
@@ -869,9 +717,9 @@
       "core/stdlib.o",
       "core/stdlib.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/stdlib.c",
-    "output": "/home/ssd/rand/Code/minos/core/stdlib.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/stdlib.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/stdlib.o"
   },
   {
     "arguments": [
@@ -907,9 +755,9 @@
       "core/string.o",
       "core/string.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/string.c",
-    "output": "/home/ssd/rand/Code/minos/core/string.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/string.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/string.o"
   },
   {
     "arguments": [
@@ -945,9 +793,9 @@
       "core/task.o",
       "core/task.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/task.c",
-    "output": "/home/ssd/rand/Code/minos/core/task.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/task.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/task.o"
   },
   {
     "arguments": [
@@ -983,9 +831,9 @@
       "core/timer.o",
       "core/timer.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/timer.c",
-    "output": "/home/ssd/rand/Code/minos/core/timer.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/timer.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/timer.o"
   },
   {
     "arguments": [
@@ -1021,9 +869,9 @@
       "core/vspace.o",
       "core/vspace.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/vspace.c",
-    "output": "/home/ssd/rand/Code/minos/core/vspace.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/vspace.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/vspace.o"
   },
   {
     "arguments": [
@@ -1059,9 +907,9 @@
       "core/memory.o",
       "core/memory.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/memory.c",
-    "output": "/home/ssd/rand/Code/minos/core/memory.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/memory.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/memory.o"
   },
   {
     "arguments": [
@@ -1097,161 +945,9 @@
       "core/mem_region.o",
       "core/mem_region.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/core/mem_region.c",
-    "output": "/home/ssd/rand/Code/minos/core/mem_region.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__KERNEL__",
-      "-c",
-      "-o",
-      "apps/esh/shell.o",
-      "apps/esh/shell.c"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/apps/esh/shell.c",
-    "output": "/home/ssd/rand/Code/minos/apps/esh/shell.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__KERNEL__",
-      "-c",
-      "-o",
-      "apps/esh/esh.o",
-      "apps/esh/esh.c"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/apps/esh/esh.c",
-    "output": "/home/ssd/rand/Code/minos/apps/esh/esh.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__KERNEL__",
-      "-c",
-      "-o",
-      "apps/esh/esh_hist.o",
-      "apps/esh/esh_hist.c"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/apps/esh/esh_hist.c",
-    "output": "/home/ssd/rand/Code/minos/apps/esh/esh_hist.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__KERNEL__",
-      "-c",
-      "-o",
-      "apps/esh/esh_argparser.o",
-      "apps/esh/esh_argparser.c"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/apps/esh/esh_argparser.c",
-    "output": "/home/ssd/rand/Code/minos/apps/esh/esh_argparser.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/mem_region.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/core/mem_region.o"
   },
   {
     "arguments": [
@@ -1287,9 +983,9 @@
       "apps/init.o",
       "apps/init.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/apps/init.c",
-    "output": "/home/ssd/rand/Code/minos/apps/init.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/apps/init.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/apps/init.o"
   },
   {
     "arguments": [
@@ -1325,47 +1021,9 @@
       "libs/shell_command/shell_command.o",
       "libs/shell_command/shell_command.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/libs/shell_command/shell_command.c",
-    "output": "/home/ssd/rand/Code/minos/libs/shell_command/shell_command.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__KERNEL__",
-      "-c",
-      "-o",
-      "libs/shell_command/clear.o",
-      "libs/shell_command/clear.c"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/libs/shell_command/clear.c",
-    "output": "/home/ssd/rand/Code/minos/libs/shell_command/clear.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/libs/shell_command/shell_command.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/libs/shell_command/shell_command.o"
   },
   {
     "arguments": [
@@ -1401,9 +1059,9 @@
       "libs/shell_command/task_cmd.o",
       "libs/shell_command/task_cmd.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/libs/shell_command/task_cmd.c",
-    "output": "/home/ssd/rand/Code/minos/libs/shell_command/task_cmd.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/libs/shell_command/task_cmd.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/libs/shell_command/task_cmd.o"
   },
   {
     "arguments": [
@@ -1439,351 +1097,9 @@
       "libs/shell_command/help_cmd.o",
       "libs/shell_command/help_cmd.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/libs/shell_command/help_cmd.c",
-    "output": "/home/ssd/rand/Code/minos/libs/shell_command/help_cmd.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__KERNEL__",
-      "-c",
-      "-o",
-      "libs/libfdt/fdt_addresses.o",
-      "libs/libfdt/fdt_addresses.c"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/libs/libfdt/fdt_addresses.c",
-    "output": "/home/ssd/rand/Code/minos/libs/libfdt/fdt_addresses.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__KERNEL__",
-      "-c",
-      "-o",
-      "libs/libfdt/fdt.o",
-      "libs/libfdt/fdt.c"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/libs/libfdt/fdt.c",
-    "output": "/home/ssd/rand/Code/minos/libs/libfdt/fdt.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__KERNEL__",
-      "-c",
-      "-o",
-      "libs/libfdt/fdt_empty_tree.o",
-      "libs/libfdt/fdt_empty_tree.c"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/libs/libfdt/fdt_empty_tree.c",
-    "output": "/home/ssd/rand/Code/minos/libs/libfdt/fdt_empty_tree.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__KERNEL__",
-      "-c",
-      "-o",
-      "libs/libfdt/fdt_overlay.o",
-      "libs/libfdt/fdt_overlay.c"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/libs/libfdt/fdt_overlay.c",
-    "output": "/home/ssd/rand/Code/minos/libs/libfdt/fdt_overlay.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__KERNEL__",
-      "-c",
-      "-o",
-      "libs/libfdt/fdt_ro.o",
-      "libs/libfdt/fdt_ro.c"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/libs/libfdt/fdt_ro.c",
-    "output": "/home/ssd/rand/Code/minos/libs/libfdt/fdt_ro.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__KERNEL__",
-      "-c",
-      "-o",
-      "libs/libfdt/fdt_rw.o",
-      "libs/libfdt/fdt_rw.c"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/libs/libfdt/fdt_rw.c",
-    "output": "/home/ssd/rand/Code/minos/libs/libfdt/fdt_rw.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__KERNEL__",
-      "-c",
-      "-o",
-      "libs/libfdt/fdt_strerror.o",
-      "libs/libfdt/fdt_strerror.c"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/libs/libfdt/fdt_strerror.c",
-    "output": "/home/ssd/rand/Code/minos/libs/libfdt/fdt_strerror.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__KERNEL__",
-      "-c",
-      "-o",
-      "libs/libfdt/fdt_sw.o",
-      "libs/libfdt/fdt_sw.c"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/libs/libfdt/fdt_sw.c",
-    "output": "/home/ssd/rand/Code/minos/libs/libfdt/fdt_sw.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__KERNEL__",
-      "-c",
-      "-o",
-      "libs/libfdt/fdt_wip.o",
-      "libs/libfdt/fdt_wip.c"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/libs/libfdt/fdt_wip.c",
-    "output": "/home/ssd/rand/Code/minos/libs/libfdt/fdt_wip.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/libs/shell_command/help_cmd.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/libs/shell_command/help_cmd.o"
   },
   {
     "arguments": [
@@ -1819,47 +1135,9 @@
       "arch/aarch64/core/aarch64_IRQ.o",
       "arch/aarch64/core/aarch64_IRQ.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/core/aarch64_IRQ.c",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/core/aarch64_IRQ.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__ASSEMBLY__",
-      "-c",
-      "-o",
-      "arch/aarch64/core/aarch64.o",
-      "arch/aarch64/core/aarch64.S"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/core/aarch64.S",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/core/aarch64.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/aarch64_IRQ.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/aarch64_IRQ.o"
   },
   {
     "arguments": [
@@ -1895,9 +1173,9 @@
       "arch/aarch64/core/aarch64_sync.o",
       "arch/aarch64/core/aarch64_sync.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/core/aarch64_sync.c",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/core/aarch64_sync.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/aarch64_sync.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/aarch64_sync.o"
   },
   {
     "arguments": [
@@ -1933,9 +1211,9 @@
       "arch/aarch64/core/arch.o",
       "arch/aarch64/core/arch.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/core/arch.c",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/core/arch.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/arch.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/arch.o"
   },
   {
     "arguments": [
@@ -1971,9 +1249,9 @@
       "arch/aarch64/core/arm_arch_timer.o",
       "arch/aarch64/core/arm_arch_timer.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/core/arm_arch_timer.c",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/core/arm_arch_timer.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/arm_arch_timer.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/arm_arch_timer.o"
   },
   {
     "arguments": [
@@ -2009,9 +1287,9 @@
       "arch/aarch64/core/cache.o",
       "arch/aarch64/core/cache.S"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/core/cache.S",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/core/cache.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/cache.S",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/cache.o"
   },
   {
     "arguments": [
@@ -2047,9 +1325,9 @@
       "arch/aarch64/core/cpu.o",
       "arch/aarch64/core/cpu.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/core/cpu.c",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/core/cpu.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/cpu.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/cpu.o"
   },
   {
     "arguments": [
@@ -2085,9 +1363,9 @@
       "arch/aarch64/core/entry.o",
       "arch/aarch64/core/entry.S"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/core/entry.S",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/core/entry.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/entry.S",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/entry.o"
   },
   {
     "arguments": [
@@ -2123,9 +1401,9 @@
       "arch/aarch64/core/mem_map.o",
       "arch/aarch64/core/mem_map.S"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/core/mem_map.S",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/core/mem_map.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/mem_map.S",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/mem_map.o"
   },
   {
     "arguments": [
@@ -2161,9 +1439,9 @@
       "arch/aarch64/core/vector.o",
       "arch/aarch64/core/vector.S"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/core/vector.S",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/core/vector.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/vector.S",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/vector.o"
   },
   {
     "arguments": [
@@ -2199,9 +1477,9 @@
       "arch/aarch64/core/cpu_feature.o",
       "arch/aarch64/core/cpu_feature.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/core/cpu_feature.c",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/core/cpu_feature.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/cpu_feature.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/cpu_feature.o"
   },
   {
     "arguments": [
@@ -2237,9 +1515,9 @@
       "arch/aarch64/core/stage1.o",
       "arch/aarch64/core/stage1.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/core/stage1.c",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/core/stage1.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/stage1.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/stage1.o"
   },
   {
     "arguments": [
@@ -2275,9 +1553,9 @@
       "arch/aarch64/core/fpsimd.o",
       "arch/aarch64/core/fpsimd.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/core/fpsimd.c",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/core/fpsimd.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/fpsimd.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/fpsimd.o"
   },
   {
     "arguments": [
@@ -2313,579 +1591,9 @@
       "arch/aarch64/core/boot.o",
       "arch/aarch64/core/boot.S"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/core/boot.S",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/core/boot.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__ASSEMBLY__",
-      "-c",
-      "-o",
-      "arch/aarch64/lib/bitops.o",
-      "arch/aarch64/lib/bitops.S"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/lib/bitops.S",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/lib/bitops.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__ASSEMBLY__",
-      "-c",
-      "-o",
-      "arch/aarch64/lib/memchr.o",
-      "arch/aarch64/lib/memchr.S"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/lib/memchr.S",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/lib/memchr.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__ASSEMBLY__",
-      "-c",
-      "-o",
-      "arch/aarch64/lib/memcmp.o",
-      "arch/aarch64/lib/memcmp.S"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/lib/memcmp.S",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/lib/memcmp.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__ASSEMBLY__",
-      "-c",
-      "-o",
-      "arch/aarch64/lib/memcpy.o",
-      "arch/aarch64/lib/memcpy.S"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/lib/memcpy.S",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/lib/memcpy.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__ASSEMBLY__",
-      "-c",
-      "-o",
-      "arch/aarch64/lib/memmove.o",
-      "arch/aarch64/lib/memmove.S"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/lib/memmove.S",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/lib/memmove.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__ASSEMBLY__",
-      "-c",
-      "-o",
-      "arch/aarch64/lib/memset.o",
-      "arch/aarch64/lib/memset.S"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/lib/memset.S",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/lib/memset.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__ASSEMBLY__",
-      "-c",
-      "-o",
-      "arch/aarch64/lib/spinlock.o",
-      "arch/aarch64/lib/spinlock.S"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/lib/spinlock.S",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/lib/spinlock.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__ASSEMBLY__",
-      "-c",
-      "-o",
-      "arch/aarch64/lib/strchr.o",
-      "arch/aarch64/lib/strchr.S"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/lib/strchr.S",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/lib/strchr.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__ASSEMBLY__",
-      "-c",
-      "-o",
-      "arch/aarch64/lib/strcmp.o",
-      "arch/aarch64/lib/strcmp.S"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/lib/strcmp.S",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/lib/strcmp.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__ASSEMBLY__",
-      "-c",
-      "-o",
-      "arch/aarch64/lib/strcpy.o",
-      "arch/aarch64/lib/strcpy.S"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/lib/strcpy.S",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/lib/strcpy.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__ASSEMBLY__",
-      "-c",
-      "-o",
-      "arch/aarch64/lib/strlen.o",
-      "arch/aarch64/lib/strlen.S"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/lib/strlen.S",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/lib/strlen.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__ASSEMBLY__",
-      "-c",
-      "-o",
-      "arch/aarch64/lib/strncmp.o",
-      "arch/aarch64/lib/strncmp.S"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/lib/strncmp.S",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/lib/strncmp.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__ASSEMBLY__",
-      "-c",
-      "-o",
-      "arch/aarch64/lib/strnlen.o",
-      "arch/aarch64/lib/strnlen.S"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/lib/strnlen.S",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/lib/strnlen.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__ASSEMBLY__",
-      "-c",
-      "-o",
-      "arch/aarch64/lib/strrchr.o",
-      "arch/aarch64/lib/strrchr.S"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/lib/strrchr.S",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/lib/strrchr.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/aarch64-linux-gnu-gcc",
-      "-Wall",
-      "-Wundef",
-      "-Wstrict-prototypes",
-      "-Wno-trigraphs",
-      "-fno-strict-aliasing",
-      "-fno-common",
-      "-fshort-wchar",
-      "-fno-PIC",
-      "-Werror-implicit-function-declaration",
-      "-Wno-format-security",
-      "-O2",
-      "-DBUILD_HYPERVISOR",
-      "-std=gnu89",
-      "--static",
-      "-fno-builtin",
-      "-g",
-      "-I./arch/aarch64/include",
-      "-I./include",
-      "-I./generic/include",
-      "-mgeneral-regs-only",
-      "-fno-asynchronous-unwind-tables",
-      "-march=armv8-a",
-      "-ffixed-x18",
-      "-mlittle-endian",
-      "-mcmodel=large",
-      "-D__ASSEMBLY__",
-      "-c",
-      "-o",
-      "arch/aarch64/lib/ticket_lock.o",
-      "arch/aarch64/lib/ticket_lock.S"
-    ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/lib/ticket_lock.S",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/lib/ticket_lock.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/boot.S",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/core/boot.o"
   },
   {
     "arguments": [
@@ -2921,9 +1629,9 @@
       "arch/aarch64/virt/arch_virt.o",
       "arch/aarch64/virt/arch_virt.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/virt/arch_virt.c",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/virt/arch_virt.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/virt/arch_virt.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/virt/arch_virt.o"
   },
   {
     "arguments": [
@@ -2959,9 +1667,9 @@
       "arch/aarch64/virt/smc_service.o",
       "arch/aarch64/virt/smc_service.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/virt/smc_service.c",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/virt/smc_service.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/virt/smc_service.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/virt/smc_service.o"
   },
   {
     "arguments": [
@@ -2997,9 +1705,9 @@
       "arch/aarch64/virt/svc_service.o",
       "arch/aarch64/virt/svc_service.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/virt/svc_service.c",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/virt/svc_service.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/virt/svc_service.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/virt/svc_service.o"
   },
   {
     "arguments": [
@@ -3035,9 +1743,9 @@
       "arch/aarch64/virt/trap.o",
       "arch/aarch64/virt/trap.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/virt/trap.c",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/virt/trap.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/virt/trap.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/virt/trap.o"
   },
   {
     "arguments": [
@@ -3073,9 +1781,9 @@
       "arch/aarch64/virt/vmsa.o",
       "arch/aarch64/virt/vmsa.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/virt/vmsa.c",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/virt/vmsa.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/virt/vmsa.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/virt/vmsa.o"
   },
   {
     "arguments": [
@@ -3111,9 +1819,9 @@
       "arch/aarch64/virt/vtimer.o",
       "arch/aarch64/virt/vtimer.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/virt/vtimer.c",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/virt/vtimer.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/virt/vtimer.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/virt/vtimer.o"
   },
   {
     "arguments": [
@@ -3149,9 +1857,9 @@
       "arch/aarch64/virt/vfp.o",
       "arch/aarch64/virt/vfp.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/virt/vfp.c",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/virt/vfp.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/virt/vfp.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/virt/vfp.o"
   },
   {
     "arguments": [
@@ -3187,9 +1895,9 @@
       "arch/aarch64/virt/stage2.o",
       "arch/aarch64/virt/stage2.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/arch/aarch64/virt/stage2.c",
-    "output": "/home/ssd/rand/Code/minos/arch/aarch64/virt/stage2.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/virt/stage2.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/arch/aarch64/virt/stage2.o"
   },
   {
     "arguments": [
@@ -3225,9 +1933,9 @@
       "drivers/serial/serial_pl011.o",
       "drivers/serial/serial_pl011.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/drivers/serial/serial_pl011.c",
-    "output": "/home/ssd/rand/Code/minos/drivers/serial/serial_pl011.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/drivers/serial/serial_pl011.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/drivers/serial/serial_pl011.o"
   },
   {
     "arguments": [
@@ -3263,9 +1971,9 @@
       "drivers/irq-chips/irqchip.o",
       "drivers/irq-chips/irqchip.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/drivers/irq-chips/irqchip.c",
-    "output": "/home/ssd/rand/Code/minos/drivers/irq-chips/irqchip.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/drivers/irq-chips/irqchip.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/drivers/irq-chips/irqchip.o"
   },
   {
     "arguments": [
@@ -3301,9 +2009,9 @@
       "drivers/irq-chips/gicv3.o",
       "drivers/irq-chips/gicv3.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/drivers/irq-chips/gicv3.c",
-    "output": "/home/ssd/rand/Code/minos/drivers/irq-chips/gicv3.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/drivers/irq-chips/gicv3.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/drivers/irq-chips/gicv3.o"
   },
   {
     "arguments": [
@@ -3339,9 +2047,9 @@
       "drivers/irq-chips/gicv2.o",
       "drivers/irq-chips/gicv2.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/drivers/irq-chips/gicv2.c",
-    "output": "/home/ssd/rand/Code/minos/drivers/irq-chips/gicv2.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/drivers/irq-chips/gicv2.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/drivers/irq-chips/gicv2.o"
   },
   {
     "arguments": [
@@ -3377,9 +2085,9 @@
       "drivers/of/of.o",
       "drivers/of/of.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/drivers/of/of.c",
-    "output": "/home/ssd/rand/Code/minos/drivers/of/of.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/drivers/of/of.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/drivers/of/of.o"
   },
   {
     "arguments": [
@@ -3415,9 +2123,9 @@
       "drivers/of/of_mm.o",
       "drivers/of/of_mm.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/drivers/of/of_mm.c",
-    "output": "/home/ssd/rand/Code/minos/drivers/of/of_mm.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/drivers/of/of_mm.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/drivers/of/of_mm.o"
   },
   {
     "arguments": [
@@ -3453,9 +2161,9 @@
       "drivers/device_id.o",
       "drivers/device_id.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/drivers/device_id.c",
-    "output": "/home/ssd/rand/Code/minos/drivers/device_id.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/drivers/device_id.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/drivers/device_id.o"
   },
   {
     "arguments": [
@@ -3491,9 +2199,9 @@
       "drivers/tty.o",
       "drivers/tty.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/drivers/tty.c",
-    "output": "/home/ssd/rand/Code/minos/drivers/tty.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/drivers/tty.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/drivers/tty.o"
   },
   {
     "arguments": [
@@ -3529,9 +2237,9 @@
       "drivers/console.o",
       "drivers/console.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/drivers/console.c",
-    "output": "/home/ssd/rand/Code/minos/drivers/console.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/drivers/console.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/drivers/console.o"
   },
   {
     "arguments": [
@@ -3564,12 +2272,12 @@
       "-D__KERNEL__",
       "-c",
       "-o",
-      "platform/fvp/fvp.o",
-      "platform/fvp/fvp.c"
+      "platform/qemu/qemu.o",
+      "platform/qemu/qemu.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/platform/fvp/fvp.c",
-    "output": "/home/ssd/rand/Code/minos/platform/fvp/fvp.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/platform/qemu/qemu.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/platform/qemu/qemu.o"
   },
   {
     "arguments": [
@@ -3605,9 +2313,9 @@
       "platform/platform.o",
       "platform/platform.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/platform/platform.c",
-    "output": "/home/ssd/rand/Code/minos/platform/platform.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/platform/platform.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/platform/platform.o"
   },
   {
     "arguments": [
@@ -3643,9 +2351,9 @@
       "virt/os/os.o",
       "virt/os/os.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/os/os.c",
-    "output": "/home/ssd/rand/Code/minos/virt/os/os.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/os/os.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/os/os.o"
   },
   {
     "arguments": [
@@ -3681,9 +2389,9 @@
       "virt/os/os_other.o",
       "virt/os/os_other.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/os/os_other.c",
-    "output": "/home/ssd/rand/Code/minos/virt/os/os_other.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/os/os_other.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/os/os_other.o"
   },
   {
     "arguments": [
@@ -3719,9 +2427,9 @@
       "virt/os/os_linux.o",
       "virt/os/os_linux.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/os/os_linux.c",
-    "output": "/home/ssd/rand/Code/minos/virt/os/os_linux.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/os/os_linux.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/os/os_linux.o"
   },
   {
     "arguments": [
@@ -3757,9 +2465,9 @@
       "virt/os/os_xnu.o",
       "virt/os/os_xnu.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/os/os_xnu.c",
-    "output": "/home/ssd/rand/Code/minos/virt/os/os_xnu.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/os/os_xnu.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/os/os_xnu.o"
   },
   {
     "arguments": [
@@ -3795,9 +2503,9 @@
       "virt/vmbox/vmbox.o",
       "virt/vmbox/vmbox.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/vmbox/vmbox.c",
-    "output": "/home/ssd/rand/Code/minos/virt/vmbox/vmbox.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/vmbox/vmbox.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/vmbox/vmbox.o"
   },
   {
     "arguments": [
@@ -3833,9 +2541,9 @@
       "virt/vmbox/vmbox_hvc.o",
       "virt/vmbox/vmbox_hvc.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/vmbox/vmbox_hvc.c",
-    "output": "/home/ssd/rand/Code/minos/virt/vmbox/vmbox_hvc.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/vmbox/vmbox_hvc.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/vmbox/vmbox_hvc.o"
   },
   {
     "arguments": [
@@ -3871,9 +2579,9 @@
       "virt/virq_chips/virq_chip.o",
       "virt/virq_chips/virq_chip.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/virq_chips/virq_chip.c",
-    "output": "/home/ssd/rand/Code/minos/virt/virq_chips/virq_chip.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/virq_chips/virq_chip.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/virq_chips/virq_chip.o"
   },
   {
     "arguments": [
@@ -3909,9 +2617,9 @@
       "virt/virq_chips/vgicv2.o",
       "virt/virq_chips/vgicv2.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/virq_chips/vgicv2.c",
-    "output": "/home/ssd/rand/Code/minos/virt/virq_chips/vgicv2.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/virq_chips/vgicv2.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/virq_chips/vgicv2.o"
   },
   {
     "arguments": [
@@ -3947,9 +2655,9 @@
       "virt/virq_chips/vgic.o",
       "virt/virq_chips/vgic.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/virq_chips/vgic.c",
-    "output": "/home/ssd/rand/Code/minos/virt/virq_chips/vgic.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/virq_chips/vgic.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/virq_chips/vgic.o"
   },
   {
     "arguments": [
@@ -3985,9 +2693,9 @@
       "virt/virq_chips/vgicv3.o",
       "virt/virq_chips/vgicv3.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/virq_chips/vgicv3.c",
-    "output": "/home/ssd/rand/Code/minos/virt/virq_chips/vgicv3.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/virq_chips/vgicv3.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/virq_chips/vgicv3.o"
   },
   {
     "arguments": [
@@ -4023,9 +2731,9 @@
       "virt/virq_chips/vaic.o",
       "virt/virq_chips/vaic.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/virq_chips/vaic.c",
-    "output": "/home/ssd/rand/Code/minos/virt/virq_chips/vaic.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/virq_chips/vaic.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/virq_chips/vaic.o"
   },
   {
     "arguments": [
@@ -4061,9 +2769,9 @@
       "virt/resource.o",
       "virt/resource.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/resource.c",
-    "output": "/home/ssd/rand/Code/minos/virt/resource.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/resource.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/resource.o"
   },
   {
     "arguments": [
@@ -4099,9 +2807,9 @@
       "virt/hypercall.o",
       "virt/hypercall.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/hypercall.c",
-    "output": "/home/ssd/rand/Code/minos/virt/hypercall.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/hypercall.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/hypercall.o"
   },
   {
     "arguments": [
@@ -4137,9 +2845,9 @@
       "virt/vdev.o",
       "virt/vdev.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/vdev.c",
-    "output": "/home/ssd/rand/Code/minos/virt/vdev.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/vdev.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/vdev.o"
   },
   {
     "arguments": [
@@ -4175,9 +2883,9 @@
       "virt/virq.o",
       "virt/virq.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/virq.c",
-    "output": "/home/ssd/rand/Code/minos/virt/virq.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/virq.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/virq.o"
   },
   {
     "arguments": [
@@ -4213,9 +2921,9 @@
       "virt/vm.o",
       "virt/vm.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/vm.c",
-    "output": "/home/ssd/rand/Code/minos/virt/vm.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/vm.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/vm.o"
   },
   {
     "arguments": [
@@ -4251,9 +2959,9 @@
       "virt/vmcs.o",
       "virt/vmcs.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/vmcs.c",
-    "output": "/home/ssd/rand/Code/minos/virt/vmcs.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/vmcs.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/vmcs.o"
   },
   {
     "arguments": [
@@ -4289,9 +2997,9 @@
       "virt/vmm.o",
       "virt/vmm.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/vmm.c",
-    "output": "/home/ssd/rand/Code/minos/virt/vmm.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/vmm.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/vmm.o"
   },
   {
     "arguments": [
@@ -4327,9 +3035,9 @@
       "virt/virtio_mmio.o",
       "virt/virtio_mmio.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/virtio_mmio.c",
-    "output": "/home/ssd/rand/Code/minos/virt/virtio_mmio.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/virtio_mmio.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/virtio_mmio.o"
   },
   {
     "arguments": [
@@ -4365,9 +3073,9 @@
       "virt/vrtc.o",
       "virt/vrtc.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/vrtc.c",
-    "output": "/home/ssd/rand/Code/minos/virt/vrtc.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/vrtc.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/vrtc.o"
   },
   {
     "arguments": [
@@ -4403,9 +3111,9 @@
       "virt/vwdt.o",
       "virt/vwdt.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/vwdt.c",
-    "output": "/home/ssd/rand/Code/minos/virt/vwdt.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/vwdt.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/vwdt.o"
   },
   {
     "arguments": [
@@ -4441,9 +3149,9 @@
       "virt/varm_timer.o",
       "virt/varm_timer.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/varm_timer.c",
-    "output": "/home/ssd/rand/Code/minos/virt/varm_timer.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/varm_timer.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/varm_timer.o"
   },
   {
     "arguments": [
@@ -4479,9 +3187,9 @@
       "virt/debug_console.o",
       "virt/debug_console.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/debug_console.c",
-    "output": "/home/ssd/rand/Code/minos/virt/debug_console.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/debug_console.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/debug_console.o"
   },
   {
     "arguments": [
@@ -4517,9 +3225,9 @@
       "virt/vmodule.o",
       "virt/vmodule.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/vmodule.c",
-    "output": "/home/ssd/rand/Code/minos/virt/vmodule.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/vmodule.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/vmodule.o"
   },
   {
     "arguments": [
@@ -4555,9 +3263,9 @@
       "virt/iommu.o",
       "virt/iommu.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/iommu.c",
-    "output": "/home/ssd/rand/Code/minos/virt/iommu.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/iommu.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/iommu.o"
   },
   {
     "arguments": [
@@ -4593,9 +3301,9 @@
       "virt/shmem.o",
       "virt/shmem.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/shmem.c",
-    "output": "/home/ssd/rand/Code/minos/virt/shmem.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/shmem.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/shmem.o"
   },
   {
     "arguments": [
@@ -4631,9 +3339,9 @@
       "virt/vm_daemon.o",
       "virt/vm_daemon.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/vm_daemon.c",
-    "output": "/home/ssd/rand/Code/minos/virt/vm_daemon.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/vm_daemon.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/vm_daemon.o"
   },
   {
     "arguments": [
@@ -4669,9 +3377,9 @@
       "virt/vm_pm.o",
       "virt/vm_pm.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/vm_pm.c",
-    "output": "/home/ssd/rand/Code/minos/virt/vm_pm.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/vm_pm.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/vm_pm.o"
   },
   {
     "arguments": [
@@ -4707,9 +3415,9 @@
       "virt/vfault.o",
       "virt/vfault.c"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/virt/vfault.c",
-    "output": "/home/ssd/rand/Code/minos/virt/vfault.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/vfault.c",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/virt/vfault.o"
   },
   {
     "arguments": [
@@ -4744,8 +3452,8 @@
       "allsymbols.o",
       "allsymbols.S"
     ],
-    "directory": "/home/ssd/rand/Code/minos",
-    "file": "/home/ssd/rand/Code/minos/allsymbols.S",
-    "output": "/home/ssd/rand/Code/minos/allsymbols.o"
+    "directory": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor",
+    "file": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/allsymbols.S",
+    "output": "/home/ssd/rand/Code/minos-workspace/minos-hypervisor/allsymbols.o"
   }
 ]

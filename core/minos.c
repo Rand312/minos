@@ -44,14 +44,18 @@ extern void mm_init(void);
 
 void boot_main(void)
 {
+	// 加载符号信息，方便 dump
 	allsymbols_init();
+	// 初始化 percpu subsystem
 	percpu_init(0);
 
 	pr_notice("Minos %s\n", MINOS_VERSION_STR);
 
+	// 确定当前 cpu_id 为 0
 	ASSERT(smp_processor_id() == 0);
-
+	// 初始化内核地址空间
 	kernel_vspace_init();
+	// 初始化物理内存管理
 	mm_init();
 
 #ifdef CONFIG_DEVICE_TREE
@@ -61,13 +65,17 @@ void boot_main(void)
 	early_init();
 	early_init_percpu();
 
+	// 分析设备树，转化为 device_node
 	arch_init();
 	arch_init_percpu();
 
+	// 平台的初始化函数，
 	platform_init();
+	// 初始化 irq_chip
 	irq_init();
 
 #ifdef CONFIG_SMP
+	// 分析设备树中的 CPU 节点，设置启动方式等等
 	smp_init();
 #endif
 	subsys_init();
@@ -76,13 +84,16 @@ void boot_main(void)
 	module_init();
 	module_init_percpu();
 
+	// 初始化每个 pcpu 的调度 list
 	sched_init();
+	// 初始化 pcpu->sched_timer，注册 resched irq，irqwork irq
 	local_sched_init();
 
 	device_init();
 	device_init_percpu();
 
 	ramdisk_init();
+	// "创建" idle_task
 	create_idle_task();
 
 #ifdef CONFIG_SMP
@@ -90,6 +101,7 @@ void boot_main(void)
 #endif
 
 #ifdef CONFIG_VIRT
+	// 创建 vmdaemon，解析设备树文件，创建虚拟机
 	virt_init();
 #endif
 	cpu_idle();
