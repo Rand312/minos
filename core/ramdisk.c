@@ -23,6 +23,7 @@ static struct ramdisk_inode *root;
 static struct ramdisk_sb *sb;
 static void *ramdisk_data;
 
+// 设置 ramdisk_start、ramdisk_end 的值，此值来源于分配给 ramdisk 的 mem_region 的 start、end，根源来自于设备树节点记录
 void set_ramdisk_address(void *start, void *end)
 {
 	ramdisk_start = start;

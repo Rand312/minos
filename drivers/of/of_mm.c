@@ -21,6 +21,7 @@
 #include <minos/memory.h>
 #include <minos/ramdisk.h>
 
+// 解析的时候，以实际的硬件为准，而不是以设备树中记录的 memory size 为准
 static int __fdt_parse_memory_info(int node, char *attr)
 {
 	int len = 0;
@@ -73,6 +74,7 @@ static int __fdt_parse_memory_info(int node, char *attr)
 	return 0;
 }
 
+// 分割出作为预留使用的 mem_region，qemu 启动时没有
 static void __fdt_parse_memreserve(void)
 {
 	int count, i, ret;
@@ -103,6 +105,7 @@ static void __fdt_parse_memreserve(void)
 }
 
 #ifdef CONFIG_VIRT
+// 分割出 vm 将要使用的 mem_region，一个 vm 对应一个 mem_region
 static void __fdt_parse_vm_mem(void)
 {
 	const char *name;
@@ -124,12 +127,14 @@ static void __fdt_parse_vm_mem(void)
 		if (!type || (strcmp(type, "virtual_machine") != 0))
 			continue;
 
+		// 获取设备树节点的 vmid
 		__of_get_u32_array(dtb_address, child, "vmid", (uint32_t *)&vmid, 1);
 
 		/*
 		 * get the memory information for the vm, each vm will
 		 * have max 10 memory region
 		 */
+		// 获取 vm 节点中记录的 memory 大小
 		len = __of_get_u64_array(dtb_address, child, "memory", array, 2 * 10);
 		if ((len <= 0) || ((len % 2) != 0)) {
 			name = fdt_get_name(dtb_address, child, NULL);
@@ -147,12 +152,15 @@ static void __fdt_parse_vm_mem(void)
 }
 #endif
 
+// 分割 mem_region 作为 minos 镜像使用的内存
 static void __fdt_parse_kernel_mem(void)
 {
 	split_memory_region(minos_start, CONFIG_MINOS_RAM_SIZE,
 			MEMORY_REGION_TYPE_KERNEL, 0);
 }
 
+// 分割出用作 ramdisk 的 mem_region
+// 从设备树中找到 ramdisk 的大小，然后分割
 static void __fdt_parse_ramdisk_mem(void)
 {
 	const fdt32_t *data;

@@ -41,6 +41,7 @@ static struct irq_desc percpu_irq_descs[PERCPU_IRQ_DESC_SIZE] = {
 	},
 };
 
+// 
 static struct irq_desc spi_irq_descs[SPI_IRQ_DESC_SIZE] = {
 	[0 ... (SPI_IRQ_DESC_SIZE - 1)] = {
 		default_irq_handler,

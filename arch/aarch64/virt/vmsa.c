@@ -39,6 +39,16 @@ static int __init_text el2_stage2_init(void)
 	uint64_t value, dcache, icache;
 	struct aa64mmfr0 *aa64mmfr0;
 
+	// AArch64 Memory Model Feature Register 0
+	// Provides information about the implemented memory model and memory management support in AArch64 state.
+	
+	// pa_range，Physical Address range supported
+		// 0b0000 32bits，4GB
+		// 0b0010 40bits，1TB
+	// t_gran_16，16KB memory translation support? 
+	// t_gran_64，64KB memory translation support? 
+	// t_gran_4，4KB memory translation support? 
+
 	value = read_id_aa64mmfr0_el1();
 	aa64mmfr0 = (struct aa64mmfr0 *)&value;
 	pr_info("aa64mmfr0: pa_range:0x%x t_gran_16k:0x%x t_gran_64k"
@@ -46,7 +56,11 @@ static int __init_text el2_stage2_init(void)
 		 aa64mmfr0->t_gran_16k, aa64mmfr0->t_gran_64k,
 		 aa64mmfr0->t_gran_4k);
 
+	// Cache Type Register，提供 cache 的架构信息
+	// IminLine bits[3:0]
 	value = read_sysreg(CTR_EL0);
+	// 这里如何计算的 ？？？？？？？
+	// 计算 dcache 和 icache 大小
 	dcache = 4 << ((value & 0xf0000) >> 16);
 	icache = 4 << ((value & 0xf));
 	pr_info("dcache_line_size:%d ichache_line_size:%d\n", dcache, icache);

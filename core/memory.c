@@ -406,6 +406,7 @@ void *__get_free_pages(int pages, int align)
 	return (void *)ptov(pfn2phy(page->pfn));
 }
 
+// 初始化 slab_hash_table
 static void slab_init(void)
 {
 	int i;
@@ -438,7 +439,13 @@ static void memory_region_init(void)
 	 * check the memory region configruation, each region should
 	 * not overlap with host memory region.
 	 */
-	// 遍历 mem_list 链表中所有的 memory_region
+	// 遍历 mem_list 链表中所有的 memory_region，
+// [       0.000000@00 000] NIC MEM: 0x000000004645a000 -> 0x0000000046600000 [0x00000000001a6000] Normal/Host
+// [       0.000000@00 000] NIC MEM: 0x0000000040000000 -> 0x0000000044000000 [0x0000000004000000] Kernel/Host
+// [       0.000000@00 000] NIC MEM: 0x0000000044000000 -> 0x000000004645a000 [0x000000000245a000] RamDisk/Host
+// [       0.000000@00 000] NIC MEM: 0x0000000086600000 -> 0x0000000140000000 [0x00000000b9a00000] Normal/Host
+// [       0.000000@00 000] NIC MEM: 0x0000000046600000 -> 0x0000000086600000 [0x0000000040000000] VM/VM1
+
 	list_for_each_entry(re, &mem_list, list) {
 		if (re->type == MEMORY_REGION_TYPE_KERNEL) {
 			if ((re->phy_base >= minos_start) &&

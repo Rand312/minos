@@ -216,6 +216,7 @@ static int __init_text aarch64_init_percpu(void)
 {
 	uint64_t reg;
 
+	// 读取当前的异常等级
 	reg = read_CurrentEl();
 	pr_notice("current EL is %d\n", GET_EL(reg));
 
@@ -225,6 +226,7 @@ static int __init_text aarch64_init_percpu(void)
 	 * the cpu
 	 */
 #ifdef CONFIG_VIRT
+	// 设置 HCR.IMO HCR.FMO
 	reg = read_sysreg64(HCR_EL2);
 	reg |= HCR_EL2_IMO | HCR_EL2_FMO | HCR_EL2_AMO;
 	write_sysreg64(reg, HCR_EL2);

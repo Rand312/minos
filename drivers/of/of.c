@@ -1025,7 +1025,7 @@ struct device_node *of_parse_device_tree(void *dtb)
 	return node;
 }
 
-// 分析设备树
+// 解析设备树
 void of_parse_host_device_tree(void)
 {
 	of_root_node = of_parse_device_tree(dtb_address);

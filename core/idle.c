@@ -143,6 +143,7 @@ void cpu_idle(void)
 	start_system_task();
 
 	set_os_running();
+	
 	local_irq_enable();
 
 	pcpu_irqwork(pcpu->pcpu_id);
@@ -154,6 +155,7 @@ void cpu_idle(void)
 		 * need to check whether the pcpu can go to idle
 		 * state to avoid the interrupt happend before wfi
 		 */
+		// 如果当前不需要调度 且 此pcpu可以idle
 		while (!need_resched() && pcpu_can_idle(pcpu)) {
 			local_irq_disable();
 			if (pcpu_can_idle(pcpu)) {

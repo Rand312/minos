@@ -107,6 +107,7 @@ void boot_main(void)
 	cpu_idle();
 }
 
+// 启动次级CPU
 void boot_secondary(int cpuid)
 {
 	pr_notice("cpu-%d is up\n", cpuid);
