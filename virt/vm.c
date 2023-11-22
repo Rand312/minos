@@ -848,6 +848,7 @@ static int create_vcpus(struct vm *vm)
 	return 0;
 }
 
+// vm 
 static void vm_open_ramdisk_file(struct vm *vm, struct vmtag *vme)
 {
 	if (!vm_is_native(vm))
@@ -882,12 +883,14 @@ static struct vm *__create_vm(struct vmtag *vme)
 		return NULL;
 	}
 
+	// 创建 vm struct
 	vm = malloc(sizeof(*vm));
 	if (!vm)
 		return NULL;
 
 	vme->nr_vcpu = MIN(vme->nr_vcpu, VM_MAX_VCPU);
 	memset(vm, 0, sizeof(struct vm));
+	// 创建 vcpu
 	vm->vcpus = malloc(sizeof(struct vcpu *) * vme->nr_vcpu);
 	if (!vm->vcpus) {
 		free(vm);
@@ -911,9 +914,11 @@ static struct vm *__create_vm(struct vmtag *vme)
 	 * open the ramdisk file if the vm need load from
 	 * the ramdisk.
 	 */
+	
 	vm_open_ramdisk_file(vm, vme);
 
 	spin_lock(&vms_lock);
+	// 注册该 vm 到 vms
 	vms[vme->vmid] = vm;
 	list_add_tail(&vm_list, &vm->vm_list);
 	total_vms++;
@@ -938,7 +943,7 @@ struct vm *create_vm(struct vmtag *vme, struct device_node *node)
 		if (vme->vmid == 0)
 			return NULL;
 	}
-
+	
 	vm = __create_vm(vme);
 	if (!vm)
 		return NULL;
@@ -1025,11 +1030,11 @@ static void *create_native_vm_of(struct device_node *node, void *arg)
 	return create_vm(&vmtag, node);
 }
 
+// 解析设备树 vms 节点，创建 vm
 static void parse_and_create_vms(void)
 {
 #ifdef CONFIG_DEVICE_TREE
 	struct device_node *node;
-
 	node = of_find_node_by_name(of_root_node, "vms");
 	if (node)
 		of_iterate_all_node_loop(node, create_native_vm_of, NULL);

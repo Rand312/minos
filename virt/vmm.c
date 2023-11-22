@@ -106,6 +106,7 @@ int destroy_guest_mapping(struct mm_struct *mm, unsigned long vir, size_t size)
 	return ret;
 }
 
+// 分配一个 vmm_area 结构体，记录 base、size 信息，只是记录信息，没有实际的内存分配
 static struct vmm_area *__alloc_vmm_area_entry(unsigned long base, size_t size)
 {
 	struct vmm_area *va;
@@ -745,6 +746,8 @@ out:
 	return -ENOMEM;
 }
 
+// 创建 vm 的 vmm_area
+// vmm_area 是虚拟地址空间
 static void vmm_area_init(struct mm_struct *mm, int bit64)
 {
 	unsigned long base, size;
@@ -805,10 +808,13 @@ static int vm_memory_init(struct vm *vm)
 	 * find the memory region which belongs to this
 	 * VM and register to this VM.
 	 */
+	// 遍历 mem_region
 	for_each_memory_region(region) {
+		// 寻找为当前 vm 分配的 mem_region，如果不是 continue
 		if (region->vmid != vm->vmid)
 			continue;
 
+		// 切割出一个 vmm_area，其 base、size 为 mem_region 大小
 		va = split_vmm_area(&vm->mm, region->phy_base,
 				region->size, VM_NATIVE_NORMAL);
 		if (!va)
@@ -819,6 +825,7 @@ static int vm_memory_init(struct vm *vm)
 	 * check whether the entry address, setup_data address and load
 	 * address are in the valid memory region.
 	 */
+
 	ret = check_vm_address(vm, (unsigned long)vm->load_address);
 	ret += check_vm_address(vm, (unsigned long)vm->entry_point);
 	ret += check_vm_address(vm, (unsigned long)vm->setup_data);
@@ -835,6 +842,7 @@ int vm_mm_struct_init(struct vm *vm)
 	init_list(&mm->vmm_area_free);
 	init_list(&mm->vmm_area_used);
 
+	// 分配pgd页表
 	mm->pgdp = arch_alloc_guest_pgd();
 	if (mm->pgdp == NULL) {
 		pr_err("No memory for vm page table\n");
@@ -1012,6 +1020,7 @@ struct mem_block *vmm_alloc_memblock(void)
 	return mb;
 }
 
+// 将空闲的 mem_region 转换为 block，作为 guest vm
 void vmm_init(void)
 {
 	struct memory_region *region;
@@ -1027,12 +1036,14 @@ void vmm_init(void)
 	 */
 	// 对于每一个 memory_region
 	list_for_each_entry(region, &mem_list, list) {
+		// 遍历所有的空闲内存，准备全部用作 guest vm，转换成 block 形式
 		if (region->type != MEMORY_REGION_TYPE_NORMAL)
 			continue;
 
 		/*
 		 * block section need BLOCK align.
 		 */
+		// 如果该段 mem_region 小于一个 block，放过它
 		start = BALIGN(region->phy_base, BLOCK_SIZE);
 		end = ALIGN(region->phy_base + region->size, BLOCK_SIZE);
 		if (end - start <= 0) {
