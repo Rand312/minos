@@ -52,7 +52,9 @@ static DECLARE_BITMAP(vmid_bitmap, CONFIG_MAX_VM);
 
 static int aff_current;
 static int native_vcpus;
+// 定义 vcpu 亲和性位图，位图大小为 pcpu 数量
 DECLARE_BITMAP(vcpu_aff_bitmap, NR_CPUS);
+// 定义相关锁
 DEFINE_SPIN_LOCK(affinity_lock);
 
 #define VM_NR_CPUS_CLUSTER 256
@@ -63,7 +65,7 @@ static inline int vcpu_is_offline(struct vcpu *vcpu)
 	return check_vcpu_state(vcpu, VCPU_STATE_SUSPEND);
 }
 
-// 
+// 使得 vcpu 上线，也就是将该 vcpu 对应的 task 添加到 pcpu 的 ready list 上面去
 static void vcpu_online(struct vcpu *vcpu)
 {
 	// 确保此 vcpu 是离线的
@@ -115,8 +117,9 @@ int vcpu_power_on(struct vcpu *caller, unsigned long affinity,
 	if (vcpu_is_offline(vcpu)) {
 		pr_notice("vcpu-%d of vm-%d power on 0x%p\n",
 				vcpu->vcpu_id, vcpu->vm->vmid, entry);
-		// 调用 os->ops->vcpu_power_on 方法
+		// 调用 os->ops->vcpu_power_on 方法，NOTE 不是 platform 的方法
 		os_vcpu_power_on(vcpu, ULONG(entry));
+		// 
 		vcpu_online(vcpu);
 	// 错误状态：当前 vcpu 处于非离线状态
 	} else {
@@ -127,12 +130,13 @@ int vcpu_power_on(struct vcpu *caller, unsigned long affinity,
 	return 0;
 }
 
-// 
+// arch_vcpu_state_save
 void vcpu_context_save(struct task *task)
 {
 	save_vcpu_vmodule_state(task_to_vcpu(task));
 }
 
+// arch_vcpu_state_restore
 void vcpu_context_restore(struct task *task)
 {
 	restore_vcpu_vmodule_state(task_to_vcpu(task));
@@ -154,7 +158,7 @@ static int vcpu_can_idle(struct vcpu *vcpu)
 	return 1;
 }
 
-// 
+// vcpu idle，即等待 vcpu_event 事件
 int vcpu_idle(struct vcpu *vcpu)
 {
 	return wait_event(&vcpu->vcpu_event, vcpu_can_idle(vcpu), 0);
@@ -421,9 +425,12 @@ static int vcpu_affinity_init(void)
 	int i;
 	struct vm *vm;
 
+	// 清空位图设置
 	bitmap_clear(vcpu_aff_bitmap, 0, NR_CPUS);
 
+	// 遍历所有的 vm
 	for_each_vm(vm) {
+		// 
 		for (i = 0; i < vm->vcpu_nr; i++)
 			set_bit(vm->vcpu_affinity[i], vcpu_aff_bitmap);
 	}
@@ -956,6 +963,7 @@ struct vm *create_vm(struct vmtag *vme, struct device_node *node)
 		goto release_vm;
 	}
 
+	// qemu 平台没有
 	iommu_vm_init(vm);
 
 	ret = create_vcpus(vm);
@@ -965,11 +973,14 @@ struct vm *create_vm(struct vmtag *vme, struct device_node *node)
 		goto release_vm;
 	}
 
+	// vm1 具有 host-vm 属性，为 host_vm
 	if ((vm->flags & VM_FLAGS_HOST)) {
 		ASSERT(host_vm == NULL);
 		host_vm = vm;
 	}
 
+	// virq_create_vm，初始化 virq_struct 结构体
+	// hostvm 会调用 qemu_setup_hvm
 	if (do_hooks((void *)vm, NULL, OS_HOOK_CREATE_VM)) {
 		pr_err("create vm failed in hook function\n");
 		goto release_vm;

@@ -124,6 +124,7 @@ int parse_vm_info_of(struct device_node *node, struct vmtag *vmtag)
 	if (of_get_bool(node, "no_of_resource"))
 		vmtag->flags |= VM_FLAGS_NO_OF_RESOURCE;
 
+	// vm1 具有该属性
 	if (of_get_bool(node, "host_vm"))
 		vmtag->flags |= VM_FLAGS_HOST;
 

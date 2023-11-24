@@ -844,7 +844,7 @@ int vm_mm_struct_init(struct vm *vm)
 
 	// 分配pgd页表
 	mm->pgdp = arch_alloc_guest_pgd();
-	if (mm->pgdp == NULL) {
+	if (mm->pgdp == NULL) { 
 		pr_err("No memory for vm page table\n");
 		return -ENOMEM;
 	}

@@ -42,6 +42,7 @@ static int qemu_setup_hvm(void *item, void *data)
 	 * pci_bus 0000:00: root bus resource [mem 0x10000000-0x3efeffff]
 	 * pci_bus 0000:00: root bus resource [mem 0x8000000000-0xffffffffff]
 	 */
+	// 分割三个 vmm_area 出来再分别进行 stage2 映射
 	split_vmm_area(&vm->mm, 0x0, 0x10000, VM_GUEST_IO | VM_RW);
 	split_vmm_area(&vm->mm, 0x10000000, 0x2EFF0000,
 			VM_GUEST_IO | VM_RW | VM_HUGE);
