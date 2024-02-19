@@ -602,6 +602,8 @@ int sched_init(void)
 	return 0;
 }
 
+// 它用于唤醒（wake up）被中断（interrupted）的进程或线程
+
 static int wake_up_interrupted(struct task *task,
 		long pend_state, int event, void *data)
 {

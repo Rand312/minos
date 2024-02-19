@@ -85,9 +85,9 @@ early_initcall(tid_early_init);
 static void task_timeout_handler(unsigned long data)
 {
 	struct task *task = (struct task *)data;
-
+	// MARK，这是什么意思？？？
 	wake_up_timeout(task);
-	// 设置 __TIF_NEED_RESCHED 标志
+	// 设置 __TIF_NEED_RESCHED 标志，需要 resched，异常返回时检查是否需要 resched
 	set_need_resched();
 }
 
@@ -100,6 +100,7 @@ static void task_init(struct task *task, char *name,
 	 * to setup the stack information of idle task, by
 	 * default the kernel stack will set to stack top.
 	 */
+	// 如果不是 idle task，执行下面的操作
 	if (!(opt & TASK_FLAGS_IDLE)) {
 		task->stack_bottom = stack;
 		task->stack_top = stack + stk_size;
@@ -266,21 +267,21 @@ struct task *__create_task(char *name,
 		return NULL;
 	}
 
-	// 创建 do_hooks ？？？？？
+	// 目前没做什么实际的事情
 	task_create_hook(task);
 
 	/*
 	 * vcpu task will have it own arch_init_task function which
 	 * is called arch_init_vcpu()
 	 */
-	// 
+	// 如果不是 vcpu 类型的 task
 	if (!(task->flags & TASK_FLAGS_VCPU))
 		arch_init_task(task, (void *)func, 0, task->pdata);
 
 	/*
 	 * start the task if need auto started.
 	 */
-	// 如果没有设置自动开始
+	// 如果没有设置自动开始，vcpu task 具有该标志
 	if (!(task->flags & TASK_FLAGS_NO_AUTO_START))
 		// 将该 task 加入到某个 pcpu 的 read_list
 		task_ready(task, 0);
@@ -303,6 +304,7 @@ struct task *create_task(char *name,
 		unsigned long opt,
 		void *arg)
 {
+	// 数字越小，优先级越高
 	if (prio < 0) {
 		if (opt & OS_PRIO_VCPU)
 			prio = OS_PRIO_VCPU;
