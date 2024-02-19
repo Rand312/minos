@@ -23,6 +23,14 @@
 	.section __elx_vectors, "ax"
 	.balign 8
 
+/*
+.macro vfunc name：这行代码定义了一个汇编宏，命名为vfunc，它接受一个参数name。
+.global \name：这行代码使用宏参数name，将该参数作为标识符，并使用.global声明该标识符为全局可见。这样，在链接过程中，其他代码也可以访问并调用这个函数。
+.type \name "function"：这行代码使用宏参数name，将该参数作为标识符，并使用.type指令将该标识符的类型设置为函数。这样，在链接时，编译器和链接器可以正确地处理这个标识符，并进行相应的符号解析和地址分配。
+.cfi_startproc：这行代码表示函数的开始，它用于生成调试信息（CFI，Call Frame Information），以便在调试时能够正确地跟踪函数调用栈。
+\name:：这行代码使用宏参数name，将该参数作为标识符，并在这里定义一个标号。标号用于标识代码中的特定位置，以便在跳转或其他控制流操作中进行引用。
+.endm：这行代码表示宏定义的结束。
+*/
 .macro vfunc name
 	.global \name
 	.type \name "function"

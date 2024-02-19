@@ -40,7 +40,7 @@ struct pcpu {
 	struct task *running_task;
 	struct task *idle_task;
 	uint32_t nr_pcpu_task;
-
+	// ready list 位图，一个 pcpu 有 8 个优先级队列，如果某个队列上有 task，那么位图对应的位置 1
 	uint8_t local_rdy_grp;
 	uint8_t padding[3];
 	struct list_head ready_list[OS_PRIO_MAX];

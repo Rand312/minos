@@ -5,6 +5,8 @@
 
 extern void cond_resched(void);
 
+// 抢占记数如果为 0 表示允许抢占
+// 反之如果不为 0，则表示不允许抢占
 static inline int preempt_allowed(void)
 {
 	return !get_current_task_info()->preempt_count;
