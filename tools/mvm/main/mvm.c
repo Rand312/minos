@@ -387,20 +387,20 @@ static int create_and_init_vm(struct vm *vm)
 {
 	char path[32];
 	int retry;
-
+	// 打开 vm0-fd 句柄
 	vm->vm0_fd = open(DEV_MVM_HOST, O_RDWR | O_NONBLOCK);
 	if (vm->vm0_fd <= 0) {
 		pr_err("open VM0 file fail %d\n", vm->vm0_fd);
 		return -EIO;
 	}
-
+	// ioctl 创建 vm
 	vm->vmid = create_new_vm(vm);
 	if (vm->vmid <= 0)
 		return -EFAULT;
 
 	memset(path, 0, sizeof(path));
 	sprintf(path, DEV_MVM_PATH"%d", vm->vmid);
-
+	// 尝试打开 新创建的 vm 在 vm1 /dev/mvm/mvm-x
 	for (retry = 0; retry < 5; retry++) {
 		vm->vm_fd = open(path, O_RDWR | O_NONBLOCK);
 		if (vm->vm_fd < 0)
@@ -705,14 +705,14 @@ static int mvm_main(void)
 {
 	int ret;
 	struct vm *vm;
-
+	// 当前进程收到下列信号，停止 vm
 	signal(SIGTERM, signal_handler);
 	signal(SIGBUS, signal_handler);
 	signal(SIGSEGV, signal_handler);
 	signal(SIGSTOP, signal_handler);
 	signal(SIGTSTP, signal_handler);
 	signal(SIGINT, signal_handler);
-
+	// 创建 vm 结构体，这里的 vm 结构体是用户态自己的
 	vm = mvm_vm = (struct vm *)calloc(1, sizeof(struct vm));
 	if (!vm)
 		return -ENOMEM;
@@ -729,16 +729,18 @@ static int mvm_main(void)
 	 * get all the necessary vm options for this VM, then
 	 * check the whether this VM has been config correctly
 	 */
+	// 从 mvm 命令行中获取 vm 参数
 	ret = mvm_parse_option_group(OPTION_GRP_VM, vm);
 	if (ret)
 		goto error_option;
 
+	// 检查参数是否有遗漏的
 	ret = mvm_check_vm_config(vm);
 	if (ret) {
 		pr_err("option checking fail\n");
 		goto error_option;
 	}
-
+	
 	ret = os_early_init(vm);
 	if (ret) {
 		pr_err("os early init failed %d\n", ret);
@@ -751,7 +753,7 @@ static int mvm_main(void)
 		pr_err("mevent init fail\n");
 		goto error_option;
 	}
-
+	
 	ret = create_and_init_vm(vm);
 	if (ret) {
 		pr_err("failed to create vm %d\n", ret);
@@ -762,6 +764,7 @@ static int mvm_main(void)
 	 * create the device which is passed by the
 	 * argument
 	 */
+	// no
 	os_create_resource(vm);
 	mvm_parse_option_group(OPTION_GRP_VDEV, vm);
 

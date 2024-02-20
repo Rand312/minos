@@ -554,7 +554,7 @@ static int linux_early_init(struct vm *vm)
 		else
 			vm->entry = vm->mem_start + 0x80000;
 	}
-
+	// mvm.sh 脚本中未给出
 	if (vm->setup_data == 0) {
 		vm->setup_data = vm->mem_start +
 			vm->mem_size - MEM_BLOCK_SIZE;
@@ -571,4 +571,5 @@ struct vm_os os_linux = {
 	.setup_vm_env   = linux_setup_env,
 	.vm_exit	= linux_vm_exit,
 };
+// 这里就是定义了一个 os type 为 linux 的 vm_os 结构体
 DEFINE_OS(os_linux);

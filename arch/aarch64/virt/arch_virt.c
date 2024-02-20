@@ -38,6 +38,7 @@ static uint32_t mpidr_el1[NR_CPUS];
 void flush_all_tlb_mm(struct mm_struct *mm)
 {
 	struct vm *vm = container_of(mm, struct vm, mm);
+	// 这里看出 mm_struct 中存放的 pgdp 就是 vttbr 使用的页表
 	uint64_t vttbr = vtop(mm->pgdp) | ((uint64_t)vm->vmid << 48);
 	unsigned long flags;
 	uint64_t old_vttbr;

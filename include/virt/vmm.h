@@ -29,8 +29,8 @@ struct vm_iommu {
  * is the phsical address of this vmm_area
  */
 struct vmm_area {
-	unsigned long start;
-	unsigned long end;
+	unsigned long start;   // 应是 ipa 地址
+	unsigned long end;     // 应是 ipa 地址
 	unsigned long pstart;
 	int flags;
 	int vmid;			/* 0 - for self other for VM */

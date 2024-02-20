@@ -985,11 +985,11 @@ static int ioctl_create_vm(struct file *filp, void __user *p)
 {
 	int vmid;
 	struct vmtag vmtag;
-
+	// 从用户态获取 vm 配置信息
 	vmid = copy_from_user(&vmtag, p, sizeof(struct vmtag));
 	if (vmid)
 		return -EACCES;
-
+	
 	vmid = create_new_vm(&vmtag);
 	if (vmid <= 0) {
 		pr_err("unable to create new guest VM\n");

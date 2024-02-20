@@ -157,13 +157,13 @@ repeat:
 			free(tmp);
 			goto repeat;
 		}
-
+		// vmm_area_free 按照从小到大的顺序排列
 		if (size <= (tmp->end - tmp->start)) {
 			list_insert_before(&tmp->list, &va->list);
 			break;
 		}
 	}
-
+	// 走到这里说明要插入的 area 是最大的，上面循环并未插入，这里补充将其挂入链表最后
 	if (va->list.next == NULL)
 		list_add_tail(&mm->vmm_area_free, &va->list);
 
@@ -230,6 +230,7 @@ int release_vmm_area(struct mm_struct *mm, struct vmm_area *va)
 	spin_lock(&mm->lock);
 	// 将该 vma 结构体从 mm->vmm_area_used 链表中移除
 	list_del(&va->list);
+	// 将该 vma 结构体挂入 vmm_area_free 链表
 	__add_free_vmm_area(mm, va);
 	spin_unlock(&mm->lock);
 
@@ -276,13 +277,14 @@ int map_vmm_area(struct mm_struct *mm,
 	int ret;
 
 	switch (va->flags & VM_MAP_TYPE_MASK) {
-	case VM_MAP_PT:
+	case VM_MAP_PT:  // 建立直接映射
 		va->pstart = va->start;
 		ret = vmm_area_map_ln(mm, va);
 		break;
 	case VM_MAP_BK:
 		ret = vmm_area_map_bk(mm, va);
 		break;
+	// create_hvm_shmem_map 的时候走 default
 	default:
 		va->pstart = pbase;
 		ret = vmm_area_map_ln(mm, va);
@@ -448,6 +450,7 @@ static void dump_vmm_areas(struct mm_struct *mm)
 }
 
 //将 vmid 为 vm->vmid 但是位于 vm0 的内存 归还给 vm0
+// 释放 vmm_area 内存，这部分内存属于 vm（vmid 不是 vm0），但是位于（挂在）vm0 的链表上
 static void release_vmm_area_in_vm0(struct vm *vm)
 {
 	struct vm *vm0 = get_host_vm();
@@ -457,7 +460,7 @@ static void release_vmm_area_in_vm0(struct vm *vm)
 	spin_lock(&mm->lock);
 	// 遍历 vm0 正在使用的 vmm_area
 	list_for_each_entry_safe(va, n, &mm->vmm_area_used, list) {
-		// 如果该 vmm_area 属于 vm0，continue，也就是要寻找不属于 vm0 的 vmm_area
+		// 如果不等于 vm->vmid，说明该 vmm_area 属于 vm0，continue，也就是要寻找不属于 vm0 的 vmm_area
 		if (va->vmid != vm->vmid)
 			continue;
 		
@@ -469,9 +472,9 @@ static void release_vmm_area_in_vm0(struct vm *vm)
 		if (!(va->flags & VM_SHARED))
 			free_pages((void *)va->pstart);
 		
-		// 将该 vmm_area 从当前的 vmm_area_used 链表中删除
+		// 将该 vmm_area 从 vm0 的 vmm_area_used 链表中删除
 		list_del(&va->list);
-		// 将该 vmm_area 添加到 vm0 的 vmm_area_free 链表中，也就相当于归还内存了
+		// 将该 vmm_area 添加到 vm0 的 vmm_area_free 链表中
 		__add_free_vmm_area(mm, va);
 	}
 	spin_unlock(&mm->lock);
@@ -523,7 +526,7 @@ void release_vm_memory(struct vm *vm)
 	}
 
 	/* release the vm0's memory belong to this vm */
-	// 归还 vm0 的内存
+	// 释放 vm0 中的内存，但是这部分内存属于其他 vm
 	release_vmm_area_in_vm0(vm);
 
 	// 释放所有级别的页表内存，这里因为特殊设计，将所有 page 链起来，所以直接遍历链表释放相关内存即可，不用遍历页表然后释放
@@ -550,7 +553,8 @@ unsigned long create_hvm_shmem_map(struct vm *vm,
 	return va->start;
 }
 
-// 
+// src 是 guest 中的一个 va，具体来说是 Linux 内核中的一个虚拟地址
+// 此函数要从 guest Linux 内核中拷贝一些数据到 hypervisor
 int copy_from_guest(void *target, void __guest *src, size_t size)
 {
 	unsigned long start = (unsigned long)src;
@@ -567,13 +571,13 @@ int copy_from_guest(void *target, void __guest *src, size_t size)
 		
 		// 将 gva 转换为 pa，经过了 stage1 和 stage2 的转换
 		pa = guest_va_to_pa(start, 1);
-		// 创建直接映射
+		// 创建直接映射，将 pa 物理地址映射为在 (hypervisor)EL2 能够访问的虚拟地址
 		ret = create_host_mapping(PAGE_ALIGN(ptov(pa)),
 				PAGE_ALIGN(pa), PAGE_SIZE, VM_RO);
 		if (ret)
 			return ret;
 		
-		// 拷贝
+		// 拷贝数据
 		memcpy(target, (void *)vtop(pa), copy_size);
 		destroy_host_mapping(PAGE_ALIGN(ptov(pa)), PAGE_SIZE);
 
@@ -586,6 +590,7 @@ int copy_from_guest(void *target, void __guest *src, size_t size)
 }
 
 // 通过 walk pagetable 来进行 stage2 的地址转换
+// 将 ipa 转换为 pa
 int translate_guest_ipa(struct mm_struct *mm,
 		unsigned long offset, unsigned long *pa)
 {
@@ -601,6 +606,8 @@ int translate_guest_ipa(struct mm_struct *mm,
 // mm 为 vmx，即 guest_vm->mm
 // hvm_mmap_base，vm0 的 vmm_area->start
 // offset，guest_vm base addr
+
+// do_vm_mmap(&vm->mm, va->start, offset, size);
 static int do_vm_mmap(struct mm_struct *mm, unsigned long hvm_mmap_base,
 		unsigned long offset, unsigned long size)
 {
@@ -624,7 +631,7 @@ static int do_vm_mmap(struct mm_struct *mm, unsigned long hvm_mmap_base,
 			return -EPERM;
 		}
 
-		// 将该段物理内存区域映射到 vm0，使得 vm0 可以访问 guest vm
+		// 创建该 vm 对于该段内存在 stage2 的映射关系
 		ret = create_guest_mapping(mm0, hvm_mmap_base,
 				pa, MEM_BLOCK_SIZE, VM_NORMAL | VM_RW);
 		if (ret) {
@@ -650,7 +657,8 @@ static int do_vm_mmap(struct mm_struct *mm, unsigned long hvm_mmap_base,
  * size - the size need to mapped
  */
 
-// 将 guest_vm 中 [offset, offset+size) 这一段内存区域对应的物理内存 映射到 vm0 
+// 为 [offset, offset+size) 这一段内存区域创建 stage2 映射
+// 从后面的代码反向推理，offset 应该是一个 ipa 地址，MARK，待通过 Linux 验证
 struct vmm_area *vm_mmap(struct vm *vm, unsigned long offset, size_t size)
 {
 	struct vm *vm0 = get_host_vm();
@@ -698,7 +706,7 @@ static int __alloc_vm_memory(struct mm_struct *mm, struct vmm_area *va)
 
 	va->b_head = NULL;
 	va->flags |= VM_MAP_BK;
-	// 计算该 vmm_area 有多少个 mem_block
+	// 计算该 vmm_area 大小等于多少个 mem_block
 	count = VMA_SIZE(va) >> MEM_BLOCK_SHIFT;
 
 	/*
@@ -711,6 +719,7 @@ static int __alloc_vm_memory(struct mm_struct *mm, struct vmm_area *va)
 		if (!block)
 			return -ENOMEM;
 
+		// 头插法到 va->b_head 链表
 		block->next = va->b_head;
 		va->b_head = block;
 	}
@@ -724,16 +733,18 @@ int alloc_vm_memory(struct vm *vm)
 	struct mm_struct *mm = &vm->mm;
 	struct vmm_area *va;
 
+	// 如果是刚创建 vm 时走到这里的话，
+		// vmm_area_used 链表中应该只有一个 vma 结构，此结构是从整体的 ipa vma 中 split 下来的，见 guest_mm_init 函数流程
 	list_for_each_entry(va, &mm->vmm_area_used, list) {
 		if (!(va->flags & VM_NORMAL))
 			continue;
-
+		// 从 block 中分配内存
 		if (__alloc_vm_memory(mm, va)) {
 			pr_err("alloc memory for vm-%d failed\n", vm->vmid);
 			goto out;
 		}
 
-		// 
+		// 建立 stage2 映射
 		if (map_vmm_area(mm, va, 0)) {
 			pr_err("map memory for vm-%d failed\n", vm->vmid);
 			goto out;
@@ -748,6 +759,7 @@ out:
 
 // 创建 vm 的 vmm_area
 // vmm_area 是虚拟地址空间
+// 
 static void vmm_area_init(struct mm_struct *mm, int bit64)
 {
 	unsigned long base, size;
@@ -801,6 +813,7 @@ static int vm_memory_init(struct vm *vm)
 	struct vmm_area *va;
 	int ret = 0;
 
+	// mvm 创建的 vm 直接返回 0
 	if (!vm_is_native(vm))
 		return 0;
 
@@ -848,7 +861,7 @@ int vm_mm_struct_init(struct vm *vm)
 		pr_err("No memory for vm page table\n");
 		return -ENOMEM;
 	}
-
+	// 分配和初始化 vma 结构体
 	vmm_area_init(mm, !vm_is_32bit(vm));
 
 	/*
@@ -981,7 +994,7 @@ static int get_memblock_from_section(struct block_section *bs, uint32_t *bfn)
 
 struct mem_block *vmm_alloc_memblock(void)
 {
-	struct block_section *bs;
+	struct block_ section *bs;
 	struct mem_block *mb;
 	int success = 0, ret;
 	uint32_t bfn = 0;
@@ -994,7 +1007,7 @@ struct mem_block *vmm_alloc_memblock(void)
 			if (ret == 0) {
 				success = 1;
 				break;
-			} else {
+			} else { 
 				pr_err("memory block content wrong\n");
 			}
 		}

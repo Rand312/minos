@@ -163,6 +163,7 @@ unsigned long vm_create_vmcs(struct vm *vm)
 		return 0;
 
 	size = VMCS_SIZE(vm->vcpu_nr);
+	// 从 shmem block 分配内存，这里返回的是 el2 地址
 	base = alloc_shmem(PAGE_NR(size));
 	if (!base)
 		return 0;

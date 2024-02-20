@@ -70,7 +70,7 @@ static void vcpu_online(struct vcpu *vcpu)
 {
 	// 确保此 vcpu 是离线的
 	ASSERT(vcpu_is_offline(vcpu));
-	// 将该 vcpu 对应的 task 添加到某个 pcpu read_list 上面去
+	// 将该 vcpu 对应的 task 添加到某个 pcpu ready_list 上面去，不需要抢占
 	task_ready(vcpu->task, 0);
 }
 
@@ -105,7 +105,7 @@ int vcpu_power_on(struct vcpu *caller, unsigned long affinity,
 
 	// 获取 vcpu_id
 	cpuid = affinity_to_vcpuid(caller->vm, affinity);
-	// 获取 vcpu 指针
+	// 获取 vm 中第 cpuid 个 vcpu
 	vcpu = get_vcpu_in_vm(caller->vm, cpuid);
 	if (!vcpu) {
 		pr_err("no such:%d->0x%x vcpu for this VM %s\n",
@@ -119,7 +119,7 @@ int vcpu_power_on(struct vcpu *caller, unsigned long affinity,
 				vcpu->vcpu_id, vcpu->vm->vmid, entry);
 		// 调用 os->ops->vcpu_power_on 方法，NOTE 不是 platform 的方法
 		os_vcpu_power_on(vcpu, ULONG(entry));
-		// 
+		// vcpu task 挂入 pcpu
 		vcpu_online(vcpu);
 	// 错误状态：当前 vcpu 处于非离线状态
 	} else {
@@ -430,7 +430,7 @@ static int vcpu_affinity_init(void)
 
 	// 遍历所有的 vm
 	for_each_vm(vm) {
-		// 
+		// 如果某个 vm 的 vcpu 亲和 pcpu，那么将 pcpu 对应的位置 1
 		for (i = 0; i < vm->vcpu_nr; i++)
 			set_bit(vm->vcpu_affinity[i], vcpu_aff_bitmap);
 	}
@@ -496,7 +496,7 @@ static int vmtag_check_and_config(struct vmtag *tag)
 	size = tag->mem_size;
 	if (tag->mem_base == 0)
 		tag->mem_base = GVM_NORMAL_MEM_START;
-
+	
 	if (!vmm_has_enough_memory(size)) {
 		pr_err("no enough memory for guest\n");
 		return -ENOMEM;
@@ -607,7 +607,8 @@ int start_guest_vm(struct vm *vm)
 	 */
 	return do_start_vm(vm);
 }
-
+// 之前初始化创建的 vma 结构体是整个 ipa 空间大小
+// 这里切出一个小的，用于创建 vm 时指定的 base,size；并且实际分配内存
 static int guest_mm_init(struct vm *vm, uint64_t base, uint64_t size)
 {
 	if (split_vmm_area(&vm->mm, base, size, VM_GUEST_NORMAL) == NULL) {
@@ -637,7 +638,7 @@ int create_vm_mmap(int vmid,  unsigned long offset,
 
 	return -EINVAL;
 }
-
+// 这个 tag 应该是 guest 中的一个 内核地址
 int create_guest_vm(struct vmtag __guest *tag)
 {
 	int ret = 0;
@@ -645,6 +646,7 @@ int create_guest_vm(struct vmtag __guest *tag)
 	struct vmtag vmtag;
 
 	memset(&vmtag, 0, sizeof(struct vmtag));
+	// 从 guest kernel 中获取 vmtag 信息，MARK，guest 和 host 对 vmtag 的定义不一样
 	ret = copy_from_guest(&vmtag, tag, sizeof(struct vmtag));
 	if (ret != 0) {
 		pr_err("copy vmtag from guest failed\n");
@@ -858,6 +860,7 @@ static int create_vcpus(struct vm *vm)
 // vm 
 static void vm_open_ramdisk_file(struct vm *vm, struct vmtag *vme)
 {
+	// mvm 创建的 vm，不是 native
 	if (!vm_is_native(vm))
 		return;
 
@@ -880,6 +883,7 @@ static void vm_open_ramdisk_file(struct vm *vm, struct vmtag *vme)
 	}
 }
 
+// 设置 vm 结构体
 static struct vm *__create_vm(struct vmtag *vme)
 {
 	struct vm *vm;
@@ -940,13 +944,14 @@ struct vm *create_vm(struct vmtag *vme, struct device_node *node)
 {
 	int ret = 0;
 	struct vm *vm;
-
+	// 
 	if (vme->vmid != 0)  {
 		pr_notice("request vmid %d\n", vme->vmid);
 		if (test_and_set_bit(vme->vmid, vmid_bitmap))
 			return NULL;
+	// MARK，调试的时候发现 mvm 走这里，vmid 应该为 -1 ？？？？？？？
 	} else {
-		vme->vmid = alloc_new_vmid();
+		vme->vmid = alloc_new_vmid();  // 从 vmid bitmap 中分配一个 vmid
 		if (vme->vmid == 0)
 			return NULL;
 	}
@@ -1008,7 +1013,7 @@ static inline const char *get_vm_type(struct vm *vm)
 	else
 		return "Guest";
 }
-
+// hypervisor 自己分析配置文件创建的 vm 就是 native vm
 static void *create_native_vm_of(struct device_node *node, void *arg)
 {
 	struct vmtag vmtag;

@@ -70,6 +70,7 @@ static inline unsigned long __minos_hvc(uint32_t id, unsigned long a0,
 #define minos_hvc5(id, a, b, c, d, e)		minos_hvc(id, a, b, c, d, e, 0)
 #define minos_hvc6(id, a, b, c, d, e, f)	minos_hvc(id, a, b, c, d, e, f)
 
+// hvc 命令创建 vm
 static inline int hvc_vm_create(void *vmtag)
 {
 	return minos_hvc1(HVC_VM_CREATE, vmtag);

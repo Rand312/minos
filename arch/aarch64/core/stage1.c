@@ -94,6 +94,16 @@
 #define stage1_phy_pte(pte)			(void *)((pte) & S1_PHYSICAL_MASK)
 #define stage1_phy_pmd(pmd)			(void *)((pmd) & S1_PHYSICAL_MASK)
 
+
+// 下面是关于 stage1 地址转换的一些函数
+// 根据我的理解，stage1 转换指的是虚拟机中的 “虚拟地址”（va） 到 “物理地址”（ipa）的转换
+// stage2 是 “中间物理地址”（ipa）到 “真正物理地址”（pa）的转换
+// 但是 minos 项目中所述的 stage1 应当不是此含义
+// minos 中的 stage1 指的是 hypervisor 层级地址转换，也就是说当 cpu 运行在 el2 时的地址转换，此时使用 ttbr0_el2
+// 反过来想，stage1 的地址转换相关函数应该位于 guest，也就是 Linux 内核代码，不应该出现于 minos 代码中
+// 所以 minos 的 stage1 转换实际指的是 hypervisor 层级的地址转换，这也恰好对应这 host 这个词汇
+// 从 create_host_mapping 可以看出，host 的 mapping，然后调用 stage1 相关函数
+
 static void inline flush_tlb_va_range(unsigned long va, size_t size)
 {
 	flush_tlb_va_host(va, size);

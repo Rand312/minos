@@ -83,7 +83,7 @@ int remove_event_waiter(struct event *ev, struct task *task)
 	}
 }
 
-// 从链表中获取一个 event
+// 从 event 的 waiter 链表中获取第一个 等待者
 static inline struct task *get_event_waiter(struct event *ev)
 {
 	struct task *task;
@@ -101,7 +101,7 @@ static inline struct task *get_event_waiter(struct event *ev)
  * num - the number need to wake ? <= 0 means, wakeup all.
  * will return the number of task which have been wake.
  */
-// 获取一个 event，然后执行唤醒操作
+// 获取第一个 waiter task，然后执行唤醒操作
 int __wake_up_event_waiter(struct event *ev, void *msg,
 		int pend_state, int opt)
 {
@@ -137,7 +137,7 @@ void event_pend_down(void)
 	task->msg = NULL;
 }
 
-// 唤醒某个 event
+// 只会用在 vcpu_event，唤醒其对应的 vcpu task
 long wake(struct event *ev)
 {
 	struct task *task = (struct task *)ev->data;
