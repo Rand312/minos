@@ -112,7 +112,7 @@ void *map_vm_memory(struct vm *vm)
 	}
 
 	pr_notice("vm-%d [0x%"PRIx64" 0x%"PRIx64"] mmap to [0x%lx 0x%lx]\n",
-			vm->vmid, vm->map_start, vm->map_start + vm->map_size,
+			vm->vmid, vm->map_start, vm->  + vm->map_size,
 			(unsigned long)addr, (unsigned long)addr + vm->map_start);
 
 	return addr;

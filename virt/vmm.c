@@ -533,6 +533,7 @@ void release_vm_memory(struct vm *vm)
 	free_pages((void *)mm->pgdp);
 }
 
+// 返回 ipa 地址
 unsigned long create_hvm_shmem_map(struct vm *vm,
 			unsigned long phy, uint32_t size)
 {

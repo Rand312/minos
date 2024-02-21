@@ -72,7 +72,8 @@ static int vm_hvc_handler(gp_regs *c, uint32_t id, uint64_t *args)
 		break;
 
 	case HVC_VM_CREATE_VMCS:
-		addr = vm_create_vmcs(vm);
+		// 返回 guest 能访问的 ipa 地址
+		addr = vm_create_vmcs(vm);  
 		HVC_RET1(c, addr);
 		break;
 
