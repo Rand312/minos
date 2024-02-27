@@ -28,6 +28,13 @@
 #include <virt/vmodule.h>
 #include <minos/of.h>
 
+// GICC: CPU interface寄存器
+// GICD: distributor寄存器
+// GICH: virtual interface控制寄存器，在hypervisor模式访问
+// GICR: redistributor寄存器
+// GICV: virtual cpu interface寄存器
+// GITS: ITS寄存器
+
 //GIC-V2 一些特点：
 // 最多支持 8 个 CPU
 
@@ -199,7 +206,7 @@ static uint32_t vgicv2_get_virq_unmask(struct vcpu *vcpu,
 	return vgicv2_get_virq_state(vcpu, offset, GICD_ISENABLER);
 }
 
-// 
+// 虚拟 gicd read
 static int vgicv2_read(struct vcpu *vcpu, struct vgicv2_dev *gic,
 		unsigned long offset, unsigned long *v)
 {
@@ -320,7 +327,7 @@ void vgicv2_send_sgi(struct vcpu *vcpu, uint32_t sgi_value)
 			cpumask_set_cpu(bit, &cpumask);
 		}
 	} else
-		// 否则是发送给自己，将 cpumask 设置为自己的 cpu_id
+		// 否则是发送给 指定的 vcpu，将 cpumask 设置为其的 cpu_id
 		cpumask_set_cpu(vcpu->vcpu_id, &cpumask);
 
 	// 遍历 cpumask 中的 cpu_id
@@ -525,7 +532,7 @@ static void vgicc_deinit(struct vdev *vdev)
 	free(vdev);
 }
 
-// 创建 virtual gicc 
+// 创建 virtual gicc
 static int vgicv2_create_vgicc(struct vm *vm, unsigned long base, size_t size)
 {
 	struct vgicc *vgicc;
@@ -664,7 +671,8 @@ static int vgicv2_init_virqchip(struct virq_chip *vc,
 	return 0;
 }
 
-// 从 device_node 中获取 gic info
+// 这里就是获取的是 vm 的 dts，具体的此项目中是 qemu-virt.dts
+// https://github.com/minosproject/minos-misc/blob/master/qemu-arm64/qemu-virt.dts
 static int get_vgicv2_info(struct device_node *node, struct vgicv2_info *vinfo)
 {
 	int ret;
@@ -714,7 +722,7 @@ static struct virq_chip *vgicv2_virqchip_init(struct vm *vm,
 
 	pr_notice("create vgicv2 for vm-%d\n", vm->vmid);
 
-	// 从 device node 中获取 vgic 的一些信息
+	// 从 vm dts 中获取 vgic 的一些信息
 	ret = get_vgicv2_info(node, &vinfo);
 	if (ret) {
 		pr_err("no gicv2 address info found\n");
@@ -730,6 +738,7 @@ static struct virq_chip *vgicv2_virqchip_init(struct vm *vm,
 	// 初始化虚拟设备 virtual gicv2
 	host_vdev_init(vm, &dev->vdev, "vgicv2");
 	// 添加虚拟设备的内存映射区域
+	// trap all Guest OS accesses to the GIC Distributor registers, so that it can determine the virtual distributor settings for each virtual machine
 	ret = vdev_add_iomem_range(&dev->vdev, vinfo.gicd_base, vinfo.gicd_size);
 	if (ret)
 		goto release_vdev;
@@ -742,7 +751,7 @@ static struct virq_chip *vgicv2_virqchip_init(struct vm *vm,
 	dev->gicd_iidr = 0x0;
 
 	// 设置该 virtual gic 的一些操作函数
-	dev->vdev.read = vgicv2_mmio_read;
+	dev->vdev.read = vgicv2_mmio_read;  // gicd read function
 	dev->vdev.write = vgicv2_mmio_write;
 	dev->vdev.deinit = vgicv2_deinit;
 	dev->vdev.reset = vgicv2_reset;
@@ -765,6 +774,8 @@ static struct virq_chip *vgicv2_virqchip_init(struct vm *vm,
 		pr_notice("map gicc 0x%x to gicv 0x%x size 0x%x\n",
 				vinfo.gicc_base, vgicv2_info.gicv_base,
 				vinfo.gicc_size);
+		// remap the GIC CPU interface register address space to point to the GIC virtual CPU interface registers. 
+		// 需要将 physical cpu interface 映射到 virtual cpu interface
 		create_guest_mapping(&vm->mm, vinfo.gicc_base,
 				vgicv2_info.gicv_base, vinfo.gicc_size,
 				VM_GUEST_IO | VM_RW);
@@ -800,9 +811,11 @@ static void gicv2_state_restore(struct vcpu *vcpu, void *context)
 	// 恢复所有的 lr 寄存器
 	for (i = 0; i < gicv2_nr_lrs; i++)
 		writel_gich(c->lr[i], GICH_LR + i * 4);
-
+	// Active Priorities Register，根据 virtual cpu interface 活跃的中断优先级
 	writel_gich(c->apr, GICH_APR);
+	// Virtual Machine Control Register, 控制着一些使能位
 	writel_gich(c->vmcr, GICH_VMCR);
+	// Hypervisor Control Register, 
 	writel_gich(c->hcr, GICH_HCR);
 }
 

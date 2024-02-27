@@ -33,7 +33,7 @@ static void *gicd_base = 0;
 
 extern int vgicv3_init(uint64_t *data, int len);
 
-static DEFINE_PER_CPU(void *, gicr_rd_base);
+static DEFINE_PER_CPU(void *, gicr_rd_base);__irqchip
 static DEFINE_PER_CPU(void *, gicr_sgi_base);
 
 #define gicr_rd_base()	get_cpu_var(gicr_rd_base)

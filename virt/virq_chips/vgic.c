@@ -120,7 +120,9 @@ repeat:
 		clear_bit(bit, vs->pending_bitmap);
 	}
 
-	// ？？？？？？
+	// old ！= 0 表示上次想要 send virq 时，但是没有空闲的 lr 寄存器了，且发送失败的 virq 号记录到了 bit
+	// vs->last_fail_virq == 0 表示这次很可能有空闲的 lr 寄存器
+	// 所以调整 size 为上次失败的 virq 号，让上面的循环能够触及该失败的 virq 号，且为其分配 lr 寄存器
 	if ((old != 0) && (vs->last_fail_virq == 0)) {
 		bit = 0;
 		size = old;

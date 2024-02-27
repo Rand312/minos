@@ -81,7 +81,7 @@ unsigned long translate_va_to_pa(struct vspace *vs, unsigned long va)
 	return addr;
 }
 
-
+// io_remap，直接映射到 hypervisor
 void *io_remap(virt_addr_t vir, size_t size)
 {
 	size_t new_size;

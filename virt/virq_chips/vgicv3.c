@@ -760,7 +760,7 @@ static void vgicv3_init_virqchip(struct virq_chip *vc,
 
 	vc->inc_pdata = dev;
 }
-
+// 这里就是获取的是 vm 的 dts，具体的此项目中是 qemu-virt.dts
 static int get_vgicv3_info(struct device_node *node, struct vgicv3_info *vinfo)
 {
 	int ret;

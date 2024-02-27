@@ -98,7 +98,8 @@ static void inline vdev_add_vmm_area(struct vdev *vdev, struct vmm_area *va)
 	else
 		prev->next = va;
 }
-
+// 虚拟设备添加内存 范围，只是在该 vm 中分配一个 vma，将信息记录到 vma，没有做映射
+// MARK，可能就是这里没有做映射的原因，当 guest read 该段内存的时候，vm trap 到 hyp，然后 hyp 负责给 vm 读取内存数据
 int vdev_add_iomem_range(struct vdev *vdev, unsigned long base, size_t size)
 {
 	struct vmm_area *va;
@@ -110,6 +111,7 @@ int vdev_add_iomem_range(struct vdev *vdev, unsigned long base, size_t size)
 	 * vdev memory usually will not mapped to the real
 	 * physical space, here set the flags to 0.
 	 */
+	// 这里相当于将 vdev 的内存范围记录到 vm->mm，但是并没有建立实际的映射
 	va = split_vmm_area(&vdev->vm->mm, base, size, VM_GUEST_VDEV);
 	if (!va) {
 		pr_err("vdev: request vmm area failed 0x%lx 0x%lx\n",

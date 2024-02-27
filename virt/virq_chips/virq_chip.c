@@ -41,9 +41,10 @@ static int virqchip_enter_to_guest(void *item, void *data)
 	// 如果 flags == 0，表示说没有 irq 注入到此 vcpu
 	// 如果有注入的 fiq，那么 bit31=1，其他 bits 表示有多少 irq 注入
 	flags = vc->enter_to_guest(vcpu, vc->inc_pdata);
-	if (flags == 0) {
+	if (flags == 0) {  // 大部分情况
+		// 当前平台有该标志，所以其实大部分情况  这个大的判断里面什么都不做
 		// 清空 HCR_EL2 中的 VI VF 标志
-		if (!(vc->flags & VIRQCHIP_F_HW_VIRT))
+		if (!(vc->flags & VIRQCHIP_F_HW_VIRT))  
 			arch_clear_virq_flag();
 	} else {
 		if (!(vc->flags & VIRQCHIP_F_HW_VIRT)) {
@@ -56,7 +57,7 @@ static int virqchip_enter_to_guest(void *item, void *data)
 
 	return 0;
 }
-
+// 退出 guest 的时候会调用此函数，一般是有异常来了，会先调用此函数，然后再调用异常处理函数
 static int virqchip_exit_from_guest(void *item, void *data)
 {
 	struct vcpu *vcpu = (struct vcpu *)item;
