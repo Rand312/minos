@@ -196,6 +196,9 @@ asoc_handle_cntp_ctl(struct vcpu *vcpu, struct vtimer *vtimer)
 	}
 }
 
+// CNTP_CTL_EL0, Counter-timer Physical Timer Control register
+// Control register for the EL1 physical timer.
+// 写的情况：控制使能
 static void vtimer_handle_cntp_ctl(struct vcpu *vcpu, int access,
 		int read, unsigned long *value)
 {
@@ -213,14 +216,16 @@ static void vtimer_handle_cntp_ctl(struct vcpu *vcpu, int access,
 		if (vcpu->vm->os->type == OS_TYPE_XNU)
 			asoc_handle_cntp_ctl(vcpu, vtimer);
 	} else {
+		// 获取使能情况，正常情况总是使能的
 		v = (uint32_t)(*value);
 		v &= ~CNT_CTL_ISTATUS;
 
+		// enable 使能的情况下，status 的值才有意义
 		if (v & CNT_CTL_ENABLE)
 			v |= vtimer->cnt_ctl & CNT_CTL_ISTATUS;
 		vtimer->cnt_ctl = v;
 
-		//重启或者体质 vtimer
+		// 根据使能状况 重启或者停止 vtimer
 		if ((vtimer->cnt_ctl & CNT_CTL_ENABLE) &&
 				(vtimer->cnt_cval != 0)) {
 			ns = ticks_to_ns(vtimer->cnt_cval + c->offset);
@@ -231,6 +236,8 @@ static void vtimer_handle_cntp_ctl(struct vcpu *vcpu, int access,
 	}
 }
 
+// CNTP_TVAL_EL0, Counter-timer Physical Timer TimerValue register
+// Holds the timer value for the EL1 physical timer.
 
 //第一种工作方式：到一个绝对时间之后就触发
 //比较寄存器有64位，如果设置了之后，当系统计数器达到或超过了这个值之后（CVAL<系统计数器），就会触发定时器中断
@@ -244,22 +251,29 @@ static void vtimer_handle_cntp_tval(struct vcpu *vcpu,
 
 	c = get_vmodule_data_by_id(vcpu, vtimer_vmodule_id);
 	get_access_vtimer(vtimer, c, access);
+
+	// 虚拟机的时间： Now
 	now = get_sys_ticks() - c->offset;
 
 	if (read) {
+		// vtimer->cnt_cval - get_sys_ticks()，表示距离 timer 触发还剩下多少时间
 		ticks = (vtimer->cnt_cval - now - c->offset) & 0xffffffff;
 		*value = ticks;
 	} else {
 		unsigned long v = *value;
 
-		vtimer->cnt_cval = get_sys_ticks() + v;
+		vtimer->cnt_cval = get_sys_ticks() + v;  //当前值+比较值
 		if (vtimer->cnt_ctl & CNT_CTL_ENABLE) {
-			vtimer->cnt_ctl &= ~CNT_CTL_ISTATUS;
+			vtimer->cnt_ctl &= ~CNT_CTL_ISTATUS;  //清除该位，表示触发timer的条件没到
 			ticks = ticks_to_ns(vtimer->cnt_cval);
-			mod_timer(&vtimer->timer, ticks);
+			mod_timer(&vtimer->timer, ticks);   //重启timer
 		}
 	}
 }
+
+// CNTP_CVAL_EL0, Counter-timer Physical Timer CompareValue register
+// Holds the compare value for the EL1 physical timer.
+
 //第二种工作模式：从现在开始再过一定时间间隔之后触发
 //定时寄存器有32位，如果设置了之后，会将比较寄存器设置成当前系统计数器加上设置的定时寄存器的值（CVAL=系统计数器+TVAL），后面就一样了，当系统计数器达到或超过了这个值后，就会触发定时中断
 static void vtimer_handle_cntp_cval(struct vcpu *vcpu,
@@ -275,7 +289,9 @@ static void vtimer_handle_cntp_cval(struct vcpu *vcpu,
 	if (read) {
 		*value = vtimer->cnt_cval - c->offset;
 	} else {
-		vtimer->cnt_cval = *value + c->offset;
+		// value+虚拟机启动时间
+		// 感觉这像是一个固定的值
+		vtimer->cnt_cval = *value + c->offset;  
 		if (vtimer->cnt_ctl & CNT_CTL_ENABLE) {
 			vtimer->cnt_ctl &= ~CNT_CTL_ISTATUS;
 			ns = ticks_to_ns(vtimer->cnt_cval);
