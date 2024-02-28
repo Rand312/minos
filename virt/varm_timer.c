@@ -38,12 +38,13 @@ static void *varm_timer_init(struct vm *vm, struct device_node *node)
 	 * ticks, here we get the virtual timer's irq number, the
 	 * virtual timer's irq num will with the index 2
 	 */
+	// 获取 vm 的 dts 时钟信息
 	ret = vm_get_device_irq_index(vm, node, &irq, &flags, 2);
 	if (ret || (irq > 32)) {
 		pr_err("can not find virtual timer for VM\n");
 		return  NULL;
 	}
-
+	// 这里是 27
 	pr_info("virtual arch timer irq: %d\n", irq);
 	vm->vtimer_virq = irq;
 

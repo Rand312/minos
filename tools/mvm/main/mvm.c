@@ -455,7 +455,9 @@ static int vcpu_handle_mmio(struct vm *vm, int trap_reason,
 static int vcpu_handle_common_trap(struct vm *vm, int trap_reason,
 		uint64_t trap_data, uint64_t *trap_result)
 {
+	
 	switch (trap_reason) {
+	// 
 	case VMTRAP_REASON_REBOOT:
 	case VMTRAP_REASON_SHUTDOWN:
 	case VMTRAP_REASON_WDT_TIMEOUT:
