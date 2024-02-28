@@ -233,12 +233,13 @@ int virtio_mmio_init(struct vm *vm, unsigned long gbase,
 	}
 
 	size = PAGE_BALIGN(size);
+	// 分配一块内存，这里返回的应该是 pa
 	iomem = alloc_shmem(PAGE_NR(size));
 	if (!iomem)
 		return -ENOMEM;
 
 	memset(iomem, 0, size);
-
+	// 从 hyp 分配一块虚拟内存，将其映射到 pa(iomem)
 	hva = create_hvm_shmem_map(vm, (unsigned long)iomem, size);
 	if (hva == BAD_ADDRESS) {
 		free_shmem(iomem);
@@ -251,12 +252,13 @@ int virtio_mmio_init(struct vm *vm, unsigned long gbase,
 	 * by the way, this memory also need to mapped to the
 	 * guest vm 's memory space
 	 */
+	// 将 vm 中的 ipa(gbase) 也映射到 iomem
 	if (create_guest_mapping(&vm->mm, gbase, (unsigned long)iomem,
 				size, VM_IO | VM_RO)) {
 		free_shmem(iomem);
 		return -ENOMEM;
 	}
-
+	// 所以这里返回的是 hyp 层次的 虚拟地址
 	*hbase = hva;
 	return 0;
 }

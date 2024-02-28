@@ -280,7 +280,7 @@ static struct task *pick_next_task(struct pcpu *pcpu)
 	/*
 	 * get the highest ready task list to running
 	 */
-	// 获取最高优先级
+	// 获取最高优先级 
 	prio = ffs_one_table[pcpu->local_rdy_grp];
 	ASSERT(prio != -1);
 	// 获取最高优先级链表头

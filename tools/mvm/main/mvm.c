@@ -292,6 +292,8 @@ void *hvm_map_iomem(unsigned long base, size_t size)
 	 * also see:
 	 * https://android.googlesource.com/platform/bionic/+/master/docs/32-bit-abi.md
 	 */
+	// 这里的 vm0_fd 应当表示的 hyp 虚拟地址空间，base 表示在 hyp 的虚拟地址空间中，某个结构的起始地址
+	// 经过如此映射之后，hostvm 也可以访问 base 
 	return mmap64(NULL, size, PROT_READ | PROT_WRITE,
 			MAP_SHARED, mvm_vm->vm0_fd, base);
 }

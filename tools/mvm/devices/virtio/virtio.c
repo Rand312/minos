@@ -42,7 +42,7 @@ static uint64_t virtio_iomem_base = VM_VIRTIO_IOMEM_BASE;
 static int virtio_device_index;
 
 
-static void *hv_virtio_mmio_init(struct vm *vm, uint64_t gbase)
+static void * hv_virtio_mmio_init(struct vm *vm, uint64_t gbase)
 {
 	int ret = 0;
 	void *map_base;
@@ -60,7 +60,8 @@ static void *hv_virtio_mmio_init(struct vm *vm, uint64_t gbase)
 		pr_err("virtio mmio init failed in hypervisor\n");
 		return INVALID_MMAP_ADDR;
 	}
-
+	// gbase 是一个 ipa 值，在 hyp 中经过 stage2 映射到了一个 pa
+	// 而 args[0] 里面存放的是 hyp 层次的虚拟地址，该虚拟地址经过 hyp 层的页表转换到 pa
 	map_base = vdev_map_iomem((unsigned long)args[0],
 			VIRTIO_DEVICE_IOMEM_SIZE);
 
