@@ -167,6 +167,7 @@ static void virtio_dev_reset(struct vdev *vdev)
 	pr_notice("virtio device reset\n");
 }
 
+// 使用 mvm 创建 vm 的时候会创建 virtio device
 static void *virtio_create_device(struct vm *vm, struct device_node *node)
 {
 	int ret;
@@ -177,7 +178,7 @@ static void *virtio_create_device(struct vm *vm, struct device_node *node)
 	struct virtio_device *virtio_dev = NULL;
 
 	pr_notice("create virtio-mmio device for vm-%d\n", vm->vmid);
-
+	// base 值记录在该 vm 设备树文件中，是一个 ipa
 	ret = translate_device_address(node, &base, &size);
 	if (ret || (size == 0))
 		return NULL;
@@ -199,6 +200,7 @@ static void *virtio_create_device(struct vm *vm, struct device_node *node)
 	request_virq(vm, irq, 0);
 
 	/* set up the iomem base of the vdev */
+	// 该段内存在下面 virtio_mmio_init 函数中映射
 	ret = translate_guest_ipa(&vm->mm, base,
 			(unsigned long *)&virtio_dev->iomem);
 	if (ret) {
