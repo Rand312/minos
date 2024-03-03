@@ -115,7 +115,8 @@ struct virt_queue {
 	uint16_t used_flags;
 	uint16_t signalled_used;
 	uint16_t signalled_used_valid;   // false 表示还没有向前端做任何通知
-	uint16_t vq_index;
+	//该 virtio device有多个 virtio queue，这里应该是指当前的索引号
+	uint16_t vq_index;  
 
 	struct virtio_device *dev;
 	struct iovec *iovec;
@@ -144,7 +145,8 @@ struct virtio_device {
 	struct virtio_ops *ops;
 };
 
-// 
+// 循环队列，avail->idx 表示 start，last_avail_idx 看作 end
+// 相等的时候表示没有可用的 desc
 static int inline virtq_has_descs(struct virt_queue *vq)
 {
 	return vq->avail->idx != vq->last_avail_idx;

@@ -58,6 +58,7 @@ _start:
 	/* interrupt disabled mmu/dcache/icache off */
 	msr	daifset, #2
 	b	do_start
+	/*为了不修改u-boot，直接使用u-boot的booti命令，需要在起始地址偏移为8字节的地方加上image header*/
 	.quad   0				/* Image load offset from start of RAM */
         .quad   __code_end - _start		/* reserved */
         .quad   8				/* kernel flags */
@@ -76,22 +77,27 @@ do_start:
 	// see which level we are now, minos currently can
 	// support running on EL1 and EL2 but can not run
 	// on EL3.
+; Current Exception level.
+; 0b00 EL0.
+; 0b01 EL1.
+; 0b10 EL2.
+; 0b11 EL3
 	mrs	x0, CurrentEl
-	mov	x1, x0, lsr #2
-	and	x1, x1, #3
+	mov	x1, x0, lsr #2  // x0右移2位，结果存放到x1
+	and	x1, x1, #3  // 结果与 0b11/EL3 相与
 
 	// can not run on EL3.
-	cmp	x1, #3
-	b.eq	minos_panic
+	cmp	x1, #3   
+	b.eq	minos_panic  // 表示当前处于 EL3
 
-	mov	x26, #0
-	cmp	x1, #2
+	mov	x26, #0   // 将 CurrentEl 存放到 x26
+	cmp	x1, #2 // 与 0b10/EL2 比较
 
-#ifdef CONFIG_VIRT
-	b.ne	minos_panic
+#ifdef CONFIG_VIRT  // 如果开启了虚拟化功能，那么此时应该处于 EL2
+	b.ne	minos_panic  // 如果不是，panic
 
-	mov	x0, 0
-	msr	HCR_EL2, x0
+	mov	x0, 0  
+	msr	HCR_EL2, x0  // HCR_EL2 寄存器设置为 0
 	isb
 #else
 	// if current EL is not EL2 then jump to EL1
@@ -115,15 +121,16 @@ do_start:
 	 * neither EL3 nor EL2 trap floating point or
 	 * accesses to CPACR
 	 */
+	// 不要 trap 访问 the Advanced SIMD and floating-point registers 的指令
 	ldr	x0, =0x300000
 	msr	CPTR_EL2, x0
-
+	// 将 x31/zero register/也就是0 的值存放到 VTTBR_EL2
 	msr	VTTBR_EL2, xzr
 	dsb	sy
 	isb
 
-	cmp	x26, #1
-	b.ne	minos_os_start
+	cmp	x26, #1  // 前面将 x26 设置成了 0，这里应该是不相等
+	b.ne	minos_os_start // 不等时跳转到 minos_os_start
 
 	// drop to EL1
 	mov	x1, #15
@@ -153,52 +160,59 @@ drop_to_el1:
 	isb
 
 minos_os_start:
+	// _start 的值为 0x4000 0000
 	adr	x1, _start			// entry address must 4K align
 	and	x0, x1, #0xfff
-	cbnz	x0, minos_panic
+	cbnz	x0, minos_panic  // 如果 x0 不等于 0，panic
 
 	// minos_start to __code_start is the reserve memory
 	// for minos, and must 2M aligned.
-	ldr	x3, =0xffffffffffe00000
-	and	x1, x1, x3
-	adr	x2, minos_start
-	str	x1, [x2]
+	// minos_start 是一个全局变量，记录着 _start 的值
+	ldr	x3, =0xffffffffffe00000  // 将常数 0xffffffffffe00000 加载到寄存器 x3 中
+	and	x1, x1, x3   // 执行完此条指令后，x1 = 0x4000 0000 与 _start 一样
+	adr	x2, minos_start  // 将标签 minos_start 的地址加载到寄存器 x2 中，为 0x4004 4000
+	str	x1, [x2]  // 将 x1 的值 _start 写到 0x4004 4000 地址处
 
+	// 调用函数 arch_raw_smp_processor_id，将返回值保存到寄存器 x0 中，用于保存当前的处理器 ID
 	bl	arch_raw_smp_processor_id	// cpuid save to x19
-	mov	x19, x0
+	mov	x19, x0   // 此时寄存器的值为 0
 
 	/* using current EL stack register */
-	msr	spsel, #1
+	// 选择当前使用的栈，EL_x
+	// 写 0 表使用 SP_EL0 的栈，写 1 表示使用 SP_EL1
+	msr	spsel, #1 
 
+	// elx_vectors 又是一个全局变量，为 vector 的起始地址
 	ldr	x1, =elx_vectors
-	msr	ARM64_VBAR, x1
+	msr	ARM64_VBAR, x1  // 设置异常向量表的地址
 
 	/* enable Abort now for early system abort */
-	msr	daifclr, #4
+	msr	daifclr, #4  // enable 系统级别的错误 SError 中断
 	isb
 
 	/* invalid the dcache and flush the tlb */
+	// 调用函数 inv_dcache_all，用于使 dcache 失效
 	bl	inv_dcache_all
 	dsb	sy
 	isb
 
 #ifdef CONFIG_VIRT
-	tlbi	alle2
+	tlbi	alle2  // 使得所有 el2 级别的 tlb invalid
 #else
-	tlbi	vmalle1
+	tlbi	vmalle1 // 如果没有开启虚拟化，使得 EL1 级别的 tlb 项目失效
 #endif
 	dsb	sy
 	isb
-
-	ldr	x1, =ARM64_SCTLR_VALUE
-	msr	ARM64_SCTLR, x1
+	// #define ARM64_SCTLR_VALUE	0x30c51878
+	ldr	x1, =ARM64_SCTLR_VALUE 
+	msr	ARM64_SCTLR, x1  // 将这个值写入 SCTLR 寄存器
 	dsb	nsh
 	isb
 
 	/* setup the el2 page table */
-	ldr	x1, = __stage1_page_table
-	asm_vtop x1
-	msr     ARM64_TTBR0, x1
+	ldr	x1, = __stage1_page_table  // 获取 hyp pagetable
+	asm_vtop x1   // 空
+	msr     ARM64_TTBR0, x1  // 将这页表地址赋值给 TTBR0_EL2
 	msr     ARM64_TTBR1, x1
 	dsb	nsh
 	isb
@@ -218,27 +232,31 @@ minos_os_start:
 	 * 0xbb - MT_NORMAL_WT
 	 */
 	ldr	x1, =0xbbff440c0400
-	msr	ARM64_MAIR, x1
+	msr	ARM64_MAIR, x1  // 设置 MAIR_EL2 Memory Attribute Indirection Register
 
 	/* get the physical address range */
-	mrs	x0, ID_AA64MMFR0_EL1
-	and	x0, x0, #0xf
+	//  AArch64 Memory Model Feature Register 0
+	mrs	x0, ID_AA64MMFR0_EL1   // 0x1122
+	and	x0, x0, #0xf  // Physical Address range supported
+					  // 值为 0x2，表示 40 bits, 1TB
 #if defined(CONFIG_VIRT)
-	mov	x2, x0, lsl #16
+	mov	x2, x0, lsl #16   // 将 x0 的值左移 16 位，然后存储到 x2 中
 	ldr	x3, =0xfffffffffff8ffff
 #else
 	mov	x2, x0, lsl #32
 	ldr	x3, =0xfffffff8ffffffff
 #endif
-	ldr	x1, =ARM64_TCR_VALUE		// load the value of TCR.
-	and	x1, x1, x3			// update the IPA/PA for TCR_ELx.
-	orr	x1, x1, x2
+	// TCR_EL2, Translation Control Register
+	ldr	x1, =ARM64_TCR_VALUE		// load the value of TCR.  0x3519
+	and	x1, x1, x3			// update the IPA/PA for TCR_ELx.  0x3519
+	orr	x1, x1, x2   // 0x23519
 
 	msr     ARM64_TCR, x1			// set the TCR_ELx.
 	dsb	nsh
 	isb
 
 	// idle task is in Current_EL
+	// 0x1c9
 	mov	x1, #ARM64_SPSR_VALUE
 	msr	ARM64_SPSR, x1
 

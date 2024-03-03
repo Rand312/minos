@@ -98,7 +98,7 @@ static inline int next_desc(struct vring_desc *desc)
 	return (!(desc->flags & VRING_DESC_F_NEXT)) ? -1 : desc->next;
 }
 
-// 翻译 vring_desc 结构体
+// 翻译 vring_desc 结构体，主要就是将 ipa 翻译成 hva
 static void translate_desc(struct vring_desc *desc, int index,
 		struct iovec *iov, int iov_size)
 {
@@ -127,11 +127,11 @@ static int get_indirect_buf(struct vring_desc *desc, int index,
 		return -EINVAL;
 	}
 
-	// 这个 desc->addr 代表的地址就是 ving_desc 的地址？？？？？
+	// 这个 desc->addr 代表的地址就是 vring_desc 的地址？？？？？
 	in_desc = (struct vring_desc *)gpa_to_hvm_va(desc->addr);
 
 	for (;;) {
-		vd = &in_desc[next];
+		vd = &in_desc[next];  //这里为什么能直接访问？在哪里映射的
 		if (vd->flags & VRING_DESC_F_INDIRECT) {
 			pr_err("invalid desc in indirect desc\n");
 			return -EINVAL;
@@ -384,7 +384,7 @@ void virtq_notify(struct virt_queue *vq)
 	if (virtq_need_notify(vq))
 		virtio_send_irq(vq->dev, VIRTIO_MMIO_INT_VRING);
 }
-
+// 标记已使用，并发送信号
 void virtq_add_used_and_signal(struct virt_queue *vq,
 		unsigned int head, int len)
 {
@@ -409,15 +409,16 @@ static int __virtio_vdev_init(struct vdev *vdev,
 	vdev->dev_type = VDEV_TYPE_VIRTIO;
 	vdev->iomem = hbase;
 	vdev->guest_iomem = gbase;
+	// 在 gvm 中申请一个 virq
 	vdev->gvm_irq = vdev_alloc_irq(vdev->vm, 1);
 	if (!vdev->gvm_irq) {
 		pr_err("request virq for virtio device failed\n");
 		return -ENOENT;
 	}
-
+	
 	pr_debug("vdev : irq-%d hpa-%p gva-0x%"PRIx64"\n", vdev->gvm_irq,
 			vdev->iomem, vdev->guest_iomem);
-
+    
 	if (rs > VIRTQUEUE_MAX_SIZE)
 		rs = VIRTQUEUE_MAX_SIZE;
 
