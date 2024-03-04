@@ -260,30 +260,34 @@ minos_os_start:
 	mov	x1, #ARM64_SPSR_VALUE
 	msr	ARM64_SPSR, x1
 
+	// x19 里面存放的是 MPIDR_EL1 的值，如果为 0，表示为 Boost CPU
+	// 否则为 application/secondary cpu，从这里开始走 secondary_start_up 来启动
 	cbnz	x19, secondary_start_up
 
-	ldr	x0, =__minos_end
-	asm_vtop x0
-	adr	x1, minos_stack_top
-	adr	x2, minos_bootmem_base
-	adr	x3, minos_stack_bottom
+	ldr	x0, =__minos_end     // 获取 end 地址
+	asm_vtop x0   // 当前配置下什么都没做
+	// 
+	adr	x1, minos_stack_top    // 0x4004 4010
+	adr	x2, minos_bootmem_base   // 0x4004 4008
+	adr	x3, minos_stack_bottom  // 0x4004 4018
 
 	// store the bootmem base
+	// 将 __minos_end 进行向上取整(4096)，作为 boot mem 的起始地址，然后将该值存放到 minos_bootmem_base
 	add	x0, x0, #4095
-	mov	x4, #4095
-	mvn	x5, x4
+	mov	x4, #4095  // 0xfff
+	mvn	x5, x4  // 0xffff ffff ffff f000
 	and	x0, x0, x5
 	str	x0, [x2]
 
 	// store the minos stack bottom
-	str	x0, [x3]
+	str	x0, [x3]  // boot mem 的起始地址也是栈底
 
 	// store the minos stack top
-	mov	x4, #CONFIG_TASK_STACK_SIZE
-	mov	x5, #CONFIG_NR_CPUS
-	mul	x5, x4, x5
-	add	x0, x0, x5
-	str	x0, [x1]
+	mov	x4, #CONFIG_TASK_STACK_SIZE  // 8K 大小
+	mov	x5, #CONFIG_NR_CPUS   // CPU 个数
+	mul	x5, x4, x5  // 8K * CONFIG_NR_CPUS  // 0x8000
+	add	x0, x0, x5  // 向上增加 0x8000
+	str	x0, [x1]  // 将该值存储到 minos_stack_bottom
 
 	sub	x0, x0, x19, lsl #CONFIG_TASK_STACK_SHIFT
 	asm_ptov x0
