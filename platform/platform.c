@@ -60,6 +60,7 @@ static int __init_text platform_early_init(void)
 	if (platform == NULL)
 		panic("no platform found ...\n");
 
+	// linux_qemu 无
 	if (platform->parse_mem_info)
 		platform->parse_mem_info();
 

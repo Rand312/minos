@@ -49,6 +49,10 @@ static int __init_text el2_stage2_init(void)
 	// t_gran_64，64KB memory translation support? 
 	// t_gran_4，4KB memory translation support? 
 
+
+	// [       0.000000@00 000] INF aa64mmfr0: pa_range:0x2 t_gran_16k:0x0 t_gran_64k:0x0 t_gran_4k:0x0
+	// [       0.000000@00 000] INF dcache_line_size:64 ichache_line_size:64
+
 	value = read_id_aa64mmfr0_el1();
 	aa64mmfr0 = (struct aa64mmfr0 *)&value;
 	pr_info("aa64mmfr0: pa_range:0x%x t_gran_16k:0x%x t_gran_64k"

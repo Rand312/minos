@@ -39,6 +39,11 @@ void percpu_init(int cpuid)
 	 *
 	 * some member of pcpu has been init on boot stage, like cpuid.
 	 */
+
+	// percpu 的原理就是单个 cpu 所有的私有数据存放在一起，然后再存放下一个 cpu 所有的数据
+	// 所有对于不同 cpu 的同一个数据，有一个 offset
+	// 这个 offset 就是一个 cpu 所有私有数据的集合大小
+	// __percpu_section_size = __percpu_cpu_0_end - __percpu_cpu_0_start;
 	for (i = 0; i < CONFIG_NR_CPUS; i++) {
 		percpu_offset[i] = (phy_addr_t)(&__percpu_start) +
 			(size_t)(&__percpu_section_size) * i;

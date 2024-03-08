@@ -27,8 +27,9 @@ struct task *os_task_table[OS_NR_TASKS];
 static LIST_HEAD(task_list);
 
 /* idle task needed be static defined */
-// 定义与 CPU 个数相同的 idle task
+// 定义与 CPU 个数相同的 idle task，这定义的是实际的 task 结构体
 struct task idle_tasks[NR_CPUS];
+// 这里定义 percpu 数据，是个指针，指向对应的 idle task，在 task_early_init 中设置的
 static DEFINE_PER_CPU(struct task *, idle_task);
 
 // 使用do{...}while(0)构造后的宏定义不会受到大括号、分号等的影响，总是会按你期望的方式调用运行

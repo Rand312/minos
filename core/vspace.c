@@ -113,7 +113,7 @@ int io_unmap(virt_addr_t vir, size_t size)
 	return ret;
 }
 
-// 初始化
+// 设置 hyp 的 pgd 值
 int kernel_vspace_init(void)
 {
 	struct vspace *vs = &host_vspace;

@@ -68,6 +68,10 @@ static int __fdt_parse_memory_info(int node, char *attr)
 		}
 
 		len -= size_cell + address_cell;
+
+		// base 为设备树中记录的 0x4000 0000
+		// size 设备树中记录的是 4G
+		// 但是我们 qemu 设置的是 2G，所以实际为 0x8000 0000
 		add_memory_region(base, size, MEMORY_REGION_TYPE_NORMAL, 0);
 	}
 
@@ -199,15 +203,18 @@ int of_parse_memory_info(void)
 		pr_warn("no memory node found in dtb\n");
 		return -ENOENT;
 	}
-
+	// 记录设备树中的 memory，添加到 mem_region
 	__fdt_parse_memory_info(node, "reg");
 
 	/*
 	 * split the minos kernel's memory region, need
 	 * before to split the dtb memory
 	 */
+	// 划分 KERNEL，也就是 minos 需要使用的 mem_region
 	__fdt_parse_kernel_mem();
-	__fdt_parse_memreserve();
+	// 无
+	__fdt_parse_memreserve();  
+	// 根据设备树中记录的 ramdisk 信息，划分 ramdisk mem_region
 	__fdt_parse_ramdisk_mem();
 
 #ifdef CONFIG_VIRT

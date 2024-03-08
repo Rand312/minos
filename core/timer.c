@@ -275,7 +275,7 @@ int stop_timer(struct timer *timer)
 	return 0;
 }
 
-//初始话硬件计时器 ptimer，每个 cpu 1 个
+//初始话硬件计时器 ptimer，每个 cpu 1 个 raw timer，更像是每个 pcpu 自己的 timer manager
 static int init_raw_timers(void)
 {
 	struct raw_timer *timers;

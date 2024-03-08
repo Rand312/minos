@@ -948,6 +948,7 @@ int of_init_bootargs(void)
 	if (node <= 0)
 		return -ENOENT;
 	// 获取该 /chosen 节点中的 bootargs 属性
+	// "bootwait=3 tty=vm1 rootfs=virtio-blk.drv";
 	data = fdt_getprop(dtb, node, "bootargs", &len);
 	if (!data || (len == 0))
 		return -ENOENT;
@@ -1060,6 +1061,7 @@ int of_get_console_name(char **name)
 		return -ENOENT;
 
 	// 获取标准输出，qemu 平台使用 pl011 这个串口作为标准输出
+	// fdt_getprop 获取属性值，以地址的形式返回
 	data = fdt_getprop(dtb, node, "minos,stdout", &len);
 	if (!data || (len == 0))
 		return -ENOENT;
@@ -1113,6 +1115,7 @@ void of_setup_platform(void)
 	int len;
 	const void *data;
 
+	// 无
 	data = fdt_getprop(dtb_address, 0, "model", &len);
 	if (data)
 		pr_notice("model : %s\n", (char *)data);
@@ -1121,6 +1124,7 @@ void of_setup_platform(void)
 	 * compatible may like arm,fvp-base\0arm,vexpress\0
 	 * but here, only parsing the first string
 	 */
+	// compatible = "linux,qemu-arm64";
 	data = fdt_getprop(dtb_address, 0, "compatible", &len);
 	if (data) {
 		pr_notice("platform : %s\n", (char *)data);

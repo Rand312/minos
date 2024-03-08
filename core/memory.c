@@ -432,6 +432,8 @@ static void memory_region_init(void)
 	extern void set_ramdisk_address(void *start, void *end);
 	struct memory_region *re;
 
+
+// 分析设备树，将设备树中记录的内存添加到 memory_region
 #ifdef CONFIG_DEVICE_TREE
 	of_mm_init();
 #endif
@@ -467,7 +469,9 @@ static void memory_region_init(void)
 
 void mm_init(void)
 {
+	// 确定 slab_base page_base
 	memory_init();
+	// 初始化 slab hash 链表
 	slab_init();
 	memory_region_init();
 }

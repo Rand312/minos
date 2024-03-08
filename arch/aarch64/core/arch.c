@@ -216,7 +216,7 @@ static int __init_text aarch64_init_percpu(void)
 {
 	uint64_t reg;
 
-	// 读取当前的异常等级
+	// 读取当前的异常等级，应该是 EL2
 	reg = read_CurrentEl();
 	pr_notice("current EL is %d\n", GET_EL(reg));
 
@@ -228,6 +228,7 @@ static int __init_text aarch64_init_percpu(void)
 #ifdef CONFIG_VIRT
 	// 设置 HCR.IMO HCR.FMO
 	reg = read_sysreg64(HCR_EL2);
+	// Physical SError\Physical IRQ\Physical FIQ都会routing到 hyp
 	reg |= HCR_EL2_IMO | HCR_EL2_FMO | HCR_EL2_AMO;
 	write_sysreg64(reg, HCR_EL2);
 	// write_sysreg64(0x3 << 20, CPACR_EL2);
@@ -372,7 +373,7 @@ void arch_main(void *dtb)
 	// 重定位 dtb 地址
 	dtb = relocate_dtb_address((unsigned long)dtb);
 
-	// 记录 dtb_address
+	// 记录重定位的dtb地址到 dtb_address
 	of_init(dtb);
 	// 获取标准输出 名称字符串
 	of_get_console_name(&name);

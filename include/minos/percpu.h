@@ -59,6 +59,7 @@ extern struct pcpu pcpus[NR_CPUS];
 
 void percpu_init(int cpuid);
 
+// 在 boot.S 中，设置了 TPIDR_EL2 中存放了 struct pcpu 数据
 static inline int smp_processor_id(void)
 {
 	return ((struct pcpu *)arch_get_pcpu_data())->pcpu_id;

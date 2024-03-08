@@ -81,6 +81,8 @@ void console_init(char *name)
 		console = get_console(name);
 	// 调用该 console、minos 中就是调用该 串口的初始化函数，比如说 __pl011_init
 	if (console->init)
+		// __pl011_init((void *)ptov(CONFIG_UART_BASE), 24000000, 115200);
+		// CONFIG_UART_BASE=0x9000000
 		console->init(NULL);
 
 	/* flush the string in the memory log buf */

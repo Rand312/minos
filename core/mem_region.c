@@ -45,6 +45,9 @@ int add_memory_region(uint64_t base, uint64_t size, int type, int vmid)
 	 */
 	//检查当前将要加入的 mem_region 是否和现有的 mem_region 冲突
 	//注意 list_for_each_entry 的具体含义
+
+	// 第一次执行到这的时机是，分析设备树中记录的内存信息时
+	// 此时 mem_list 为空
 	list_for_each_entry(region, &mem_list, list) {
 		r_size = region->size;
 		r_base = region->phy_base;
@@ -58,13 +61,17 @@ int add_memory_region(uint64_t base, uint64_t size, int type, int vmid)
 	}
 
 	//分配一个 mem_region，初始化
+
+	// 第一次执行到这的时机是，分析设备树中记录的内存信息时
+	// 此时会分配一个 memory_region，这是第一个 mem_region
+	
 	region = alloc_memory_region();
 	region->phy_base = base;
 	region->size = size;
 	region->type = type;
 	region->vmid = vmid;
 
-	//初始化节点，加入 mem_list 当中去
+	// 初始化节点，加入 mem_list 当中去
 	init_list(&region->list);
 	list_add_tail(&mem_list, &region->list);
 	pr_info("ADD   MEM: 0x%p [0x%p] 0x%x\n", region->phy_base,

@@ -53,7 +53,7 @@ void boot_main(void)
 
 	// 确定当前 cpu_id 为 0
 	ASSERT(smp_processor_id() == 0);
-	// 初始化内核地址空间
+	// 就是设置 __stage1_page_table 的值到 host_vspace->pgd
 	kernel_vspace_init();
 	// 初始化物理内存管理
 	mm_init();
@@ -69,7 +69,7 @@ void boot_main(void)
 	arch_init();
 	arch_init_percpu();
 
-	// 平台的初始化函数，
+	// 平台的初始化函数，当前项目 qemu 无
 	platform_init();
 	// 初始化 irq_chip
 	irq_init();
