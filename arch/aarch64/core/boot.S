@@ -46,10 +46,10 @@
 	ldr	\pcpu, =pcpus
 	ldr	\pcpu_size, =PCPU_SIZE
 	mul	\pcpu_size, \pcpu_size, \cpuid
-	add	\pcpu, \pcpu, \pcpu_size
-	msr	ARM64_TPIDR, \pcpu
+	add	\pcpu, \pcpu, \pcpu_size   //第 cpuid 个 pcpu 结构体地址
+	msr	ARM64_TPIDR, \pcpu // 将该结构体地址写入 TPIDR
 	asm_vtop \pcpu
-	str	x19, [\pcpu, #PCPU_ID_OFFSET]
+	str	x19, [\pcpu, #PCPU_ID_OFFSET]  // 将该 pcpu id 值写入对应 pcpu 结构体的 id 元素
 .endm
 
 	.global _start
@@ -266,7 +266,7 @@ minos_os_start:
 
 	ldr	x0, =__minos_end     // 获取 end 地址
 	asm_vtop x0   // 当前配置下什么都没做
-	// 
+	// adr Rd, label
 	adr	x1, minos_stack_top    // 0x4004 4010
 	adr	x2, minos_bootmem_base   // 0x4004 4008
 	adr	x3, minos_stack_bottom  // 0x4004 4018
@@ -287,12 +287,13 @@ minos_os_start:
 	mov	x5, #CONFIG_NR_CPUS   // CPU 个数
 	mul	x5, x4, x5  // 8K * CONFIG_NR_CPUS  // 0x8000
 	add	x0, x0, x5  // 向上增加 0x8000
-	str	x0, [x1]  // 将该值存储到 minos_stack_bottom
+	str	x0, [x1]  // 将该值存储到 minos_stack_top
 
-	sub	x0, x0, x19, lsl #CONFIG_TASK_STACK_SHIFT
+	sub	x0, x0, x19, lsl #CONFIG_TASK_STACK_SHIFT  // 减去一个栈的大小
 	asm_ptov x0
 	mov	sp, x0
-
+	
+	// 初始化 bss 区，设置为 0
 	ldr	x0, =__bss_start
 	asm_vtop x0
 	mov	x1, #0
@@ -301,6 +302,7 @@ minos_os_start:
 	sub	x2, x2, x0
 	bl	memset
 
+	// 初始化 percpu 区域
 	ldr	x0, =__percpu_start
 	asm_vtop x0
 	mov	x1, #0
@@ -340,7 +342,8 @@ mmu_on:
 	ic	ialluis
 	dsb	sy
 	isb
-
+	
+	// tlbi 相关指令，刷新 tlb
 	clear_ttbr0
 
 	mov	x0, x27		// restore the dtb address.

@@ -311,6 +311,8 @@ int affinity_to_cpuid(unsigned long affinity)
 	return (aff1 * CONFIG_NR_CPUS_CLUSTER0) + aff0;
 }
 
+// 只有 spin_table 形式启动的 cpu，这里才会初始化
+// qemu 平台没有，使用的是 psci
 void arch_smp_init(phy_addr_t *smp_h_addr)
 {
 #ifdef CONFIG_DEVICE_TREE

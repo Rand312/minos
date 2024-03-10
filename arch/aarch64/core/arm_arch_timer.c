@@ -98,6 +98,7 @@ unsigned long get_sys_time(void)
 }
 
 //初始化 arch 的 timer，主要是从设备树中获取信息
+
 static int __init_text timers_arch_init(void)
 {
 	int i, ret, from_dt;
@@ -121,6 +122,10 @@ static int __init_text timers_arch_init(void)
 			return -ENOENT;
 		}
 
+// [       0.000000@00 000] NIC    sec_phy_timer  : 29
+// [       0.000000@00 000] NIC nonsec_phy_timer  : 30
+// [       0.000000@00 000] NIC       virt_timer  : 27
+// [       0.000000@00 000] NIC hypervisor_timer  : 26
 		pr_notice("%s : %d\n", timer_name[i], info->irq);
 	}
 
@@ -136,6 +141,7 @@ static int __init_text timers_arch_init(void)
 
 	isb();
 	//获取当前的 ticks，记录到 boot_tick
+	// Holds the 64-bit physical count value
 	boot_tick = read_sysreg64(CNTPCT_EL0);
 	pr_notice("clock freq from %s %d\n", from_dt ? "DTB" : "REG", cpu_khz);
 	pr_notice("boot ticks is :0x%x\n", boot_tick);
@@ -176,6 +182,7 @@ static int __init_text timers_init(void)
 	struct armv8_timer_info *info;
 	extern int virtual_timer_irq_handler(uint32_t irq, void *data);
 
+	// Holds the 64-bit virtual offset. This is the offset between the physical count value visible in CNTPCT_EL0 and the virtual count value visible in CNTVCT_EL0.
 	write_sysreg64(0, CNTVOFF_EL2);
 
 	/* el1/el0 can read CNTPCT_EL0 */
@@ -194,18 +201,20 @@ static int __init_text timers_init(void)
 	isb();
 
 	info = &timer_info[VIRT_TIMER];
-	// 注册中断
+	// 注册 virt timer 中断
 	if (info->irq) {
 		request_irq(info->irq, virtual_timer_irq_handler,
 			info->flags & 0xf, "virt timer irq", NULL);
 	}
 
+	// 虚拟化的情况下，选取 hyp timer
 	sched_timer_info = &timer_info[HYP_TIMER];
 #else
 	sched_timer_info = &timer_info[VIRT_TIMER];
 #endif
 
 	ASSERT(sched_timer_info && sched_timer_info->irq);
+	// 注册 hyp timer 中断
 	request_irq(sched_timer_info->irq,
 			timer_interrupt_handler,
 			sched_timer_info->flags & 0xf,

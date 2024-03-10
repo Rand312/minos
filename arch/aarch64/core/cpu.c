@@ -46,6 +46,7 @@ static inline unsigned long psci_fn_hvc(uint32_t id, unsigned long a1,
 	return res.a0;
 }
 
+// 这里应该时调到 atf、uboot 中去了，待验证
 int psci_cpu_on(unsigned long cpu, unsigned long entry)
 {
 	return (int)psci_fn(PSCI_0_2_FN_CPU_ON, cpu, entry, 0);
