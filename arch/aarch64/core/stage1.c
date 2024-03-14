@@ -29,19 +29,19 @@
 #define S1_PAGETABLE_SIZE		4096
 
 #define S1_PGD_SHIFT			39
-#define S1_PGD_SIZE			(1UL << S1_PGD_SHIFT)
+#define S1_PGD_SIZE			(1UL << S1_PGD_SHIFT)    //512G
 #define S1_PGD_MASK			(~(S1_PGD_SIZE - 1))
 
 #define S1_PUD_SHIFT			30
-#define S1_PUD_SIZE			(1UL << S1_PUD_SHIFT)
+#define S1_PUD_SIZE			(1UL << S1_PUD_SHIFT)    //1G
 #define S1_PUD_MASK			(~(S1_PUD_SIZE - 1))
 
 #define S1_PMD_SHIFT			21
-#define S1_PMD_SIZE			(1UL << S1_PMD_SHIFT)
+#define S1_PMD_SIZE			(1UL << S1_PMD_SHIFT)    //2M
 #define S1_PMD_MASK			(~(S1_PMD_SIZE - 1))
 
 #define S1_PTE_SHIFT			12
-#define S1_PTE_SIZE			(1UL << S1_PTE_SHIFT)
+#define S1_PTE_SIZE			(1UL << S1_PTE_SHIFT)    //4K
 #define S1_PTE_MASK			(~(S1_PTE_SIZE - 1))
 
 #define S1_PHYSICAL_MASK		0x0000fffffffff000UL
@@ -104,6 +104,8 @@
 // 所以 minos 的 stage1 转换实际指的是 hypervisor 层级的地址转换，这也恰好对应这 host 这个词汇
 // 从 create_host_mapping 可以看出，host 的 mapping，然后调用 stage1 相关函数
 
+
+// 重刷 dcache、tlb 相关函数，背后都有相应的指令
 static void inline flush_tlb_va_range(unsigned long va, size_t size)
 {
 	flush_tlb_va_host(va, size);
@@ -145,7 +147,7 @@ static void *stage1_get_free_page(unsigned long flags)
 	return get_free_page();
 }
 
-// 使得某数按照 map_size 进行对齐
+// 使得start按照 map_size 进行对齐，但是不能超过 end
 static unsigned long stage1_xxx_addr_end(unsigned long start, unsigned long end, size_t map_size)
 {
 	unsigned long boundary = (start + map_size) & ~((unsigned long)map_size - 1);

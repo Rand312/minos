@@ -171,6 +171,7 @@ static void free_slab(void *addr)
 	 * create new slab type and add the new slab header
 	 * to the slab cache.
 	 */
+	// 创建新的描述符，然后插入到哈希表中
 	st = malloc_from_slab_heap(sizeof(struct slab_type));
 	if (!st) {
 		pr_err("alloc memory for slab type failed\n");
@@ -300,11 +301,15 @@ static struct page *alloc_new_pages(int pages, unsigned long align)
 	// page base 向下移动来实际分配页面
 	base = tmp - pages * PAGE_SIZE;
 	base = ALIGN(base, align);
+
+	// 这种情况是说内存不够了，如果分配的话，page_base 和 slab_base 都相撞了
 	if (base < (unsigned long)slab_base) {
 		pr_err("no more pages %d 0x%x\n", pages, align);
 		return NULL;
 	}
-
+	// 这种情况应是 page_base 的对齐级别和 align 要求有差，比如说 align 要求 8K 对齐
+	// 但是 page_base 只是 4K 对齐，这样 rbase 的值就会小于初始的 page_base
+	// 此时对于 [rabse, page_base] 之间的内存我们放入 free_list_head
 	rbase = base + pages * PAGE_SIZE;
 	if (rbase != tmp) {
 		recycle = __malloc(sizeof(struct page));
@@ -330,13 +335,13 @@ static struct page *alloc_new_pages(int pages, unsigned long align)
 		return NULL;
 	}
 
-	page->pfn = base >> PAGE_SHIFT;
-	page->flags = 0;
-	page->cnt = pages;
-	page->align = align >> PAGE_SHIFT;
+	page->pfn = base >> PAGE_SHIFT;  //页号
+	page->flags = 0;  //也属性
+	page->cnt = pages; //共几页
+	page->align = align >> PAGE_SHIFT; //几页对齐
 	page->next = NULL;
 
-	page_base = (void *)base;
+	page_base = (void *)base;  // 更新 page_base 指针
 
 	return page;
 }
