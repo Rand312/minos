@@ -197,6 +197,7 @@ void smp_cpus_up(void)
 		if (smp_affinity_id[i] == 0) {
 			pr_err("cpu-%d is not up with affinity id 0x%p\n",
 					i, smp_affinity_id[i]);
+		// 将第 i 个cpuid设置到 cpu_online
 		} else {
 			cpumask_set_cpu(i, &cpu_online);
 		}
@@ -213,6 +214,7 @@ void smp_init(void)
 	struct smp_call_data *cd;
 
 	smp_affinity_id = (uint64_t *)&__smp_affinity_id;
+	// 每个 cpu 分配 8 个字节
 	memset(smp_affinity_id, 0, sizeof(uint64_t) * NR_CPUS);
 
 	cpumask_clearall(&cpu_online);
@@ -222,7 +224,7 @@ void smp_init(void)
 		cd = &get_per_cpu(smp_call_data, i);
 		memset(cd, 0, sizeof(struct smp_call_data));
 	}
-
+	// qemu 平台 cpu 为 psci 模式使能，此函数是针对 spin_table 来说的
 	arch_smp_init(smp_holding_address);
 
 	// 注册 smp call

@@ -862,7 +862,7 @@ int vm_mm_struct_init(struct vm *vm)
 		pr_err("No memory for vm page table\n");
 		return -ENOMEM;
 	}
-	// 分配和初始化 vma 结构体
+	// 分配和初始化该 vm 的 vma 结构体
 	vmm_area_init(mm, !vm_is_32bit(vm));
 
 	/*
@@ -1034,7 +1034,11 @@ struct mem_block *vmm_alloc_memblock(void)
 	return mb;
 }
 
-// 将空闲的 mem_region 转换为 block，作为 guest vm
+// 遍历 mem_region，将空闲的 NORMAL 内存 转换为 block，作为 guest vm、
+// [       0.000000@00 000] NIC MEM: 0x000000004645a000 -> 0x0000000046600000 [0x00000000001a6000] Normal/Host
+// 这部分内存小于 1 个 block size，舍弃掉
+// [       0.000000@00 000] NIC MEM: 0x0000000086600000 -> 0x00000000c0000000 [0x0000000039a00000] Normal/Host
+// 这部分内存转换为 block
 void vmm_init(void)
 {
 	struct memory_region *region;

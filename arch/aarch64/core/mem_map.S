@@ -216,10 +216,10 @@ build_normal_pte_table:
 	adr	x0, minos_start
 	ldr	x0, [x0]
 	sub	x0, vaddr, x0
-	ubfx	pte_index, x0, #12, #20
+	ubfx	pte_index, x0, #12, #20  //提取x0寄存器中的位字段，从第12位开始，长度为20位，并将结果存储在pte_index寄存器中
 	mov	pmd_tmp, ttb0_pmd
 	add	pmd_tmp, pmd_tmp, pte_index, lsl #3
-
+	// 通过bic paddr, paddr, #0xffff000000000000对paddr进行按位清零操作
 	bic	paddr, paddr, entry_mask
 	bic	paddr, paddr, #0xffff000000000000
 	orr	paddr, paddr, pte_attr
@@ -239,6 +239,7 @@ build_page_table:
 
 	// map first 4GB for minos boot memory, here
 	// need 4 pages
+	// 对 4 页 pud 清零
 	mov	x3, #4
 	mov	ttb0_pud, pagetable_base
 	ldr	x2, =(4096 << 2)
@@ -253,6 +254,8 @@ build_page_table:
 	mov	pte_index, 0
 	ldr	x1, =HOST_TABLE_DES
 loop_pud:
+	// 将 pud 的地址记录在 pgd 中
+	// 0x4007 a003 0x4007 b003 0x4007 c003 0x4007 d003
 	orr	pte_value, tmp, x1
 	str	pte_value, [page_table, pte_index, lsl #3]
 	add	pte_index, pte_index, #1
@@ -263,22 +266,22 @@ loop_pud:
 	// count how many memory is mapped as 4K page
 	// other memory will mapped as PMD block
 	adr	vaddr, minos_bootmem_base
-	ldr	vaddr, [vaddr]
+	ldr	vaddr, [vaddr]   //0x4007 2000
 	mov	tmp, vaddr
 	ldr	entry_mask, =0x1fffff
 	add	tmp, tmp, entry_mask
 	mvn	entry_align, entry_mask
-	and	tmp, tmp, entry_align
+	and	tmp, tmp, entry_align   //这里得到以2M向上对齐的 minos_bootmem_base 0x2000 0000
 	adr	pte_value, minos_start
 	ldr	pte_value, [pte_value]
 
 	// size record the 4K page size
 	// tmp_const record the 2M block start address
 	mov	tmp_const, tmp
-	sub	size, tmp, pte_value
+	sub	size, tmp, pte_value   // 从 minos_start 到 以向上2M对齐的 minos_bootmem_base
 
-	lsr	x3, size, #21
-	lsl	x2, x3, #12
+	lsr	x3, size, #21  // 计算这个大小里面有几个 pmd(2M)
+	lsl	x2, x3, #12  // 这几个 pmd 页表的大小
 
 	mov	ttb0_pmd, pagetable_base
 	add	pagetable_base, pagetable_base, x2
@@ -291,7 +294,7 @@ loop_pud:
 	adr	vaddr, minos_start
 	ldr	vaddr, [vaddr]
 
-	lsr	pte_index, vaddr, #21
+	lsr	pte_index, vaddr, #21  //0x200
 	mov	tmp, ttb0_pmd
 	ldr	x1, =HOST_TABLE_DES
 loop_pmd:

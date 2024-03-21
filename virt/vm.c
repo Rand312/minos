@@ -53,6 +53,7 @@ static DECLARE_BITMAP(vmid_bitmap, CONFIG_MAX_VM);
 static int aff_current;
 static int native_vcpus;
 // 定义 vcpu 亲和性位图，位图大小为 pcpu 数量
+// 指示某个 pcpu 上是否有 vcpu
 DECLARE_BITMAP(vcpu_aff_bitmap, NR_CPUS);
 // 定义相关锁
 DEFINE_SPIN_LOCK(affinity_lock);
@@ -955,10 +956,10 @@ struct vm *create_vm(struct vmtag *vme, struct device_node *node)
 		if (vme->vmid == 0)
 			return NULL;
 	}
-	
+	// 初始化 vm 结构体信息
 	vm = __create_vm(vme);
 	if (!vm)
-		return NULL;
+		return NULL; 
 
 	vm->dev_node = node;
 
@@ -1053,6 +1054,7 @@ static void parse_and_create_vms(void)
 	struct device_node *node;
 	node = of_find_node_by_name(of_root_node, "vms");
 	if (node)
+	// 对设备树中出现的 vm 节点，调用 create_native_vm_of 来创建新的vm
 		of_iterate_all_node_loop(node, create_native_vm_of, NULL);
 #endif
 }
@@ -1121,6 +1123,7 @@ int virt_init(void)
 	/*
 	 * VMID 0 is reserved
 	 */
+	// 初始化 vmid 位图
 	set_bit(0, vmid_bitmap);
 	vmm_init();
 
@@ -1139,6 +1142,7 @@ int virt_init(void)
 
 #ifdef CONFIG_DEVICE_TREE
 	/* here create all the mailbox for all native vm */
+	// qemu 平台目前没有
 	of_create_vmboxs();
 #endif
 

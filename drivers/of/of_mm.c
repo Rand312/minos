@@ -72,7 +72,7 @@ static int __fdt_parse_memory_info(int node, char *attr)
 		// base 为设备树中记录的 0x4000 0000
 		// size 设备树中记录的是 4G
 		// 但是我们 qemu 设置的是 2G，所以实际为 0x8000 0000
-		add_memory_region(base, size, MEMORY_REGION_TYPE_NORMAL, 0);
+		add_memory_region(base, si ze, MEMORY_REGION_TYPE_NORMAL, 0);
 	}
 
 	return 0;

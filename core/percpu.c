@@ -56,9 +56,10 @@ void percpu_init(int cpuid)
 static int percpu_subsystem_init(void)
 {
 	struct pcpu *pcpu = get_pcpu();
-
+	// 分配 stack 内存
 	pcpu->stack = get_free_pages(2);
 	ASSERT(pcpu->stack != NULL);
+	// 移动到栈顶
 	pcpu->stack += 2 * PAGE_SIZE;
 	pcpu->state = PCPU_STATE_RUNNING;
 

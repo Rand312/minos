@@ -334,7 +334,7 @@ int create_idle_task(void)
 	task_init(task, task_name, NULL, 0, OS_PRIO_IDLE,
 			tid, aff, TASK_FLAGS_IDLE, NULL);
 
-	// 汇编中已经将 idle_stack 设置好了
+	// 汇编中 boot.S 已经将 idle_stack 设置好了
 	task->stack_top = (void *)ptov(minos_stack_top) -
 		(aff << CONFIG_TASK_STACK_SHIFT);
 	task->stack_bottom = task->stack_top - CONFIG_TASK_STACK_SIZE;
@@ -348,6 +348,7 @@ int create_idle_task(void)
 	set_current_task(task);
 
 	/* call the hooks for the idle task */
+	// create task 时的 hook 函数，目前没有
 	task_create_hook(task);
 
 	// 将该 task 加入到 pcpu 的 ready_list

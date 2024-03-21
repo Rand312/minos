@@ -70,6 +70,7 @@ int ramdisk_init(void)
 	ramdisk_start = (void *)ptov(ramdisk_start);
 	ramdisk_end = (void *)ptov(ramdisk_end);
 
+	// 这应该是自定义的 ramdisk 的格式
 	sb = ramdisk_start + RAMDISK_MAGIC_SIZE;
 	root = ramdisk_start + sb->inode_offset;
 	ramdisk_data = ramdisk_start + sb->data_offset;

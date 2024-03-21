@@ -312,7 +312,7 @@ minos_os_start:
 	bl	memset
 
 	// map the boot memory when booting
-	bl	map_boot_mem
+	bl	
 	dsb	ishst
 	isb
 
