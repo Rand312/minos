@@ -21,8 +21,11 @@
 
 #define VM_IPA_SIZE (1UL << 40)
 
+// block 集合，块内存池
 struct block_section {
-	unsigned long start;
+	// 该块内存池的起始地址，（因为最开始这片内存池是连续的)
+	unsigned long start;  
+	// 该块内存池大小
 	unsigned long size;
 	unsigned long end;
 	unsigned long free_blocks;
@@ -35,7 +38,7 @@ struct block_section {
 static struct block_section *bs_head;
 static DEFINE_SPIN_LOCK(bs_lock);
 static unsigned long free_blocks;
-
+ 
 #define mm_to_vm(__mm) container_of((__mm), struct vm, mm)
 #define VMA_SIZE(vma) ((vma)->end - (vma)->start)
 
@@ -116,6 +119,7 @@ static struct vmm_area *__alloc_vmm_area_entry(unsigned long base, size_t size)
 		return NULL;
 
 	va->start = base;
+	// -1(0xfffffffffff)，表示未分配映射实际的物理内存
 	va->pstart = BAD_ADDRESS;
 	va->end = base + size;
 	va->flags = 0;
@@ -294,7 +298,8 @@ int map_vmm_area(struct mm_struct *mm,
 	return ret;
 }
 
-// split 现有的 vma_area 结构体，然后将分出去的内存建立新的 vma_area 结构体，插入到 mm->vmm_area_free 链表中
+// split 参数中的 vma_area 结构体，建立新的 vmm_area 结构体，插入到 mm->vmm_area_used 链表
+// 参数中的 vma，用剩下的，重新插入到 mm->vmm_area_free 链表
 static struct vmm_area *__split_vmm_area(struct mm_struct *mm,
 		struct vmm_area *vma, unsigned long base,
 		unsigned long end, int flags)
@@ -410,6 +415,8 @@ struct vmm_area *split_vmm_area(struct mm_struct *mm,
 	if (!out)
 		goto exit;
 
+	// split 参数中的 vmm_area 结构体，建立新的 vmm_area 结构体，插入到 mm->vmm_area_used 链表
+	// 被分割的 vmm_area，其用剩下的，重新插入到 mm->vmm_area_free 链表
 	out = __split_vmm_area(mm, out, base, end, flags);
 exit:
 	spin_unlock(&mm->lock);
@@ -692,13 +699,13 @@ struct vmm_area *vm_mmap(struct vm *vm, unsigned long offset, size_t size)
 	return va;
 }
 
-// 
+// 从 block 中分配物理内存
 static int __alloc_vm_memory(struct mm_struct *mm, struct vmm_area *va)
 {
 	int i, count;
 	unsigned long base;
 	struct mem_block *block;
-
+	// 起始地址 2M 对齐
 	base = ALIGN(va->start, MEM_BLOCK_SIZE);
 	if (base != va->start) {
 		pr_err("memory base is not mem_block align\n");
@@ -728,14 +735,14 @@ static int __alloc_vm_memory(struct mm_struct *mm, struct vmm_area *va)
 	return 0;
 }
 
-// 
+// 为 guest vm 分配和映射物理内存
 int alloc_vm_memory(struct vm *vm)
 {
 	struct mm_struct *mm = &vm->mm;
 	struct vmm_area *va;
 
 	// 如果是刚创建 vm 时走到这里的话，
-		// vmm_area_used 链表中应该只有一个 vma 结构，此结构是从整体的 ipa vma 中 split 下来的，见 guest_mm_init 函数流程
+	// vmm_area_used 链表中应该只有一个 vma 结构，此结构是从整体的 ipa vma 中 split 下来的，见 guest_mm_init 函数流程
 	list_for_each_entry(va, &mm->vmm_area_used, list) {
 		if (!(va->flags & VM_NORMAL))
 			continue;
@@ -758,9 +765,7 @@ out:
 	return -ENOMEM;
 }
 
-// 创建 vm 的 vmm_area
-// vmm_area 是虚拟地址空间
-// 
+// 创建 vm 的第一个 vmm_area
 static void vmm_area_init(struct mm_struct *mm, int bit64)
 {
 	unsigned long base, size;
@@ -853,16 +858,17 @@ int vm_mm_struct_init(struct vm *vm)
 
 	mm->pgdp = NULL;
 	spin_lock_init(&mm->lock);
+	//
 	init_list(&mm->vmm_area_free);
 	init_list(&mm->vmm_area_used);
 
-	// 分配pgd页表
+	// 分配该 vm 的 stage2 页表/pgd
 	mm->pgdp = arch_alloc_guest_pgd();
 	if (mm->pgdp == NULL) { 
 		pr_err("No memory for vm page table\n");
 		return -ENOMEM;
 	}
-	// 分配和初始化该 vm 的 vma 结构体
+	// 分配和初始化该 vm 的 第一个 vmm_area 结构体
 	vmm_area_init(mm, !vm_is_32bit(vm));
 
 	/*
@@ -881,13 +887,15 @@ int vm_mm_init(struct vm *vm)
 	if (test_and_set_bit(VM_FLAGS_BIT_SKIP_MM_INIT, &vm->flags))
 		return 0;
 
+	// dump 出目前所有的 vmm_area 
 	dump_vmm_areas(&vm->mm);
 
 	/* just mapping the physical memory for native VM */
+	// used vmm_area 都有分配实际的物理内存，这里建立映射关系
 	list_for_each_entry(va, &mm->vmm_area_used, list) {
 		if (!(va->flags & __VM_NORMAL))
 			continue;
-
+		// 建立映射，而且是直接映射, 即 [va->start, va->end) => [va->start, va->end)
 		ret = map_vmm_area(mm, va, va->start);
 		if (ret) {
 			pr_err("map mem failed for vm-%d [0x%lx 0x%lx]\n",
@@ -900,6 +908,7 @@ int vm_mm_init(struct vm *vm)
 	 * make sure that all the free vmm_area are PAGE aligned
 	 * when caculated the end address need to plus 1.
 	 */
+	// 规整 free vmm_area
 	list_for_each_entry_safe(va, n, &mm->vmm_area_free, list) {
 		base = BALIGN(va->start, PAGE_SIZE);
 		end = ALIGN(va->end, PAGE_SIZE);

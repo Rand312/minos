@@ -21,7 +21,9 @@
 #define MAX_MEMORY_REGION 16
 
 static struct memory_region memory_regions[MAX_MEMORY_REGION];
+// 下一个空闲 memory_region 下标
 static int current_region_id;
+// 使用中的 memory_region 组成了一个链表，mem_list 是其头节点
 LIST_HEAD(mem_list);
 
 struct memory_region *alloc_memory_region(void)

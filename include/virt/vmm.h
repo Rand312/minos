@@ -9,6 +9,7 @@
 
 struct vm;
 
+
 struct mem_block {
 	uint32_t bfn;
 	struct mem_block *next;
@@ -29,12 +30,13 @@ struct vm_iommu {
  * is the phsical address of this vmm_area
  */
 struct vmm_area {
-	unsigned long start;   // 应是 ipa 地址
-	unsigned long end;     // 应是 ipa 地址
+	unsigned long start;   // ipa 地址——start
+	unsigned long end;     // ipa 地址——end
 	unsigned long pstart;
 	int flags;
 	int vmid;			/* 0 - for self other for VM */
 	struct list_head list;
+	// 如果分配的内存是 block 形式
 	struct mem_block *b_head;
 
 	/* if this vmm_area is belong to VDEV, this will link
