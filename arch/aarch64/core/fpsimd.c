@@ -18,6 +18,8 @@
 #include <asm/tcb.h>
 #include <minos/task.h>
 
+
+// 保存浮点上下文
 void fpsimd_state_save(struct task *task, struct fpsimd_context *c)
 {
 #ifdef CONFIG_VIRT
@@ -45,6 +47,7 @@ void fpsimd_state_save(struct task *task, struct fpsimd_context *c)
                      "stp q28, q29, [%1, #16 * 28]\n\t"
                      "stp q30, q31, [%1, #16 * 30]\n\t"
                      : "=Q" (*c->regs) : "r" (c->regs));
+                     // 输出操作数 "=Q" 表示将结果存储到c->regs指向的内存地址中，输入操作数 "r" 表示使用c->regs作为输入操作数
 }
 
 void fpsimd_state_restore(struct task *task, struct fpsimd_context *c)

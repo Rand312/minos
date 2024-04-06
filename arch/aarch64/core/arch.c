@@ -137,7 +137,8 @@ int arch_is_exit_to_user(struct task *task)
 	return !!((regs->pstate & 0xf) != (AARCH64_SPSR_EL2h));
 }
 
-// 
+// 保存 task 的浮点上下文
+// 如果是 vcpu 线程，那么还会保存虚拟化相关的上下文
 void arch_task_sched_out(struct task *task)
 {
 	struct cpu_context *c = &task->cpu_context;
@@ -151,6 +152,7 @@ void arch_task_sched_out(struct task *task)
 	fpsimd_state_save(task, &c->fpsimd_state);
 }
 
+// 反之
 void arch_task_sched_in(struct task *task)
 {
 	struct cpu_context *c = &task->cpu_context;
@@ -191,7 +193,7 @@ static void aarch64_init_kernel_task(struct task *task, gp_regs *regs)
 #endif
 }
 
-// 设置该 task 所需要执行的具体任务 entry
+// 设置 task 的异常上下文，
 void arch_init_task(struct task *task, void *entry, void *user_sp, void *arg)
 {
 	gp_regs *regs = stack_to_gp_regs(task->stack_top);

@@ -151,6 +151,7 @@ struct task {
 	// 该线程的私有数据
 	union {
 		void *pdata;			// the private data of this task, such as vcpu.
+								// 比如说 vcpu 线程，私有数据就是 vcpu 结构体
 #ifdef CONFIG_VIRT
 		struct vcpu *vcpu;
 #endif

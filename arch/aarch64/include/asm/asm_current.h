@@ -85,6 +85,7 @@ static inline int __smp_processor_id(void)
 
 static inline void arch_sys_sched(void)
 {
+	// b __sync_exception_from_current_el 会走到这里去
 	__asm__ volatile("svc #0");
 }
 

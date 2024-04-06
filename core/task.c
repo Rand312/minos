@@ -38,6 +38,7 @@ static DEFINE_PER_CPU(struct task *, idle_task);
 		(__ti)->preempt_count = 0; 	\
 		(__ti)->flags = 0;		\
 	} while (0)
+	
 
 // 分配 task id
 static int alloc_tid(void)
@@ -92,6 +93,7 @@ static void task_timeout_handler(unsigned long data)
 	set_need_resched();
 }
 
+// 初始化 task 结构体
 static void task_init(struct task *task, char *name,
 		void *stack, uint32_t stk_size, int prio,
 		int tid, int aff, unsigned long opt, void *arg)
@@ -102,6 +104,7 @@ static void task_init(struct task *task, char *name,
 	 * default the kernel stack will set to stack top.
 	 */
 	// 如果不是 idle task，执行下面的操作
+	// 因为 idle task 的栈是 boot 阶段就分配好的
 	if (!(opt & TASK_FLAGS_IDLE)) {
 		task->stack_bottom = stack;
 		task->stack_top = stack + stk_size;
@@ -110,7 +113,8 @@ static void task_init(struct task *task, char *name,
 		TASK_INFO_INIT(&task->ti, task);
 	}
 
-	task->tid = tid;
+	// task 各个字段信息初始化
+	task->tid = tid;   
 	task->prio = prio;
 	task->pend_state = 0;
 	task->flags = opt;
@@ -119,7 +123,7 @@ static void task_init(struct task *task, char *name,
 	task->run_time = TASK_RUN_TIME;
 	spin_lock_init(&task->s_lock);
 	task->state = TASK_STATE_SUSPEND;
-	task->cpu = -1;
+	task->cpu = -1;  // 该 task 在哪个 pcpu 上执行？ 初始值 -1
 
 	init_timer(&task->delay_timer, task_timeout_handler,
 			(unsigned long)task);
@@ -237,14 +241,15 @@ struct task *__create_task(char *name,
 	struct task *task;
 	int tid;
 
-	// 设置该 task 的 CPU 亲和性
+	// 检查该 task 的 CPU 亲和性的有效性，如果无效，设置为 TASK_AFF_ANY
+	// 意为该线程可以在任何物理cpu上运行
 	if ((aff >= NR_CPUS) && (aff != TASK_AFF_ANY)) {
 		pr_warn("task %s afinity will set to 0x%x\n",
 				name, TASK_AFF_ANY);
 		aff = TASK_AFF_ANY;
 	}
 
-	// 设置该 task 的 优先级
+	// 检查该 task 的 优先级的有效性，如果无效，重新设置为默认优先级
 	if ((prio >= OS_PRIO_IDLE) || (prio < 0)) {
 		pr_warn("wrong task prio %d fallback to %d\n",
 				prio, OS_PRIO_DEFAULT_6);
@@ -259,7 +264,7 @@ struct task *__create_task(char *name,
 	// 当前 task 不可被抢占
 	preempt_disable();
 
-	// 创建一个 task 结构体，初始化 task 结构体
+	// 创建一个 task 结构体，初始化 task 结构体，包括分配栈空间
 	task = do_create_task(name, func, stk_size, prio,
 			tid, aff, opt, arg);
 	if (!task) {
@@ -268,6 +273,7 @@ struct task *__create_task(char *name,
 		return NULL;
 	}
 
+	// 创建 task 时需要调用的 hook 函数
 	// 目前没做什么实际的事情
 	task_create_hook(task);
 
@@ -276,6 +282,9 @@ struct task *__create_task(char *name,
 	 * is called arch_init_vcpu()
 	 */
 	// 如果不是 vcpu 类型的 task
+	// 需要设置线程的上下文
+	// 线程之间的切换都是 A 保存上下文，B 加载上下文
+	// 现在创建了一个新线程，它想要被调度执行，那么我们就要给它设置好上下文
 	if (!(task->flags & TASK_FLAGS_VCPU))
 		arch_init_task(task, (void *)func, 0, task->pdata);
 
@@ -283,6 +292,7 @@ struct task *__create_task(char *name,
 	 * start the task if need auto started.
 	 */
 	// 如果没有设置自动开始，vcpu task 具有该标志
+	// 这里就是将该 task 放进就绪队列
 	if (!(task->flags & TASK_FLAGS_NO_AUTO_START))
 		// 将该 task 加入到某个 pcpu 的 read_list
 		task_ready(task, 0);
@@ -290,20 +300,21 @@ struct task *__create_task(char *name,
 	// 允许该 task 抢占了
 	preempt_enable();
 
-	if (os_is_running())
-		//调度
-		sched();
-
-	return task;
+    if (os_is_running())
+        // 调度，一般这里就会父线程被调出，子线程调入
+        sched();
+    
+    // 父线程返回新创建的 task
+    return task;
 }
 
-struct task *create_task(char *name,
-		task_func_t func,
-		size_t stk_size,
-		int prio,
-		int aff,
-		unsigned long opt,
-		void *arg)
+struct task *create_task(char *name,  // 线程名称
+		task_func_t func,             // 线程函数
+		size_t stk_size,              // 线程栈空间大小
+		int prio,                     // 线程优先级
+		int aff,                      // 线程亲和性，该线程在哪些 cpu 上运行
+		unsigned long opt,            // 一些选项，可以用来选择默认优先级
+		void *arg)                    // 线程函数的参数
 {
 	// 数字越小，优先级越高
 	if (prio < 0) {

@@ -65,11 +65,11 @@ static inline void sched_update_sched_timer(void)
 	 * enable the sched timer if there are more than one
 	 * ready task on the same prio.
 	 */
-	// 如果有多个相同优先级的 task，开始 cpu 的 sched_timer
+	// 当前优先级队列的 task 数量超过 1 个，那么需要调度了，开始 pcpu 的 sched_timer
 	// task->run_time 为当前 task 的时间片
 	if ((pcpu->tasks_in_prio[task->prio] > 1))
 		setup_and_start_timer(&pcpu->sched_timer, MILLISECS(task->run_time));
-	// 该 pcpu 上只有 1 个或者没有 task 的时候，不需要调度，也就不需要 sched_timer，所以停止 timer
+	// 当前优先级队列 上只有 1 个或者没有 task 的时候，不需要调度，也就不需要 sched_timer，所以停止 timer
 	else
 		stop_timer(&pcpu->sched_timer);
 }
@@ -89,7 +89,7 @@ static void add_task_to_ready_list(struct pcpu *pcpu,
 	pcpu->tasks_in_prio[task->prio]++;
 	// 如果当前 task 的优先级 == 将要添加的 task 的优先级
 	if (current->prio == task->prio) {
-		// 直接插入到当前 task 的前面
+		// 直接插入到当前 task 的前面，方便抢占执行
 		list_insert_before(&current->state_list, &task->state_list);
 		//如果该优先级的task刚好只有它们两个，更新 pcpu sched_timer
 		if (pcpu->tasks_in_prio[task->prio] == 2)
@@ -102,7 +102,7 @@ static void add_task_to_ready_list(struct pcpu *pcpu,
 	mb();
 	// 该优先级队列上有 task 了，那么该优先级队列对应的位图上置 1
 	pcpu->local_rdy_grp |= BIT(task->prio);
-	// 如果允许抢占了，并且当前的 ？
+	// 如果允许抢占了，并且新 task 的优先级比较高，设置抢占标志，抢占时机为异常返回
 	if (preempt || current->prio > task->prio)
 		set_need_resched();
 }
@@ -138,6 +138,7 @@ void pcpu_resched(int pcpu_id)
 	send_sgi(CONFIG_MINOS_RESCHED_IRQ, pcpu_id);
 }
 
+// 发送 CONFIG_MINOS_IRQWORK_IRQ 类型的 SGI 给目标 pcpu，让其加入一个 task
 void pcpu_irqwork(int pcpu_id)
 {
 	send_sgi(CONFIG_MINOS_IRQWORK_IRQ, pcpu_id);
@@ -173,6 +174,8 @@ static inline void smp_percpu_task_ready(struct pcpu *pcpu,
 
 	ASSERT(task->state_list.next == NULL);
 	spin_lock_irqsave(&pcpu->lock, flags);
+	// 将新 task 加入目标 pcpu 的 new_list 队列中
+	// 优先级队列是调度队列，当前 pcpu 没权利直接修改别的 pcpu 的调度队列
 	list_add_tail(&pcpu->new_list, &task->state_list);
 	spin_unlock_irqrestore(&pcpu->lock, flags);
 
@@ -185,8 +188,11 @@ int task_ready(struct task *task, int preempt)
 	struct pcpu *pcpu, *tpcpu;
 	// 关抢占
 	preempt_disable();
-	// 根据亲和性设置 cpuid
+	// 根据亲和性设置 cpuid，亲和性是调用 create_task 是作为参数传进去的
+	// 目前系统代码中调用 create_task 时，只有 当前pcpu_id，和 -1 两种情况
+	// 所以这里的 task->cpu 要么等于当前的 pcpu id
 	task->cpu = task->affinity;
+	// 要么设置为 NR_CPUS - 1(id 值最大的那个 pcpu)
 	if (task->cpu == -1)
 		task->cpu = select_task_run_cpu();
 
@@ -350,7 +356,7 @@ static void switch_to_task(struct task *cur, struct task *next)
 	 * change the current task to next task.
 	 */
 	// next task 的状态设置为 TASK_STATE_RUNNING
-	// 清除掉 __TIF_TICK_EXHAUST 标志，根据字面意思推测应该是时间片到期的标志
+	// 清除掉 __TIF_TICK_EXHAUST 标志，表示时间片到期的标志
 	next->state = TASK_STATE_RUNNING;
 	next->ti.flags &= ~__TIF_TICK_EXHAUST;
 	// next task 的 cpu 设置为当前 pcpu 的 id
@@ -364,8 +370,8 @@ static void switch_to_task(struct task *cur, struct task *next)
 	//call 类型为 OS_HOOK_TASK_SWITCH_TO hook 函数
 	do_hooks((void *)next, NULL, OS_HOOK_TASK_SWITCH_TO);
 
-	next->ctx_sw_cnt++;
-	next->wait_event = 0;
+	next->ctx_sw_cnt++;  // next task 的调度次数++
+	next->wait_event = 0;  
 	// 设置开始时间
 	next->start_ns = now;
 	smp_wmb();
@@ -540,7 +546,7 @@ static int irqwork_handler(uint32_t irq, void *data)
 		 * if the task has delay timer, cancel it.
 		 */
 		// 如果该 task 有 delay_timer，直接取消
-		// MARK，为什么这么做？？？
+		// MARK，为什么这么做，情景是什么
 		if (task->delay) {
 			stop_timer(&task->delay_timer);
 			task->delay = 0;
