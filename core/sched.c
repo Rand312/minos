@@ -405,10 +405,12 @@ void sched(void)
 	/*
 	 * tell the scheduler that I am ok to sched out.
 	 */
+	// 设置 need resched 标志
 	set_need_resched();
 	clear_do_not_preempt();
 
 	do {
+		// svc #0 进行调度
 		sys_sched();
 	// 如果需要调度，则 while 循环
 	// MARK，什么时候会出现中途不再需要调度
@@ -422,6 +424,8 @@ static inline int sched_allowed(void)
 }
 
 // 条件 resched，也就是说允许调度 && 需要调度的时候才调度
+// need_resched，查询是否有 __TIF_NEED_RESCHED 标志
+// sched_allowed，如果 preempt_count==0 && 没有处于中断上下文，那么允许调度
 void cond_resched(void)
 {
 	if (need_resched() && sched_allowed())

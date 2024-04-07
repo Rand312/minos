@@ -14,6 +14,7 @@ static inline int preempt_allowed(void)
 
 static inline void preempt_enable(void)
 {
+	// --，如果为 0 表示允许抢占
 	get_current_task_info()->preempt_count--;
 	wmb();
 	cond_resched();
