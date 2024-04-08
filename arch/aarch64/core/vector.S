@@ -126,10 +126,12 @@ lb:
 vfunc_end __bad_mode
 
 vfunc exception_return
+	// 切换为 pcpu 栈
 	LOAD_PCPU_STACK x1			// load percpu stack, need ensure the irq is off.
 
 	bl	exception_return_handler	// check whether need to resched. x18 will the next task.
 
+	// 切换为 task 
 	ldr	x1, [x18, #TASK_STACK_OFFSET]	// load the running task's stack
 	mov	sp, x1				// change to the new stack address
 
@@ -147,17 +149,18 @@ __do_exception_return:
 vfunc_end exception_return
 
 vfunc __sync_exception_from_current_el
-	SAVE_GP_REGS
+	SAVE_GP_REGS        // 保存通用寄存器
 
-	mov	x0, sp
-	str	x0, [x18, #TASK_STACK_OFFSET]
+	mov	x0, sp       
+	str	x0, [x18, #TASK_STACK_OFFSET]   // 将保存了现场后的栈指针赋值给 task.stack_base
 
 	// use SVC for sched() , other type will
 	// go to the exception handler.
-	mrs	x1, ESR_EL2
-	ubfx	x2, x1, #ESR_ELx_EC_SHIFT, #ESR_ELx_EC_WIDTH
-	cmp	x2, #ESR_ELx_EC_SVC64
-	b.eq	__sync_current_out
+	mrs	x1, ESR_EL2         // 获取异常原因
+	// x2=(x1>>ESR_ELx_EC_SHIFT)&ESR_ELx_EC_WIDTH = x1 >> 26 & 6
+	ubfx	x2, x1, #ESR_ELx_EC_SHIFT, #ESR_ELx_EC_WIDTH 
+	cmp	x2, #ESR_ELx_EC_SVC64      // 如果 x2 == ESR_ELx_EC_SVC64
+	b.eq	__sync_current_out     // 跳去 __sync_current_out
 
 	bl	sync_exception_from_current_el	// go to the c handler, will die.
 
