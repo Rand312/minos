@@ -81,10 +81,10 @@ struct irq_chip {
  * to the handler and pass the virq to the vm
  */
 struct irq_desc {
-	irq_handle_t handler;
-	uint16_t hno;
-	uint16_t affinity;
-	unsigned long flags;
+	irq_handle_t handler;   // 中断 handler 函数
+	uint16_t hno;           // 物理中断号
+	uint16_t affinity;      // cpu 亲和性
+	unsigned long flags;    
 	spinlock_t lock;
 	unsigned long irq_count;
 	void *pdata;

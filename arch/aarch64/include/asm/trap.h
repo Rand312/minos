@@ -7,11 +7,11 @@
 typedef int (*sync_handler_t)(gp_regs *reg, int ec, uint32_t esr);
 
 struct sync_desc {
-	uint8_t aarch;
-	uint8_t irq_safe;
-	uint8_t ret_addr_adjust;
-	uint8_t resv;
-	sync_handler_t handler;
+	uint8_t aarch;     // 执行状态
+	uint8_t irq_safe;  // 概念同 Linux，如果handler不会导致死锁竞争等，safe
+	uint8_t ret_addr_adjust;  // 返回地址修正
+	uint8_t resv;      // pad
+	sync_handler_t handler;  
 };
 
 #define DEFINE_SYNC_DESC(t, arch, h, is, raa)			\

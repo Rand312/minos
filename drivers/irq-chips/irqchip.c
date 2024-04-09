@@ -65,9 +65,10 @@ int gic_xlate_irq(struct device_node *node,
 {
 	if (intsize != 3)
 		return -EINVAL;
-
+	// SPI 中断
 	if (intspec[0] == 0)
 		*hwirq = intspec[1] + 32;
+	// PPI 中断
 	else if (intspec[0] == 1) {
 		if (intspec[1] >= 16)
 			return -EINVAL;
