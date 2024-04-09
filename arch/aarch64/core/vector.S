@@ -49,9 +49,10 @@
 	str	x18, [\tmp0, #PCPU_CURRENT_TASK]
 .endm
 
+// 将当前 pcpu 上记录的 current running task 指针记录到 x18
 .macro PCPU_LOAD_CURRENT_TASK
 	mrs	x18, ARM64_TPIDR
-	ldr	x18, [x18, #PCPU_CURRENT_TASK]
+	ldr	x18, [x18, #PCPU_CURRENT_TASK] // x18=pcpu->running_task
 .endm
 
 .macro LOAD_PCPU_STACK, tmp0
@@ -216,11 +217,14 @@ vfunc __irq_exception_from_current_el
 	SAVE_GP_REGS
 
 	// Set the irq flags into ti->flags.
+	// 设置中断上下文标志
 	ldr	x1, [x18, #TASK_INFO_FLAGS_OFFSET]
 	orr	x1, x1, #__TIF_HARDIRQ_MASK
 	str	x1, [x18, #TASK_INFO_FLAGS_OFFSET]
 	dsb	sy
 
+	// 保存当前栈地址到 task.stack_base，然后跳去 irq_from_current_el
+	// 当前栈地址就是 gp_regs 结构指针
 	mov	x0, sp
 	str     x0, [x18, #TASK_STACK_OFFSET]	// store the stack in case this task will scheded out.
 	bl	irq_from_current_el		// irq is disabled all the time

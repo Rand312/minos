@@ -128,12 +128,13 @@ static inline uint32_t read_esr(void)
 #endif
 }
 
+// 处理同步异常
 static void handle_sync_exception(gp_regs *regs)
 {
 	uint32_t esr_value;
 	uint32_t ec_type;
 	struct sync_desc *ec;
-
+	// 获取异常原因
 	esr_value = read_esr();
 	ec_type = ESR_ELx_EC(esr_value);
 	if (ec_type >= ESR_ELx_EC_MAX)
@@ -143,7 +144,9 @@ static void handle_sync_exception(gp_regs *regs)
 	 * for normal userspace process the return address shall
 	 * be adjust
 	 */
+	// 获取该异常的描述符
 	ec = process_sync_descs[ec_type];
+	// 执行该异常处理程序，并且修正 elr_el2 的值
 	regs->pc += ec->ret_addr_adjust;
 	ec->handler(regs, ec_type, esr_value);
 }

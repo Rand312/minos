@@ -206,17 +206,20 @@ out:
 	spin_unlock(&irq_desc->lock);
 }
 
+// irq 的 handler 函数
 int do_irq_handler(void)
 {
 	uint32_t irq;
 	struct irq_desc *irq_desc;
-	int cpuid = smp_processor_id();
+	int cpuid = smp_processor_id();  // 当前 pcpuid
 
+	// 遍历当前所有 pending 等待的 irq
 	while (1) {
+		// 获取中断号
 		irq = irq_chip->get_pending_irq();
 		if (irq >= BAD_IRQ)
 			return 0;
-
+		// 中断号对应的中断描述符
 		irq_desc = get_irq_desc_cpu(cpuid, irq);
 		if (unlikely(!irq_desc)) {
 			pr_err("irq is not actived %d\n", irq);
@@ -224,7 +227,7 @@ int do_irq_handler(void)
 			irq_chip->irq_dir(irq);
 			continue;
 		}
-
+		// 执行中断描述符中注册的回调 handler
 		do_handle_host_irq(cpuid, irq_desc);
 	}
 
