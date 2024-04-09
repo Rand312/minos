@@ -148,7 +148,7 @@ static int gicv2_set_irq_type(uint32_t irq, uint32_t type)
 
 	/* Set edge / level */
 	cfg = readl_gicd(GICD_ICFGR + (irq / 16) * 4);
-	edgebit = 2u << (2 * (irq % 16));
+	edgebit = 2u << (2 * (irq % 16));  // 边沿触发
 	if ( type & IRQ_FLAGS_LEVEL_BOTH)
 		cfg &= ~edgebit;
 	else if (type & IRQ_FLAGS_EDGE_BOTH)
@@ -195,16 +195,19 @@ static void gicv2_send_sgi(uint32_t sgi, enum sgi_mode mode, cpumask_t *mask)
 	unsigned int value = 0;
 
 	switch (mode) {
+	// 发送一个 SGI 给所有 CPU
 	case SGI_TO_OTHERS:
 		writel_gicd(GICD_SGI_TARGET_OTHERS | sgi, GICD_SGIR);
 		break;
+	// 给自己发送一个 SGI
 	case SGI_TO_SELF:
 		writel_gicd(GICD_SGI_TARGET_SELF | sgi, GICD_SGIR);
 		break;
+	// 发送一个 SGI 给目标 CPU 组
 	case SGI_TO_LIST:
 		for_each_cpu(cpu, mask)
 			value |= gic_cpu_mask[cpu];
-
+		// 填写目标 CPU 位图集合
 		writel_gicd(GICD_SGI_TARGET_LIST |
 			(value << GICD_SGI_TARGET_SHIFT) | sgi,
 			GICD_SGIR);
@@ -215,16 +218,20 @@ static void gicv2_send_sgi(uint32_t sgi, enum sgi_mode mode, cpumask_t *mask)
     }
 }
 
+// 屏蔽中断号为 irq 的中断
 static void gicv2_mask_irq(uint32_t irq)
 {
 	unsigned long flags;
 
 	spin_lock_irqsave(&gicv2_lock, flags);
+	// 写 0 无效，所以可以直接写入值 1UL << (irq % 32)
+	// irq / 32 表示第几个 GICD_ICENABLER 寄存器
+	// (irq / 32) * 4，按字节算偏移，乘以 4
 	writel_gicd(1UL << (irq % 32), GICD_ICENABLER + (irq / 32) * 4);
 	dsb();
 	spin_unlock_irqrestore(&gicv2_lock, flags);
 }
-
+// 使能中断号为 irq 的中断
 static void gicv2_unmask_irq(uint32_t irq)
 {
 	unsigned long flags;
@@ -263,7 +270,7 @@ static void __init_text gicv2_cpu_init(void)
 {
 	int i;
 	int cpuid = smp_processor_id();
-
+	// 读取 GICD_ITARGETSR0 会返回当前 cpuid
 	gic_cpu_mask[cpuid] = readl_gicd(GICD_ITARGETSR) & 0xff;
 	pr_debug("gicv2 gic mask of cpu%d: 0x%x\n", cpuid, gic_cpu_mask[cpuid]);
 	if (gic_cpu_mask[cpuid] == 0)
@@ -272,16 +279,19 @@ static void __init_text gicv2_cpu_init(void)
 	/* The first 32 interrupts (PPI and SGI) are banked per-cpu, so
 	 * even though they are controlled with GICD registers, they must
 	 * be set up here with the other per-cpu state. */
+	// TODO ???
 	writel_gicd(0xffff0000, GICD_ICENABLER); /* Disable all PPI */
 	writel_gicd(0x0000ffff, GICD_ISENABLER); /* Enable all SGI */
 
 	/* Set SGI priorities */
+	// 设置 SGI 的优先级，IPIs must preempt normal interrupts
 	for ( i = 0; i < 16; i += 4 )
 		writel_gicd(GIC_PRI_IPI << 24 | GIC_PRI_IPI << 16 |
 			GIC_PRI_IPI << 8 | GIC_PRI_IPI,
 			GICD_IPRIORITYR + (i / 4) * 4);
 
 	/* Set PPI priorities */
+	// 设置 PPI 的优先级
 	for ( i = 16; i < 32; i += 4 )
 		writel_gicd(GIC_PRI_IRQ << 24 | GIC_PRI_IRQ << 16 |
 			GIC_PRI_IRQ << 8 | GIC_PRI_IRQ,
@@ -293,6 +303,8 @@ static void __init_text gicv2_cpu_init(void)
 	/* Finest granularity of priority */
 	writel_gicc(0x0, GICC_BPR);
 	/* Turn on delivery */
+	// GICC_CTL_ENABLE 允许 group1（非安全中断，目前minos里面都是）中断发送给 cpu
+	// GICC_CTL_EOI drop priority 和 deactivate interrupt 分开
 	writel_gicc(GICC_CTL_ENABLE|GICC_CTL_EOI, GICC_CTLR);
 	dsb();
 }
@@ -312,6 +324,7 @@ static void __init_text gicv2_dist_init(void)
 	unsigned int nr_lines;
 	int i;
 
+	// 所有中断都往 pcpu0 发送
 	cpumask = readl_gicd(GICD_ITARGETSR) & 0xff;
 	cpumask = (cpumask == 0) ? (1 << 0) : cpumask;
 	cpumask |= cpumask << 8;
@@ -320,6 +333,7 @@ static void __init_text gicv2_dist_init(void)
 	/* Disable the distributor */
 	writel_gicd(0, GICD_CTLR);
 
+	// 从 GICD_TYPER 寄存器里面获取 cpu 数量和支持的中断数
 	type = readl_gicd(GICD_TYPER);
 	nr_lines = 32 * ((type & GICD_TYPE_LINES) + 1);
 	gic_cpus = 1 + ((type & GICD_TYPE_CPUS) >> 5);
@@ -330,10 +344,12 @@ static void __init_text gicv2_dist_init(void)
 
 
 	/* Default all global IRQs to level, active low */
+	// 配置所有 irq 为边沿触发
 	for ( i = 32; i < nr_lines; i += 16 )
 		writel_gicd(0x0, GICD_ICFGR + (i / 16) * 4);
 
 	/* Route all global IRQs to this CPU */
+	// 配置所有中断的亲和性为 cpu0
 	for ( i = 32; i < nr_lines; i += 4 )
 		writel_gicd(cpumask, GICD_ITARGETSR + (i / 4) * 4);
 
@@ -344,13 +360,16 @@ static void __init_text gicv2_dist_init(void)
 			GICD_IPRIORITYR + (i / 4) * 4);
 
 	/* Disable all global interrupts */
+	// 屏蔽所有中断
 	for ( i = 32; i < nr_lines; i += 32 )
 		writel_gicd(~0x0, GICD_ICENABLER + (i / 32) * 4);
 
 	/* Only 1020 interrupts are supported */
+	// 从支持的中断数和 1020 之中选一个小的
 	gicv2_nr_lines = min(1020U, nr_lines);
 
 	/* Turn on the distributor */
+	// 使能所有中断
 	writel_gicd(GICD_CTL_ENABLE, GICD_CTLR);
 	dsb();
 }
