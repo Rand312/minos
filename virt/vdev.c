@@ -99,7 +99,8 @@ static void inline vdev_add_vmm_area(struct vdev *vdev, struct vmm_area *va)
 		prev->next = va;
 }
 // 虚拟设备添加内存 范围，只是在该 vm 中分配一个 vma，将信息记录到 vma，没有做映射
-// MARK，可能就是这里没有做映射的原因，当 guest read 该段内存的时候，vm trap 到 hyp，然后 hyp 负责给 vm 读取内存数据
+// MARK，这里没有做实际的物理内存分配和 stage2映射
+// 当 guest read 该段内存的时候，vm trap 到 hyp，然后 hyp 负责给 vm 读取内存数据
 int vdev_add_iomem_range(struct vdev *vdev, unsigned long base, size_t size)
 {
 	struct vmm_area *va;
@@ -118,7 +119,7 @@ int vdev_add_iomem_range(struct vdev *vdev, unsigned long base, size_t size)
 				base, base + size);
 		return -ENOMEM;
 	}
-
+	// 一个 vm 所有 vdev 内存 vma 连接成一个链表，这里添加
 	vdev_add_vmm_area(vdev, va);
 
 	return 0;
@@ -187,7 +188,7 @@ static inline int handle_mmio_read(struct vdev *vdev, gp_regs *regs,
 	else
 		return 0;
 }
-
+// 调用 vdev 的读写函数
 static inline int handle_mmio(struct vdev *vdev, gp_regs *regs, int write,
 		int idx, unsigned long offset, unsigned long *value)
 {
@@ -197,6 +198,7 @@ static inline int handle_mmio(struct vdev *vdev, gp_regs *regs, int write,
 		return handle_mmio_read(vdev, regs, idx, offset, value);
 }
 
+// hyp 处理 mmio
 int vdev_mmio_emulation(gp_regs *regs, int write,
 		unsigned long address, unsigned long *value)
 {
@@ -204,12 +206,15 @@ int vdev_mmio_emulation(gp_regs *regs, int write,
 	struct vdev *vdev;
 	struct vmm_area *va;
 	int idx, ret = 0;
-
+	// 遍历该 vm 的虚拟设备
 	list_for_each_entry(vdev, &vm->vdev_list, list) {
 		idx = 0;
 		va = vdev->gvm_area;
+		// 遍历该虚拟设备的内存空间(vmm_area)
 		while (va) {
+			// 根据出错地址 ipa 查找该地址落在哪个区间内
 			if ((address >= va->start) && (address <= va->end)) {
+				// 找到对应的虚拟设备，调用其操作函数来处理 mmio
 				ret = handle_mmio(vdev, regs, write,
 						idx, address - va->start, value);
 				if (ret)
@@ -229,6 +234,7 @@ int vdev_mmio_emulation(gp_regs *regs, int write,
 	if (vm_is_native(vm))
 		return -EACCES;
 
+	// 给 vm 发通知，告知 vm "我"已经完成 mmio
 	ret = trap_vcpu(VMTRAP_TYPE_MMIO, write, address, value);
 	if (ret) {
 		pr_warn("gvm%d %s mmio 0x%lx failed %d\n", vm->vmid,

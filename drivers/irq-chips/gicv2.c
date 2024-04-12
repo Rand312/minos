@@ -391,7 +391,7 @@ static int __init_text gicv2_init(struct device_node *node)
 		"gic_vcpu_addr=%p size=0x%x\n",
 		array[0], array[1], array[2], array[3],
 		array[4], array[5], array[6], array[7]);
-	// 将它们直接映射到 hypervisor，此时的 gicv2_dbase gicv2_cbase gicv2_hbase 相当于 hyp 层虚拟地址
+	// 将它们直接映射到 hypervisor，此时的 gicv2_dbase gicv2_cbase gicv2_hbase 是一个 hva 地址
 	ASSERT((array[0] != 0) && (array[1] != 0))
 	gicv2_dbase = io_remap((virt_addr_t)array[0], (size_t)array[1]);
 	ASSERT((array[2] != 0) && array[3] !=0);
