@@ -888,8 +888,11 @@ int vgicv2_init(uint64_t *data, int len)
 		vgicv2_mode = VGICV2_MODE_SWE;
 		return 0;
 	}
-	
+	// VGIC Type Register, GICH_VTR
+	// 记录了 GIC Virtualization Externsions 的一些信息
 	vtr = readl_relaxed((void *)vgicv2_info.gich_base + GICH_VTR);
+	// The number of implemented List registers, minus one
+	// 获取 List register 个数
 	gicv2_nr_lrs = (vtr & 0x3f) + 1;
 	pr_notice("vgicv2: nr_lrs %d\n", gicv2_nr_lrs);
 

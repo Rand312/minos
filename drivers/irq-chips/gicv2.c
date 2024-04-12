@@ -381,6 +381,7 @@ static int __init_text gicv2_init(struct device_node *node)
 	pr_notice("*** gicv2 init ***\n");
 	memset(array, 0, sizeof(array));
 	// 获取 platform dts 中关于 gic 的信息
+	// 获取 gicc、gicd、gich、gicv base size 信息
 	translate_device_address_index(node, &array[0], &array[1], 0);
 	translate_device_address_index(node, &array[2], &array[3], 1);
 	translate_device_address_index(node, &array[4], &array[5], 2);
@@ -397,6 +398,7 @@ static int __init_text gicv2_init(struct device_node *node)
 	ASSERT((array[2] != 0) && array[3] !=0);
 	gicv2_cbase = io_remap((virt_addr_t)array[2], (size_t)array[3]);
 #ifdef CONFIG_VIRT
+	// host 映射，gich 只能由 host 访问
 	ASSERT((array[4] != 0) && (array[5] != 0))
 	gicv2_hbase = io_remap((virt_addr_t)array[4], (size_t)array[5]);
 #endif
@@ -420,6 +422,7 @@ static int __init_text gicv2_init(struct device_node *node)
 	spin_unlock(&gicv2_lock);
 
 #if defined CONFIG_VIRQCHIP_VGICV2 && defined CONFIG_VIRT
+	// vgic 初始化
 	vgicv2_init(array, 8);
 #endif
 
