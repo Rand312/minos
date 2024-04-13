@@ -46,16 +46,16 @@ static int vgicv2_mode;
 // 定义虚拟 gicv2 设备
 struct vgicv2_dev {
 	struct vdev vdev;
-	uint32_t gicd_ctlr;
+	uint32_t gicd_ctlr;        // vgicd 三寄存器，它们存放着一些设备信息
 	uint32_t gicd_typer;
 	uint32_t gicd_iidr;
-	unsigned long gicd_base;
+	unsigned long gicd_base;   // vgic 的 base 信息
 	unsigned long gicc_base;
-	unsigned long gicc_size;
+	unsigned long gicc_size;  
 	uint8_t gic_cpu_id[8];
 };
 
-// 虚拟 gicv2 的信息
+// gicv2 的接口base信息
 struct vgicv2_info {
 	unsigned long gicd_base;
 	unsigned long gicd_size;
@@ -750,7 +750,7 @@ static struct virq_chip *vgicv2_virqchip_init(struct vm *vm,
 	// gicd 的一些信息，设置为 0
 	dev->gicd_iidr = 0x0;
 
-	// 设置该 virtual gic 的一些操作函数
+	// 设置该 virtual gic distributor 的一些操作函数
 	dev->vdev.read = vgicv2_mmio_read;  // gicd read function
 	dev->vdev.write = vgicv2_mmio_write;
 	dev->vdev.deinit = vgicv2_deinit;
@@ -768,7 +768,7 @@ static struct virq_chip *vgicv2_virqchip_init(struct vm *vm,
 	 * platform has a hardware gicv2, otherwise
 	 * we need to emulated the trap.
 	 */
-	// 如果不是 SWE，表明该平台有硬件 gicv2，创建相应的内存映射
+	// 如果不是 SWE，表明该平台有硬件 gicv2 虚拟化支持，创建相应的内存映射
 	if (vgicv2_mode != VGICV2_MODE_SWE) {
 		flags |= VIRQCHIP_F_HW_VIRT;
 		pr_notice("map gicc 0x%x to gicv 0x%x size 0x%x\n",
@@ -779,7 +779,7 @@ static struct virq_chip *vgicv2_virqchip_init(struct vm *vm,
 		create_guest_mapping(&vm->mm, vinfo.gicc_base,
 				vgicv2_info.gicv_base, vinfo.gicc_size,
 				VM_GUEST_IO | VM_RW);
-	// 否则就应该创建一个 gicc
+	// 否则就应该创建一个 vgicc
 	} else {
 		ret = vgicv2_create_vgicc(vm, vinfo.gicc_base, vinfo.gicc_size);
 		if (ret)
@@ -860,7 +860,8 @@ static int gicv2_vmodule_init(struct vmodule *vmodule)
 	return 0;
 }
 
-// virtual gicv2 init
+// 初始化 virtual gicv2 需要用的一些信息
+// data 里面是一些 gicd、gicc、gich、gicv 的基址和大小
 int vgicv2_init(uint64_t *data, int len)
 {
 	unsigned long *value = (unsigned long *)&vgicv2_info;
@@ -872,7 +873,7 @@ int vgicv2_init(uint64_t *data, int len)
 		vgicv2_mode = VGICV2_MODE_SWE;
 		return 0;
 	}
-
+	// 将 data 里面的信息记录到全局变量 vgicv2_info
 	for (i = 0; i < len; i++) {
 		value[i] = data[i];
 		if (value[i] == 0) {
@@ -881,14 +882,17 @@ int vgicv2_init(uint64_t *data, int len)
 			return 0;
 		}
 	}
-
+	// gicv_base == 0 表示该 gicv2 不支持虚拟化
 	if (vgicv2_info.gicv_base == 0) {
 		pr_warn("no gicv base address, fall back to SWE mode\n");
 		vgicv2_mode = VGICV2_MODE_SWE;
 		return 0;
 	}
-
+	// VGIC Type Register, GICH_VTR
+	// 记录了 GIC Virtualization Externsions 的一些信息
 	vtr = readl_relaxed((void *)vgicv2_info.gich_base + GICH_VTR);
+	// The number of implemented List registers, minus one
+	// 获取 List register 个数
 	gicv2_nr_lrs = (vtr & 0x3f) + 1;
 	pr_notice("vgicv2: nr_lrs %d\n", gicv2_nr_lrs);
 

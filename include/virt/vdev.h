@@ -12,12 +12,13 @@
 typedef void *(*vdev_init_t)(struct vm *vm, struct device_node *node);
 
 struct vdev {
-	char name[VDEV_NAME_SIZE + 1];
-	int host;
-	struct vm *vm;
-	struct vmm_area *gvm_area;
+	char name[VDEV_NAME_SIZE + 1];     // 虚拟设备名称
+	int host;                 // vdev 是否给 host 使用
+	struct vm *vm;               // vdev 服务的 vm
+	struct vmm_area *gvm_area;   // vdev 内存空间
 	struct list_head list;
 
+	// vdev 操作集
 	int (*read)(struct vdev *, gp_regs *, int,
 			unsigned long, unsigned long *);
 	int (*write)(struct vdev *, gp_regs *, int,

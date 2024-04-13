@@ -264,16 +264,19 @@ static int dataabort_tfl_handler(gp_regs *regs, int ec, uint32_t esr_value)
 		pr_err("Instruction syndrome not valid\n");
 		goto out_fail;
 	}
-
+	// 从 ESR 寄存器获取当前操作是读 or 写
 	iswrite = dabt_iswrite(esr_value);
 	reg = ESR_ELx_SRT(esr_value);
+	// 获取要读写的数据源地址
 	value = iswrite ? get_reg_value(regs, reg) : 0;
+	// 从 FAR 获取出错地址
 	vaddr = read_sysreg(FAR_EL2);
+	// 将 gva 转换为 ipa
 	if ((esr_value &ESR_ELx_S1PTW) || (dfsc == FSC_FAULT))
 		ipa = get_faulting_ipa(vaddr);
 	else
 		ipa = guest_va_to_ipa(vaddr, 1);
-
+	// hyp 来处理虚拟设备的 mmio
 	ret = vdev_mmio_emulation(regs, iswrite, ipa, &value);
 	if (ret == -EACCES) {
 		pr_warn("Fault on mmio read/write fail 0x%x vmid:%d\n", ipa,
