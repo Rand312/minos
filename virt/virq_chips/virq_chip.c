@@ -41,7 +41,7 @@ static int virqchip_enter_to_guest(void *item, void *data)
 	// 如果 flags == 0，表示说没有 irq 注入到此 vcpu
 	// 如果有注入的 fiq，那么 bit31=1，其他 bits 表示有多少 irq 注入
 	flags = vc->enter_to_guest(vcpu, vc->inc_pdata);
-	if (flags == 0) {  // 大部分情况
+	if (flags == 0) { 
 		// 当前平台有该标志，所以其实大部分情况  这个大的判断里面什么都不做
 		// 清空 HCR_EL2 中的 VI VF 标志
 		if (!(vc->flags & VIRQCHIP_F_HW_VIRT))  

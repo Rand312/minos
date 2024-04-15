@@ -78,12 +78,13 @@ repeat:
 			continue;
 
 		/* allocate a id for the virq */
-		// 这是分配一个虚拟的 LR 寄存器 ？？？
+		// 分配一个 LR 寄存器
 		id = find_first_zero_bit(vs->lrs_bitmap, vs->nr_lrs);
 		// 分配失败
 		if (id >= vs->nr_lrs) {
 			pr_err("VM%d no space to send new irq %d\n",
 					vm->vmid, virq->vno);
+			// 记录分配 LR 失败的 virq
 			vs->last_fail_virq = bit;
 			break;
 		}
@@ -91,7 +92,7 @@ repeat:
 		/*
 		 * indicate that FIQ has been inject.
 		 */
-		// 如果存在标志就说明该 FIQ 已经被注入了？？？？？？？？
+		// 将要注入 FIQ，记录下标志
 		if (virq->flags & VIRQS_FIQ)
 			flags |= FIQ_HAS_INJECT;
 		flags++;
@@ -133,7 +134,7 @@ repeat:
 	return flags;
 }
 
-// virq 退出 guest
+// 退出 guest
 int vgic_irq_exit_from_guest(struct vcpu *vcpu, void *data)
 {
 	struct virq_struct *vs = vcpu->virq_struct;
@@ -158,7 +159,8 @@ int vgic_irq_exit_from_guest(struct vcpu *vcpu, void *data)
 		 */
 		// 获取状态
 		virq->state = virqchip_get_virq_state(vcpu, virq);
-		//
+		// 如果该 virq 已经是 inactive，说明已处理完成
+		// 重置 virq 对应的 LR 为空闲状态
 		if (virq->state == VIRQ_STATE_INACTIVE) {
 			virqchip_update_virq(vcpu, virq, VIRQ_ACTION_CLEAR);
 			clear_bit(virq->id, vs->lrs_bitmap);

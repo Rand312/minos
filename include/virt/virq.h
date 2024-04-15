@@ -75,29 +75,29 @@ struct irqtag;
 
 struct virq_desc {
 	int32_t flags;
-	uint16_t vno;
-	uint16_t hno;
-	uint8_t id;
-	uint8_t state;
-	uint8_t pr;
-	uint8_t src;
-	uint8_t type;
-	uint8_t vcpu_id;
-	uint8_t vmid;
+	uint16_t vno;    // virq number
+	uint16_t hno;    // 如果该 virq 关联了一个 hwirq，记录该 hwirq number
+	uint8_t id;      // LR 寄存器编号
+	uint8_t state;   // 状态
+	uint8_t pr;      // 优先级
+	uint8_t src;     // SGI 中断下，记录源 vcpu id
+	uint8_t type;    // edge or level
+	uint8_t vcpu_id; // vcpu id
+	uint8_t vmid;    // vm id
 	uint8_t padding;
 } __packed;
 
 #define VGIC_MAX_LRS 128
 
 struct virq_struct {
-	int nr_lrs;
-	int last_fail_virq;
-	atomic_t pending_virq;
-	uint32_t active_virq;
-	struct virq_desc local_desc[VM_LOCAL_VIRQ_NR];
-	unsigned long *pending_bitmap;
-	unsigned long *active_bitmap;
-	unsigned long lrs_bitmap[BITS_TO_LONGS(VGIC_MAX_LRS)];
+	int nr_lrs;           // LR 寄存器个数
+	int last_fail_virq;   // 上一个因分配 LR 失败的 virq
+	atomic_t pending_virq;  // 有多少个 virq 处于 pending 状态
+	uint32_t active_virq;   // 有多少个 virq 处于 active 状态
+	struct virq_desc local_desc[VM_LOCAL_VIRQ_NR];  // virq 描述符(PPI+SGI)
+	unsigned long *pending_bitmap;  // virq pending 位图（PPI+SGI+SPI)
+	unsigned long *active_bitmap;  // virq active 位图
+	unsigned long lrs_bitmap[BITS_TO_LONGS(VGIC_MAX_LRS)];  // LR 位图
 };
 
 static inline int vm_irq_count(struct vm *vm)

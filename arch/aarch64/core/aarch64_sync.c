@@ -168,6 +168,7 @@ void sync_exception_from_lower_el(gp_regs *regs)
 	 * 1 - TGE bit means a normal task
 	 * 2 - current->flags
 	 */
+	// HCR_EL2.TGE = 1 表示所有 trap 到 EL1 的异常都会 trap 到 EL2 处理
 	if ((current->flags & TASK_FLAGS_VCPU) && !(read_hcr_el2() & HCR_EL2_TGE))
 		handle_vcpu_sync_exception(regs);
 	else

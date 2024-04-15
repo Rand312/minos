@@ -129,6 +129,7 @@ static int __arm_svc_handler(gp_regs *reg, int smc)
 	uint32_t id;
 	unsigned long args[6];
 
+	// 第一个参数是服务号
 	id = reg->x0;
 	args[0] = reg->x1;
 	args[1] = reg->x2;
@@ -139,7 +140,7 @@ static int __arm_svc_handler(gp_regs *reg, int smc)
 
 	if (!(id & SVC_CTYPE_MASK))
 		local_irq_enable();
-
+	// 执行服务号对应的 handler
 	return do_svc_handler(reg, id, args, smc);
 }
 
@@ -408,6 +409,7 @@ void handle_vcpu_sync_exception(gp_regs *regs)
 	if ((!vcpu) || (vcpu->task->affinity != cpuid))
 		panic("this vcpu is not belong to the pcpu");
 
+	// 读取 ESR.ec 值，可以当作 exception number
 	esr_value = read_esr_el2();
 	ec_type = (esr_value & ESR_ELx_EC_MASK) >> ESR_ELx_EC_SHIFT;
 
@@ -417,11 +419,13 @@ void handle_vcpu_sync_exception(gp_regs *regs)
 	}
 
 	pr_debug("sync from lower EL, handle 0x%x\n", ec_type);
+	// 获取该 exception 对应的描述符
 	ec = guest_sync_descs[ec_type];
 	if (ec->irq_safe)
 		local_irq_enable();
-
+	// 返回地址修正
 	regs->pc += ec->ret_addr_adjust;
+	// 处理该异常
 	ec->handler(regs, ec_type, esr_value);
 out:
 	local_irq_disable();

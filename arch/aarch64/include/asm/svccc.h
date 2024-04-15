@@ -69,10 +69,10 @@
 typedef int (*svc_handler_t)(gp_regs *c, uint32_t id, uint64_t *args);
 
 struct svc_desc {
-	char *name;
-	uint16_t type_start;
-	uint16_t type_end;
-	svc_handler_t handler;
+	char *name;   // 服务名字
+	uint16_t type_start;  // 服务号
+	uint16_t type_end;    // 同服务号，目前 start、end 都只是表示服务号
+	svc_handler_t handler; 
 };
 
 #define DEFINE_SMC_HANDLER(n, start, end, h)	\
@@ -84,6 +84,7 @@ struct svc_desc {
 		.handler = h, \
 	}
 
+// 通过该宏定义一个 hvc 调用
 #define DEFINE_HVC_HANDLER(n, start, end, h)	\
 	static struct svc_desc __hvc_##h __used \
 	__section(".__hvc_handler") = {	\

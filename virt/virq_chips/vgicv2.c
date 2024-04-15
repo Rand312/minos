@@ -72,8 +72,8 @@ struct vgicc {
 	struct vdev vdev;
 	unsigned long gicc_base;
 	uint32_t gicc_ctlr;
-	uint32_t gicc_pmr;
-	uint32_t gicc_bpr;
+	uint32_t gicc_pmr;  //Interrupt Priority Mask Register
+	uint32_t gicc_bpr;  //将优先级分为group priority field and the subpriority field
 };
 
 static int gicv2_nr_lrs;
@@ -536,22 +536,23 @@ static void vgicc_deinit(struct vdev *vdev)
 static int vgicv2_create_vgicc(struct vm *vm, unsigned long base, size_t size)
 {
 	struct vgicc *vgicc;
-
+	// 分配 vgicc 结构体
 	vgicc = zalloc(sizeof(*vgicc));
 	if (!vgicc) {
 		pr_err("no memory for vgicv2 vgicc\n");
 		return -ENOMEM;
 	}
-
+	// vgicc 中的 vdev 初始化
 	host_vdev_init(vm, &vgicc->vdev, "vgicv2_vgicc");
+	// 注册 vgicc 空间到 vm
 	if (vdev_add_iomem_range(&vgicc->vdev, base, size)) {
 		pr_err("vgicv2: add gicc iomem failed\n");
 		free(vgicc);
 		return -ENOMEM;
 	}
-
-	vgicc->gicc_base = base;
-	vgicc->vdev.read = vgicc_read;
+	// 初始化 vgicc 的信息
+	vgicc->gicc_base = base;  // vgicc_base 地址
+	vgicc->vdev.read = vgicc_read;  // vgicc 寄存器读取操作
 	vgicc->vdev.write = vgicc_write;
 	vgicc->vdev.reset = vgicc_reset;
 	vgicc->vdev.deinit = vgicc_deinit;
@@ -615,13 +616,13 @@ static int gicv2_send_virq(struct vcpu *vcpu, struct virq_desc *virq)
 	gich_lr->grp1 = 0;   //这是一个 group 0 virtual interrupt
 	gich_lr->state = 1;   //表示 pending
 	gich_lr->hw = !!virq_is_hw(virq);
-
+	// virq->id 表示第几个 LR
 	writel_gich(val, GICH_LR + virq->id * 4);
 
 	return 0;
 }
 
-// 
+// 更新 LR
 static int gicv2_update_virq(struct vcpu *vcpu,
 		struct virq_desc *desc, int action)
 {
@@ -630,10 +631,12 @@ static int gicv2_update_virq(struct vcpu *vcpu,
 
 	switch (action) {
 	case VIRQ_ACTION_REMOVE:
+		// 如果关联了物理中断，那么还需要清零对应物理中断pending状态
+		// 目前 minos gicv2 没有实现像相关功能
 		if (virq_is_hw(desc))
 			irq_clear_pending(desc->hno);
 	
-
+	// 清空该虚拟中断在 LRs 中的记录
 	case VIRQ_ACTION_CLEAR:
 		writel_gich(0, GICH_LR + desc->id * 4);
 		break;
@@ -739,6 +742,9 @@ static struct virq_chip *vgicv2_virqchip_init(struct vm *vm,
 	host_vdev_init(vm, &dev->vdev, "vgicv2");
 	// 添加虚拟设备的内存映射区域
 	// trap all Guest OS accesses to the GIC Distributor registers, so that it can determine the virtual distributor settings for each virtual machine
+	// 通过 stage2 traslation 实现，vgicd 的一系列寄存器地址(gpa)，
+	// 我们不给他映射到实际的物理地址 pa，那么虚机在访问 vgicd_xxx 的时候，就会出现 page fault，
+	// 相关的 handler 里面判断是否是因为访问了 vgicd_xxx，如果是，调用vgicv2_mmio_read/write
 	ret = vdev_add_iomem_range(&dev->vdev, vinfo.gicd_base, vinfo.gicd_size);
 	if (ret)
 		goto release_vdev;

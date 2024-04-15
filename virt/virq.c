@@ -84,7 +84,7 @@ static int inline __send_virq(struct vcpu *vcpu, struct virq_desc *desc)
 	atomic_inc(&virq_struct->pending_virq);
 	// 如果是 sgi 类型的 virq，设置来源 cpu 为当前 cpu
 	if (desc->vno < VM_SGI_VIRQ_NR)
-		desc->src = get_vcpu_id(get_current_vcpu());
+		desc->src = get_vcenter_pu_id(get_current_vcpu());
 
 	return 0;
 }
@@ -148,7 +148,7 @@ static int guest_irq_handler(uint32_t irq, void *data)
 			(desc->vcpu_id == VIRQ_AFFINITY_VCPU_ANY))
 		vcpu = get_current_vcpu();
 	else
-		// 获取 desc 指定的 vcpu
+		// 获取 desc 对应的 vcpu
 		vcpu = get_vcpu_by_id(desc->vmid, desc->vcpu_id);
 
 	// send virq 给某 vcpu
@@ -441,7 +441,7 @@ int vcpu_has_irq(struct vcpu *vcpu)
 	return (pend < total) || (active < total);
 }
 
-// 更新 virq 的 capability 是吧？？？
+// 更新 virq 的 一些标志信息
 static void update_virq_cap(struct virq_desc *desc, unsigned long flags)
 {	
 	// 在 desc 级别设置 flags
@@ -513,7 +513,7 @@ static int __request_virq(struct vcpu *vcpu, struct virq_desc *desc,
 	desc->vcpu_id = get_vcpu_id(vcpu); // vcpu_id
 	desc->pr = 0xa0; // 优先级
 	desc->vmid = get_vmid(vcpu); // vmid
-	desc->id = VIRQ_INVALID_ID; //？？？
+	desc->id = VIRQ_INVALID_ID; // LR 编号，send_virq 的时候分配
 	desc->state = VIRQ_STATE_INACTIVE; //刚注册，inactive
 
 	/* mask the bits in spi_irq_bitmap, if it is a SPI */
@@ -538,7 +538,7 @@ static int __request_virq(struct vcpu *vcpu, struct virq_desc *desc,
 		virq_clear_hw(desc);
 	}
 
-	// 
+	// 更新 virq 的 一些标志信息
 	update_virq_cap(desc, flags);
 
 	return 0;
@@ -551,7 +551,7 @@ int request_virq_affinity(struct vm *vm, uint32_t virq, uint32_t hwirq,
 	struct vcpu *vcpu;
 	struct virq_desc *desc;
 
-	// 获取 vcpu，这里的 affinity 其实就是一个 vcpu_id
+	// 获取 vcpu0，这里的 affinity 其实就是一个 vcpu_id
 	vcpu = get_vcpu_in_vm(vm, affinity);
 	if (!vcpu) {
 		pr_err("request virq fail no vcpu-%d in vm-%d\n",
@@ -576,7 +576,7 @@ static inline int vm_max_virq_line(struct vm *vm)
 	return (vm_is_host_vm(vm) ? MAX_HVM_VIRQ : MAX_GVM_VIRQ);
 }
 
-// 注册 hardware 类型的中断
+// 注册中断衍生函数
 int request_hw_virq(struct vm *vm, uint32_t virq, uint32_t hwirq,
 			unsigned long flags)
 {
@@ -584,6 +584,7 @@ int request_hw_virq(struct vm *vm, uint32_t virq, uint32_t hwirq,
 		pr_err("invaild virq-%d for vm-%d\n", virq, vm->vmid);
 		return -EINVAL;
 	} else {
+		// 默认将所有的中断都发送给 vcpu0
 		return request_virq_affinity(vm, virq, hwirq, 0, flags);
 	}
 }
@@ -591,7 +592,7 @@ int request_hw_virq(struct vm *vm, uint32_t virq, uint32_t hwirq,
 // 注册普通的 virq
 int request_virq(struct vm *vm, uint32_t virq, unsigned long flags)
 {	
-	// hwirq 设置为 0 便是
+	// hwirq 设置为 0，该 virq 没有与物理物理中断关联
 	return request_hw_virq(vm, virq, 0, flags);
 }
 
@@ -633,7 +634,7 @@ int request_virq_pervcpu(struct vm *vm, uint32_t virq, unsigned long flags)
 	return 0;
 }
 
-// 分配一个 virq 号
+// 分配一个 virq 号并注册虚拟中断
 int alloc_vm_virq(struct vm *vm)
 {
 	int virq;
@@ -670,7 +671,7 @@ void release_vm_virq(struct vm *vm, int virq)
 	HVM_IRQ_UNLOCK(vm);
 }
 
-// 
+// 初始化 vm 的 virq 信息
 static int virq_create_vm(void *item, void *args)
 {
 	uint32_t size, vdesc_size, vdesc_bitmap_size, status_bitmap_size;
@@ -693,7 +694,8 @@ static int virq_create_vm(void *item, void *args)
 	vdesc_size = BALIGN(vdesc_size, sizeof(unsigned long));
 	// 根据数量 vspi_nr 计算位图大小
 	vdesc_bitmap_size = BITMAP_SIZE(vm->vspi_nr);
-	// 计算 中断状态 需要的位图，也就是计算 pending_bitmap 和 active_bitmap 大小
+	// 计算一个位图大小
+	// 包括所有类型的中断：PPI+SGI+SPI
 	status_bitmap_size = BITMAP_SIZE(vm->vspi_nr + VM_LOCAL_VIRQ_NR);
 
 	// 需要分配的总大小 = virq_descs + spi_bitmap + pending_bitmap + active_bitmap
@@ -702,16 +704,17 @@ static int virq_create_vm(void *item, void *args)
 	size = PAGE_BALIGN(size);
 
 	pr_notice("allocate 0x%x bytes for virq struct\n", size);
+	// 根据大小分配内存
 	base = get_free_pages(PAGE_NR(size));
 	if (!base) {
 		pr_err("no more page for virq struct\n");
 		return -ENOMEM;
 	}
-
+	// 相关地址信息记录到 vm 对应字段
 	memset(base, 0, size);
 	vm->vspi_desc = (struct virq_desc *)base;
 	vm->vspi_map = (unsigned long *)(base + vdesc_size);
-
+	// 初始化 vcpu 的 pending 和 active 位图
 	base = base + vdesc_size + vdesc_bitmap_size;
 	for (i = 0; i < vm->vcpu_nr; i++) {
 		vs = vm->vcpus[i]->virq_struct;

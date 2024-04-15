@@ -104,10 +104,10 @@ struct vm {
 
 	struct list_head vdev_list;
 
-	uint32_t vspi_nr;
-	struct virq_desc *vspi_desc;
-	unsigned long *vspi_map;
-	struct virq_chip *virq_chip;
+	uint32_t vspi_nr;     // 当前 vm spi 中断个数
+	struct virq_desc *vspi_desc;  // spi 类型中断描述符数组
+	unsigned long *vspi_map;   // 分配 virq_desc 时使用的位图
+	struct virq_chip *virq_chip;   // vgic 指针
 	uint32_t vtimer_virq;
 
 	void *vmcs;
