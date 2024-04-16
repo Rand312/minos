@@ -66,9 +66,9 @@ void arch_enable_timer(unsigned long expires)
 		return;
 	}
 
-	// 设置过期时间 
+	// 设置过期时间——Compare Value
 	deadline = ns_to_ticks(expires);
-	// 写进每个 CPU 的虚拟计时器
+	// 将 CompareValue 写入 CNTHP_CVAL_EL2 
 	write_sysreg64(deadline, ARM64_CNTSCHED_CVAL);
 
 	ctl = read_sysreg(ARM64_CNTSCHED_CTL);
