@@ -54,6 +54,8 @@ uint64_t boot_tick = 0;
 
 extern unsigned long sched_tick_handler(unsigned long data);
 
+// 使能一个 timer，expires 是过期时间，也是一个计数值
+// 当 physical counter 的计数大于等于这个过期计数值，触发中断
 void arch_enable_timer(unsigned long expires)
 {
 	uint64_t deadline;
@@ -70,8 +72,8 @@ void arch_enable_timer(unsigned long expires)
 	write_sysreg64(deadline, ARM64_CNTSCHED_CVAL);
 
 	ctl = read_sysreg(ARM64_CNTSCHED_CTL);
-	ctl |= CNT_CTL_ENABLE;
-	ctl &= ~CNT_CTL_IMASK;
+	ctl |= CNT_CTL_ENABLE;   // 使能
+	ctl &= ~CNT_CTL_IMASK;   // 接触屏蔽
 	write_sysreg(ctl, ARM64_CNTSCHED_CTL);
 	isb();
 }
