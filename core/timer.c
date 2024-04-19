@@ -31,6 +31,7 @@ DEFINE_PER_CPU(struct raw_timer, timers);
 
 void soft_timer_interrupt(void)
 {
+	// 获取当前 CPU 对应的 raw_timer
 	struct raw_timer *timers = &get_cpu_var(timers);
 	struct timer *timer, *next_timer = NULL;
 	struct list_head tmp_head;
@@ -42,11 +43,10 @@ void soft_timer_interrupt(void)
 	init_list(&tmp_head);
 	now = NOW();
 
-	//循环 active 链表，当不空的时候
+	// 遍历 raw_timer 上所有活跃的 timer
 	while (!is_list_empty(&timers->active)) {
-		//获取第一个 active timer
 		timer = list_first_entry(&timers->active, struct timer, entry);
-		//如果当前时间大于了过期时间，即说明 timeout，该执行相关动作了
+		// 如果当前时间大于了过期时间，即说明 timeout，该执行相关 handler 了
 		if (timer->expires <= (now + DEFAULT_TIMER_MARGIN)) {	
 			/* 
 			 * need to release the spin lock to avoid
@@ -71,7 +71,7 @@ void soft_timer_interrupt(void)
 				mb();
 			}
 
-			//处理完毕，running timer 置空
+			// 处理完毕，running timer 置空
 			timers->running_timer = NULL;
 			raw_spin_lock(&timers->lock);
 		} else {
@@ -84,10 +84,12 @@ void soft_timer_interrupt(void)
 			 * expires, then add it to the tmp timer list head, at
 			 * the end of this function, switch the actvie to the head
 			 */
-			//将当前 timer 加入临时的 next_timer，放进 tmp 链表
+			// 遍历所有 active timers，找出 expires 值最小的 timer，并记录到 next_timer
 			if (!next_timer || (next_timer->expires > timer->expires))
 				next_timer = timer;
+			// 将该 timer 从 active 链表中删除，因为这里的循环结束条件为 active 链表为空
 			list_del(&timer->entry);
+			// 将当前 timer 加入临时的 next_timer，放进 tmp 链表
 			list_add_tail(&tmp_head, &timer->entry);
 		}
 	}
@@ -99,7 +101,7 @@ void soft_timer_interrupt(void)
 	/*
 	 * swap the tmp head to the active head
 	 */
-	//交换 tmp 链表 和 tmp 链表
+	//交换 tmp 链表 和 active 链表
 	if (!is_list_empty(&tmp_head)) {
 		tmp_head.next->pre = &timers->active;
 		timers->active.next = tmp_head.next;
@@ -113,17 +115,19 @@ void soft_timer_interrupt(void)
 	/*
 	 * already in interrupt context, will not be interrupted.
 	 */
-	//根据 next_timer 设置硬件 timer 的中断情况
+	// 设置 next_timer，如果存在，enable arch timer，即将 next_timer->expires值写入 CompareValue 寄存器
 	timers->next_timer = next_timer;
 	if (next_timer)
 		enable_timer(next_timer->expires);
 }
 
+// 判断 timer 是否被挂入某个 raw_timer
 static inline int timer_pending(const struct timer * timer)
 {
 	return ((timer->entry.next) != NULL);
 }
 
+// 将 timer 从 raw_timer 上取下来
 static int detach_timer(struct raw_timer *timers, struct timer *timer)
 {
 	struct list_head *entry = &timer->entry;
@@ -152,30 +156,31 @@ static int __mod_timer(struct timer *timer)
 	 * cpu's timers list
 	 */
 	ASSERT(!((timer->cpu != -1) && (timer->cpu != cpu)));
-	//获取当前 pcpu 对应的硬件计时器
+	// 获取当前 pcpu 对应的硬件计时器
 	timers = &get_per_cpu(timers, cpu);
 
 	spin_lock_irqsave(&timers->lock, flags);
 
-	//从该硬件计时器上 detach 该 timer
+	// 先从物理定时器上 detach 该 timer
 	detach_timer(timers, timer);
+
+	// 重新设置该 soft timer 的 cpu 为当前 cpu
 	timer->stop = 0;
 	timer->raw_timer = timers;
 	smp_wmb();
 
-	//重新设置该 vtiemr 的 cpu 为当前 cpu
 	timer->cpu = cpu;
-	//插入到 active 链表末尾
+	// 插入到物理定时器 active 链表末尾
 	list_add_tail(&timers->active, &timer->entry);
 
 	/*
 	 * reprogram the raw timer if the next expires bigger than
 	 * current (expires + DEFAULT_TIMER_MARGIN)
 	 */
-	//如果该硬件计时器上没有其他 vtimer 或者
-	//如果 next_timer 的 expire 时间大于当前 vtimer 的 expire 时间，+ DEFAULT_TIMER_MARGIN 可能是误差
-	//将当前的 vtimer 设置为下一个 timer ？？？ next_tiemr 什么意思
-	//最后使能 timer
+	// 如果该硬件计时器上没有其他 soft timer 或者
+	// 如果 next_timer 的 expire 时间大于当前 soft timer 的 expire 时间，+ DEFAULT_TIMER_MARGIN 可能是误差
+	// 将当前的 soft timer 设置为下一个 timer，也就是说 next timer 的触发时间更近
+	// 最后使能 timer
 	if (!timers->next_timer || (timers->next_timer->expires >
 				(timer->expires + DEFAULT_TIMER_MARGIN))) {
 		timers->next_timer = timer;
@@ -191,7 +196,7 @@ static int __mod_timer(struct timer *timer)
 int mod_timer(struct timer *timer, uint64_t cval)
 {
 	uint64_t now = NOW();
-
+	// compare value 值至少需要大于 TIMER_PRECISION
 	if (cval < (now + TIMER_PRECISION))
 		timer->expires = now + TIMER_PRECISION;
 	else
@@ -200,7 +205,7 @@ int mod_timer(struct timer *timer, uint64_t cval)
 	return __mod_timer(timer);
 }
 
-//开始 timer
+// 根据 Timer Value 设置 Compare Value
 static int __start_delay_timer(struct timer *timer)
 {
 	//超时至少都要有 1ms，最小精度
@@ -208,11 +213,11 @@ static int __start_delay_timer(struct timer *timer)
 		timer->timeout = TIMER_PRECISION;
 	timer->expires = NOW() + timer->timeout;
 
-	//加入 ptimer
+	// 重新 enable 该 timer
 	return __mod_timer(timer);
 }
 
-//初始化一个 timer 结构体
+// 初始化一个 timer 结构体
 void init_timer(struct timer *timer, timer_func_t fn, unsigned long data)
 {
 	preempt_disable();
@@ -220,7 +225,7 @@ void init_timer(struct timer *timer, timer_func_t fn, unsigned long data)
 	timer->entry.next = NULL;
 	timer->expires = 0;
 	timer->timeout = 0;
-	timer->function = fn;
+	timer->function = fn;      // soft timer handler
 	timer->data = data;
 	timer->raw_timer = NULL;
 	preempt_enable();
@@ -232,7 +237,7 @@ int start_timer(struct timer *timer)
 	return __start_delay_timer(timer);
 }
 
-//建立一个 timer，即设置对应的超时时间
+//建立一个 timer，即设置对应的超时时间，这个 timeout 相当于 Timer Value
 void setup_timer(struct timer *timer, uint64_t tval)
 {
 	timer->timeout = tval;
@@ -261,13 +266,13 @@ int stop_timer(struct timer *timer)
 	 * wait the timer finish the action if already
 	 * timedout.
 	 */
-	 //如果停止的计时器就是当前计时器
+	 // 如果停止的计时器就是当前计时器, yield
 	while (timers->running_timer == timer)
 		cpu_relax();
 
 	//从硬件计时器上 detach 该计时器
 	detach_timer(timers, timer);
-	//重置该 timer 的一些属性值
+	// 重置该 timer 的一些属性值
 	timer->cpu = -1;
 	timer->expires = 0;
 	spin_unlock_irqrestore(&timers->lock, flags);

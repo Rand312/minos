@@ -128,6 +128,7 @@ static inline unsigned long guest_va_to_ipa(unsigned long va, int read)
 	return pa;
 }
 
+// yield指令用来告知硬件系统，本cpu上执行的指令是polling操作，没有那么急迫，如果有任何的资源冲突，本cpu可以让出控制权
 static inline void cpu_relax(void)
 {
 	asm volatile("yield" ::: "memory");

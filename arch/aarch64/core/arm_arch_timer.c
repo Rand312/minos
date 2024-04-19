@@ -78,14 +78,14 @@ void arch_enable_timer(unsigned long expires)
 	isb();
 }
 
-//Holds the 64-bit physical count value.
+// 读取 physical counter 数值，wall-clock time
 unsigned long get_sys_ticks(void)
 {
 	isb();
 	return read_sysreg64(CNTPCT_EL0);
 }
 
-//减去 boot 时刻的 ticks，即当前时间
+//减去 boot 时刻的 ticks，即相对于启机时刻的当前时间
 unsigned long get_current_time(void)
 {
 	isb();
