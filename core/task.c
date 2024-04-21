@@ -83,11 +83,11 @@ static int tid_early_init(void)
 }
 early_initcall(tid_early_init);
 
-// task 时间片到了，
+// 进程休眠时间到了，需要唤醒
 static void task_timeout_handler(unsigned long data)
 {
 	struct task *task = (struct task *)data;
-	// MARK，这是什么意思？？？
+	// 唤醒该 task
 	wake_up_timeout(task);
 	// 设置 __TIF_NEED_RESCHED 标志，需要 resched，异常返回时检查是否需要 resched
 	set_need_resched();

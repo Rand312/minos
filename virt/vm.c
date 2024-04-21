@@ -352,7 +352,7 @@ static void vcpu_exit_from_user(struct task *task, gp_regs *regs)
 	vcpu->mode = IN_ROOT_MODE;
 }
 
-// 创建 vcpu，
+// 创建 vcpu
 static struct vcpu *create_vcpu(struct vm *vm, uint32_t vcpu_id)
 {
 	char name[64];
@@ -362,7 +362,7 @@ static struct vcpu *create_vcpu(struct vm *vm, uint32_t vcpu_id)
 	/* generate the name of the vcpu task */
 	memset(name, 0, 64);
 	sprintf(name, "%s-vcpu-%d", vm->name, vcpu_id);
-	// 创建 vcpu 对应的 task
+	// 创建 vcpu 线程
 	task = create_vcpu_task(name, vm->entry_point,
 			vm->vcpu_affinity[vcpu_id], 0, NULL);
 	if (task == NULL)
@@ -380,16 +380,16 @@ static struct vcpu *create_vcpu(struct vm *vm, uint32_t vcpu_id)
 	}
 
 	// 初始化 vcpu 字段
-	task->pdata = vcpu;
+	task->pdata = vcpu;    // struct task 的私有数据设置为 vcpu 结构
 	vcpu->task = task;
 	vcpu->vcpu_id = vcpu_id;
 	vcpu->vm = vm;
-	vcpu->mode = IN_ROOT_MODE;
+	vcpu->mode = IN_ROOT_MODE;  // 表示正位于 EL2
 
 	if (vm->flags & VM_FLAGS_32BIT)
 		task->flags |= TASK_FLAGS_32BIT;
 
-	// 初始该 vcpu 的 virq_struct 
+	// 初始该 vcpu 的 virq_struct，即初始 percpu 中断相关信息
 	vcpu_virq_struct_init(vcpu);
 	vm->vcpus[vcpu_id] = vcpu;
 	event_init(&vcpu->vcpu_event, OS_EVENT_TYPE_NORMAL, task);

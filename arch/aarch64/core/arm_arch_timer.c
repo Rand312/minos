@@ -79,6 +79,8 @@ void arch_enable_timer(unsigned long expires)
 }
 
 // 读取 physical counter 数值，wall-clock time
+ 
+//Holds the 64-bit physical count value.
 unsigned long get_sys_ticks(void)
 {
 	isb();
@@ -100,7 +102,6 @@ unsigned long get_sys_time(void)
 }
 
 //初始化 arch 的 timer，主要是从设备树中获取信息
-
 static int __init_text timers_arch_init(void)
 {
 	int i, ret, from_dt;

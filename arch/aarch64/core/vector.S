@@ -139,10 +139,10 @@ vfunc exception_return
 	ldr	x1, [sp, #8]			// load spsr
 	and	x1, x1, #0x0f
 	cmp	x1, #9				// whether the task will return to user
-	b.eq	__do_exception_return
+	b.eq	__do_exception_return   // 特权等级不变
 
 	mov	x0, sp
-	bl	task_return_to_user
+	bl	task_return_to_user  // 返回虚机 (EL0/1)
 
 __do_exception_return:
 	LOAD_GP_REGS

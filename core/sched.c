@@ -232,12 +232,12 @@ void task_sleep(uint32_t delay)
 	 */
 	local_irq_save(flags);
 	do_not_preempt();
-	task->delay = delay;
+	task->delay = delay;  // 设置 delay 时间，相当于 TimerValue
 	task->state = TASK_STATE_WAIT_EVENT;
 	task->wait_type = OS_EVENT_TYPE_TIMER;
 	local_irq_restore(flags);
 
-	sched();
+	sched();  // 调度，调度中会 start delay timer
 }
 
 // 设置 task 的状态为 TASK_STATE_SUSPEND，然后调度
@@ -722,6 +722,7 @@ static int wake_up_common(struct task *task, long pend_state, int event, void *d
 	 * here it means that this task has not been timeout, so can
 	 * delete the timer for this task.
 	 */
+	// 当前线程还未 timeout，但是已经被唤醒了，那么 delay timer 没用了
 	if (timeout && (task->pend_state != TASK_STATE_PEND_TO))
 		stop_timer(&task->delay_timer);
 

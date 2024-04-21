@@ -114,7 +114,7 @@ static int kworker_task(void *data)
 	return 0;
 }
 
-static void suostart_system_task(void)
+static void start_system_task(void)
 {
 	int cpu = smp_processor_id();
 	struct task *task;

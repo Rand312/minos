@@ -53,28 +53,29 @@ enum {
 };
 
 struct vcpu {
-	uint32_t vcpu_id;
-	struct vm *vm;
-	struct task *task;
-	struct vcpu *next;
+	uint32_t vcpu_id;    // 一个 vm 中可能有多个 vcpu，此为它们的 id
+	struct vm *vm;       // 该 vcpu 所属 vm
+	struct task *task;   // 该 vcpu 对应的 vcpu 线程
+	struct vcpu *next;   
 
-	volatile int mode;
+	volatile int mode;   // 当前 vcpu 所处的模式
+							// ROOT 模式表示位于 EL2、 GUEST 模式表示正位于 EL0/1
 
 	/*
 	 * member to record the irq list which the
 	 * vcpu is handling now
 	 */
-	struct virq_struct *virq_struct;
+	struct virq_struct *virq_struct;  // 该 vcpu 的 percpu 中断
 
-	struct event vcpu_event;
+	struct event vcpu_event; 
 
-	struct vmcs *vmcs;
+	struct vmcs *vmcs;   // trap 相关记录
 	int vmcs_irq;
 
 	/*
 	 * context for this vcpu.
 	 */
-	void **context;
+	void **context;  // vcpu 换进换出时需要用到的 context
 } __cache_line_align;
 
 struct vm {
