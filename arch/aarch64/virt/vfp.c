@@ -30,8 +30,11 @@ struct vfp_context {
 	uint32_t fpexc32_el2;
 	uint32_t padding0;
 #endif
+	// FPSR, Floating-point Status Register
 	uint32_t fpsr;
+	// FPCR, Floating-point Control Register
 	uint32_t fpcr;
+	// CPTR_EL2, Architectural Feature Trap Register (EL2)
 	uint32_t cptr;
 };
 
@@ -40,7 +43,9 @@ static void vfp_state_init(struct vcpu *vcpu, void *c)
 	struct vfp_context *context = (struct vfp_context *)c;
 
 	memset(context, 0, sizeof(struct vfp_context));
-	context->cptr = 0x300000;
+	// This control does not cause execution of any instructions to be trapped.
+	// 不会导致任何 trap
+	context->cptr = 0x300000; 
 }
 
 static void vfp_state_save(struct vcpu *vcpu, void *context)

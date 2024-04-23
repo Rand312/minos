@@ -31,7 +31,9 @@ func arch_raw_smp_processor_id
 	ldr	x4, =(1 << 24)
 	and	x5, x0, x4
 	cbnz	x5, __shift_mpidr
-	ubfx    x1, x0, #MPIDR_EL1_AFF0_LSB, #MPIDR_EL1_AFF_WIDTH
+	// 从 bit0 开始提取 8 位，放入 x1
+	ubfx    x1, x0, #MPIDR_EL1_AFF0_LSB, #MPIDR_EL1_AFF_WIDTH  
+	// 从 bit8 开始提取 8 位，放入 x2
 	ubfx    x2, x0, #MPIDR_EL1_AFF1_LSB, #MPIDR_EL1_AFF_WIDTH
 	b	__out
 __shift_mpidr:

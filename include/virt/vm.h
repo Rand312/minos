@@ -76,6 +76,7 @@ struct vcpu {
 	 * context for this vcpu.
 	 */
 	void **context;  // vcpu 换进换出时需要用到的 context
+					 // 实质为 vmodule 指针集合
 } __cache_line_align;
 
 struct vm {

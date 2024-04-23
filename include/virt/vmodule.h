@@ -10,10 +10,10 @@ struct vcpu;
 #define INVALID_MODULE_ID (-1)
 
 struct vmodule {
-	char name[32];
-	int id;
-	struct list_head list;
-	uint32_t context_size;
+	char name[32];    // 该 vmodule 的名称
+	int id;           
+	struct list_head list;   // 挂入 vmodule_list 的字段
+	uint32_t context_size;   // 该 vmodule 管理的数据大小
 
 	/*
 	 * below member usually used for vcpu

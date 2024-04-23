@@ -132,7 +132,8 @@ void arch_vcpu_init(struct vcpu *vcpu, void *entry, void *arg)
 				AARCH64_SPSR_A;
 }
 
-//VTCR The control register for stage 2 of the EL1&0 translation regime.
+// VTCR The control register for stage 2 of the EL1&0 translation regime.
+// 决定 stage2 如何转换
 static inline uint64_t generate_vtcr_el2(void)
 {
 	uint64_t value = 0;
@@ -154,23 +155,27 @@ static inline uint64_t generate_vtcr_el2(void)
 
 	// PS --- pysical size 1TB
 	// Physical address Size for the Second Stage of translation
+	// 表示 vm 的物理地址空间有多大，表示理论上的，不是实际为其分配的
 	value |= (2 << 16);
 
 	// vmid -- 8bit
-	//If the implementation only supports an 8-bit VMID, this field is RES0. 即如果只支持 8bit 的 vmid，那么这里设置为 0
-	// 设置为 0，即 8bit 模式 8 bit - the upper 8 bits of VTTBR_EL2 and VSTTBR_EL2 are ignored by the hardware, and treated as if they are all zeros, for every purpose except when reading back the register.
-	// 设置为 1，16 bit - the upper 8 bits of VTTBR_EL2 and VSTTBR_EL2 are used for allocation and matching in the TLB.
+	// If the implementation only supports an 8-bit VMID, this field is RES0. 即如果只支持 8bit 的 vmid，那么这里设置为 0
+	// 设置为 0，即 8bit 模式 - the upper 8 bits of VTTBR_EL2 被忽略，默认为 0
+	// 设置为 1，16 bit 模式，- the upper 8 bits of VTTBR_EL2 会被当作 tlb 的 tag 标记。
+	// tlb 就是个 cache，为了查找匹配，设定 tag，这里如果相关 cpu feature 实现，那么 tlb 中有个 tag 位为 vmid，方便快速查找页表
 	value |= (0x0 << 19);
 
 	return value;
 }
 
-//页表地址 + vmid
+// 构建一个 vttbr_el2 寄存器值：vmid + stage2 页表基址
+// base 应该是一个 物理地址
 static inline uint64_t generate_vttbr_el2(uint32_t vmid, unsigned long base)
 {
 	return (base | ((uint64_t)vmid << 48));
 }
 
+// 对 vcpu context 相关的一系列寄存器初始化
 void arch_vcpu_state_init(struct vcpu *vcpu, void *c)
 {
 	struct vcpu_context *context = (struct vcpu_context *)c;
@@ -181,19 +186,36 @@ void arch_vcpu_state_init(struct vcpu *vcpu, void *c)
 
 	/*
 	 * HVC : enable hyper call function
+	   使能 hvc 指令，调用 EL2 service call
 	 * TWI : trap wfi - default enable, disable by dts
 	 * TWE : trap wfe - default disable
+	 * wfi、wfe 指令被 trap 到 EL2
 	 * TIDCP : Trap implementation defined functionality
+	 * 访问 implementation defined functionality(未定义/自定义 指令 or 寄存器) 将会被 trap 到 EL2
 	 * IMP : physical irq routing
 	 * FMO : physical firq routing
+	 * 物理中断 irq，fiq 发生时，会先被 routing 到 EL2 处理
 	 * BSU_IS : Barrier Shareability upgrade
+	 * 设置缓存一致性范围，这里暂不讨论
 	 * FB : force broadcast when do some tlb ins
+	 * 当 tlb 相关指令执行的时候，广播到所有 cpu（也是一定范围内的 cpu）
 	 * PTW : protect table walk
+	 * stage1 转换使用的页表中记录着内存属性，stage2 转换同理
+	 * 两者属性设置可能不同，stage1 服从于 stage2
+	 * 最终想要访问的内存可能是设备内存
+	 * 如果 PTW = 0，那么当作普通的未 cached memory 处理，读取内存然后返回
+	 * 如果 PTW = 1，那么产生一个 stage2 permission fault
 	 * TSC : trap smc ins
+	 * smc 指令将会被 trap 到 EL2
 	 * TACR : Trap Auxiliary Control Registers
+	 * 访问 Trap Auxiliary Control Registers 将会被 trap 到 EL2
+	 * Auxiliary Control Registers 也是与 implementation defined functionality 相关的
 	 * AMO : Physical SError interrupt routing.
+	 * SError 中断将会被 trap 到 EL2
 	 * RW : low level is 64bit, when 0 is 32 bit
+	 * 决定低特权级是哪个执行状态，1 表示低特权级为 64位，反之 32 位
 	 * VM : enable virtualzation
+	 * 虚拟化是否使能，最关键的就是 stage2 translation 是否使能
 	 */
 	//配置每个 guest 的 hcr_el2 寄存器
 	value = read_sysreg64(HCR_EL2);
@@ -210,12 +232,18 @@ void arch_vcpu_state_init(struct vcpu *vcpu, void *c)
 	if (!(vcpu->vm->flags & VM_FLAGS_NATIVE_WFI))
 		context->hcr_el2 |= HCR_EL2_TWI;
 
+	// 如果虚机为 65 位系统，设置 RW = 1
 	if (!task_is_32bit(vcpu->task))
 		context->hcr_el2 |= HCR_EL2_RW;
 
 	/*
 	 * this require HVM's vcpu affinity need start with 0
 	 */
+	// MPIDR_EL1, Multiprocessor Affinity Register、VMPIDR_EL2, Virtualization Multiprocessor ID Register
+	// 这里设置 vmpidr 寄存器值
+	// vmpidr 也是 per cpu 的，里面存放 vcpu id
+	// 类似的，mpidr 里面存放 cpu id
+	// 虚机访问 mpidr 时返回对应 vmpidr
 	if (vm_is_host_vm(vcpu->vm))
 		context->vmpidr = cpuid_to_affinity(get_vcpu_id(vcpu));
 	else
@@ -223,8 +251,15 @@ void arch_vcpu_state_init(struct vcpu *vcpu, void *c)
 
 	pr_notice("vmpidr is 0x%x\n", context->vmpidr);
 
+	// CPACR_EL1，Architectural Feature Access Control Register
+	// bit20 应该是保留的，没有实际作用
+	// 这里是设置访问 simd 相关寄存器是否 trap，暂时不知为何这么设置，跳过 MARK
 	context->cpacr = 0x3 << 20;
 
+	// MIDR_EL1, Main ID Register、VPIDR_EL2, Virtualization Processor ID Register
+	// midr_el1，per cpu 寄存器，存放的是 cpu 的 main identification information 
+	// mpidr 里面存放的我们可以看作是 ”第几个“ cpu，midr 里面存放的是 cpu 架构，代号，版本等信息
+	// vpidr，统里 vpidr，当 EL1 访问 mpidr_el1 时，返回对应 vpidr 中的值
 	if (vm_is_native(vcpu->vm))
 		context->vpidr = mpidr_el1[vcpu_affinity(vcpu)];
 	else
@@ -235,17 +270,21 @@ void arch_vcpu_state_init(struct vcpu *vcpu, void *c)
 	 * fixed, which may not equal to the target platform
 	 * so need trap dc zva
 	 */
+	// Linux 系统不涉及，此 bit 也是 trap 某些指令到 EL2
 	if (vcpu->vm->os->type == OS_TYPE_XNU)
 		context->hcr_el2 |= HCR_EL2_TDZ;
 
+	// 设置 stage2 转换相关的控制位
 	context->vtcr_el2 = generate_vtcr_el2();
+	// 设置 stage2 页表
 	context->vttbr_el2 = generate_vttbr_el2(vm->vmid, vtop(vm->mm.pgdp));
-	context->ttbr0_el1 = 0;
-	context->ttbr1_el1 = 0;
-	context->mair_el1 = 0;
-	context->tcr_el1 = 0;
-	context->par_el1 = 0;
-	context->amair_el1 = 0;
+	// 以下为 EL1 寄存器，这些寄存器应该由虚机初始化，这里 host 端设置为 0
+	context->ttbr0_el1 = 0;   // 用户态页表
+	context->ttbr1_el1 = 0;   // 内核页表
+	context->mair_el1 = 0;    // 内存属性相关
+	context->tcr_el1 = 0;     // stage1 地址转换控制位
+	context->par_el1 = 0;     // arm 提供 at 指令来实现地址转换，转换后的地址从 par_el1 获取
+	context->amair_el1 = 0;   // Auxiliary Memory Attribute Indirection Register
 }
 
 static void arch_vcpu_state_save(struct vcpu *vcpu, void *c)
