@@ -647,9 +647,11 @@ static int gicv2_update_virq(struct vcpu *vcpu,
 
 static int vgicv2_vcpu_init(struct vcpu *vcpu, void *d, unsigned long flags)
 {
+	// 如果不支持硬件虚拟化
 	if (!(flags & VIRQCHIP_F_HW_VIRT))
 		return 0;
 
+	// 设置 LR registers 个数
 	vcpu->virq_struct->nr_lrs = gicv2_nr_lrs;
 
 	return 0;

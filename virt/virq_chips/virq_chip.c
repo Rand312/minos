@@ -107,6 +107,7 @@ int virqchip_get_virq_state(struct vcpu *vcpu, struct virq_desc *virq)
 	return 0;
 }
 
+// 注册虚拟中断 hook 函数，在进出 guest 的时候会执行对应 hook 函数
 static int __init_text virqchip_init(void)
 {
 	register_hook(virqchip_enter_to_guest, OS_HOOK_ENTER_TO_GUEST);

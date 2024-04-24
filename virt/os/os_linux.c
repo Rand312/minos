@@ -332,11 +332,13 @@ static void fdt_vm_init(struct vm *vm)
 static inline void __linux_vcpu_startup(struct vcpu *vcpu, unsigned long entry)
 {
 	gp_regs *regs;
-
+	// 设置 vcpu 线程的异常上下文
 	arch_vcpu_init(vcpu, (void *)entry, NULL);
 	regs = (gp_regs *)vcpu->task->stack_base;
 
 	/* fill the dtb address to x0 */
+	// 虚拟机系统在 bootstrap cpu（vcp0）上启动
+	// 启动虚拟机内核，我们也可以看做是一个函数，那么这个函数也需要一定参数，比如说 dtb 地址
 	if (get_vcpu_id(vcpu) == 0) {
 		if (!task_is_32bit(vcpu->task)) {
 			regs->x0 = (uint64_t)vcpu->vm->setup_data;

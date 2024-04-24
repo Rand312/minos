@@ -148,10 +148,13 @@
                                             5 bits for guest irq priority */
 
 struct gicv2_context {
-    uint32_t hcr;      // 包含关于 virtual cpu interface 的一些控制位
+    uint32_t hcr;      // Hypervisor Control Register, GICH_HCR
+					   // 包含关于 virtual cpu interface 的一些控制位
     uint32_t vmcr;     // virtual machine control register
 					   // alias of GICV_CTLR，一些权限控制位
-    uint32_t apr;
+    uint32_t apr;      //  Active Priorities Register, GICH_APR，32 bits
+					      // 可以看做是当前优先级，其值由最近 acked 中断优先级高 5 位决定
+						  // 如最近 acked 中断优先级高 5 位是 30，那么 GICH_APR[30] = 1
     uint32_t lr[64];   // lr 寄存器，存放发生虚拟中断的一些信息
 };
 

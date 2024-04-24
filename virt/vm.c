@@ -325,18 +325,19 @@ free_vcpu:
 	return NULL;
 }
 
-// 
+// 返回虚机时需要额外执行的一些列操作
 static void vcpu_return_to_user(struct task *task, gp_regs *regs)
 {
 	struct vcpu *vcpu = (struct vcpu *)task->pdata;
 
-	vcpu->mode = OUTSIDE_ROOT_MODE;
+	vcpu->mode = OUTSIDE_ROOT_MODE;  // 此时仍然在处于 EL2 hypervisor 中，设置为 ROOT mode
 	smp_wmb();
 
+	// 执行 OS_HOOK_ENTER_TO_GUEST 类型的 hook 函数
 	do_hooks(vcpu, (void *)regs, OS_HOOK_ENTER_TO_GUEST);
 
 	smp_wmb();
-	vcpu->mode = IN_GUEST_MODE;
+	vcpu->mode = IN_GUEST_MODE;      // 将要进入虚机，设置为 GUEST mode
 }
 
 static void vcpu_exit_from_user(struct task *task, gp_regs *regs)
@@ -564,10 +565,11 @@ static int load_vm_image(struct vm *vm)
 	return 0;
 }
 
+// 启动 vm，也就是启动 vcpu0
 static int do_start_vm(struct vm *vm)
 {
 	struct vcpu *vcpu0;
-
+	// get vcpu0
 	vcpu0 = vm->vcpus[0];
 	if (!vcpu0) {
 		pr_err("VM create with error, vm%d not exist\n", vm->vmid);
