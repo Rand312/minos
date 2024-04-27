@@ -316,7 +316,7 @@ static void switch_to_task(struct task *cur, struct task *next)
 
 	// 保存 cur task 的上下文到 task->cpu_context.fpsimd_state
 	arch_task_sched_out(cur);
-	// call OS_HOOK_TASK_SWITCH_OUT 类型的 hook 函数
+	// call OS_HOOK_TASK_SWITCH_OUT 类型的 hook 函数，当前 无
 	do_hooks((void *)cur, NULL, OS_HOOK_TASK_SWITCH_OUT);
 
 	// 获取当前时间 

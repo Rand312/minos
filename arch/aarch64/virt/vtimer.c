@@ -45,19 +45,24 @@
 #define ACCESS_REG		0x0
 #define ACCESS_MEM		0x1
 
+// vitual timer
 struct vtimer {
 	struct vcpu *vcpu;
-	struct timer timer;
-	int virq;
-	uint32_t cnt_ctl;
-	uint64_t cnt_cval;
-	uint64_t freq;
+	struct timer timer;  // virtual timer 也需要在 host 端有一个软件定时器对应
+								// 如果该 vtimer 被用作 EL0/1 的 EL1 Physical Timer
+								// 那么 timer 作用不言而喻，需要一个软件定时器来模拟 EL1 物理定时器
+								// 如果该 vtimer 被用作保存 EL1 Virtual Timer 上下文
+								// 那么也需要一个软件定时器，因为对于该 vcpu 来说，虽然它被换出，但是我们希望其 virtual timer 仍然运作
+	int virq;            // 该 vtimer 触发中断后，向对应 vcpu 发送 virq 号中断
+	uint32_t cnt_ctl;    // 控制字(使能位、屏蔽位、中断条件位)
+	uint64_t cnt_cval;   // Compare Value
+	uint64_t freq;       // 频率
 };
 
 struct vtimer_context {
-	struct vtimer phy_timer;
-	struct vtimer virt_timer;
-	unsigned long offset;
+	struct vtimer phy_timer;     // minos 用此来模拟实现 EL1 Physical Timer
+	struct vtimer virt_timer;    // 主要用作保存 vtimer 上下文的位置
+	unsigned long offset;        
 };
 
 static int arm_phy_timer_trap(struct vcpu *vcpu,
@@ -146,14 +151,15 @@ static void vtimer_state_init(struct vcpu *vcpu, void *context)
 	// 虚拟计数器 = 物理计数器 - 偏移
 	if (get_vcpu_id(vcpu) == 0) {
 		vcpu->vm->time_offset = get_sys_ticks();//vtimer的offset设置为当前ticks
+		// 如果要 trap EL0/1 对 CNTP_XXX_EL1 的访问，那么 host handler 为 arm_phy_timer_trap
 		arm_data->phy_timer_trap = arm_phy_timer_trap;
 	}
 
-	c->offset = vcpu->vm->time_offset;
-	//初始化
+	c->offset = vcpu->vm->time_offset;  // offset 为所属 vm 启动时间
+
 	vtimer = &c->virt_timer;
 	vtimer->vcpu = vcpu;
-	vtimer->virq = vcpu->vm->vtimer_virq;
+	vtimer->virq = vcpu->vm->vtimer_virq;  // 27
 	vtimer->cnt_ctl = 0;
 	vtimer->cnt_cval = 0;
 	init_timer(&vtimer->timer, virt_timer_expire_function,
@@ -161,7 +167,7 @@ static void vtimer_state_init(struct vcpu *vcpu, void *context)
 
 	vtimer = &c->phy_timer;
 	vtimer->vcpu = vcpu;
-	vtimer->virq = 26;
+	vtimer->virq = 26;     // 物理定时器的 irq 默认为 26
 	vtimer->cnt_ctl = 0;
 	vtimer->cnt_cval = 0;
 	init_timer(&vtimer->timer, phys_timer_expire_function,
