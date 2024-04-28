@@ -97,7 +97,6 @@ static void virt_timer_expire_function(unsigned long data)
 	 * if the irq is not mask, the vtimer will trigger
 	 * the hardware irq again.
 	 */
-	//只是唤醒对应的 vcpu，当上下文切换到对应的 vcpu 时，the vtimer 会触发相应的 hardware irq
 	wake(&vtimer->vcpu->vcpu_event);
 }
 
@@ -108,7 +107,7 @@ static void vtimer_state_restore(struct vcpu *vcpu, void *context)
 	struct vtimer_context *c = (struct vtimer_context *)context;
 	struct vtimer *vtimer = &c->virt_timer;
 	
-	// 停止该 vtimer 对应的 timer，这里？？？
+	// 停止软件定时器
 	stop_timer(&vtimer->timer);
 	// 恢复 offset、control、cval 寄存器的值
 	write_sysreg64(c->offset, ARM64_CNTVOFF_EL2);
@@ -128,14 +127,15 @@ static void vtimer_state_save(struct vcpu *vcpu, void *context)
 	vtimer->cnt_ctl = read_sysreg32(ARM64_CNTV_CTL_EL0);
 	write_sysreg32(0, CNTV_CTL_EL0);  //istatus imask enable
 	isb();
-	// 如果当前任务 停止 or 暂停，直接返回？？？ 不需要保存计时器的值？？？
+	// 如果当前 vcpu 已经被暂停了，直接返回就行，不需要再关心其上的定时任务
 	if ((task->state == TASK_STATE_STOP) ||
 			(task->state == TASK_STATE_SUSPEND))
 		return;
 
-	// 如果定时器是使能状态 && 没有被屏蔽
+	// 如果该 vcpu 上有未完成的定时任务，使能状态 && 没有被屏蔽
 	if ((vtimer->cnt_ctl & CNT_CTL_ENABLE) &&
 		!(vtimer->cnt_ctl & CNT_CTL_IMASK)) {
+		// 启动对应的软件定时器
 		mod_timer(&vtimer->timer, ticks_to_ns(vtimer->cnt_cval +
 				c->offset - boot_tick));
 	}

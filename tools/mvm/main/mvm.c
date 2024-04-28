@@ -143,6 +143,7 @@ static int create_new_vm(struct vm *vm)
 	pr_notice("        -entry      : 0x%"PRIx64"\n", info.entry);
 	pr_notice("        -setup_data : 0x%"PRIx64"\n", info.setup_data);
 
+	// 将虚机信息的地址当作参数，ioctl 进入内核
 	vmid = ioctl(vm->vm0_fd, IOCTL_CREATE_VM, (unsigned long)&info);
 	if (vmid <= 0) {
 		pr_err("create new vm failed %d\n", vmid);
