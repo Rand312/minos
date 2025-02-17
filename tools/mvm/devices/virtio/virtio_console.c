@@ -615,6 +615,8 @@ virtio_console_config_backend(struct virtio_console_backend *be)
 	case VIRTIO_CONSOLE_BE_STDIO:
 		tcgetattr(fd, &tio);
 		saved_tio = tio;
+		// 将终端设为原始模式（Raw Mode），此时输入字符直接传递给程序，
+		// 不经过行缓冲或特殊字符处理（如 Ctrl+C 不会被解释为中断信号）
 		cfmakeraw(&tio);
 		tio.c_cflag |= CLOCAL;
 		tcsetattr(fd, TCSANOW, &tio);

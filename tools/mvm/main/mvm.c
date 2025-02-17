@@ -323,7 +323,7 @@ static int vm_create_vcpus(struct vm *vm)
 		pr_err("create VMCS failed\n");
 		return -ENOMEM;
 	}
-
+	// hvm 中创建维护 vcpu 结构体
 	vm->vcpus = calloc(vm->nr_vcpus, sizeof(struct vcpu *));
 	if (!vm->vcpus)
 		return -ENOMEM;
@@ -335,6 +335,7 @@ static int vm_create_vcpus(struct vm *vm)
 
 		vcpu->cpuid = i;
 		vcpu->vm = vm;
+		// 获取第 i 个 vcpu 地址
 		vcpu->vmcs = vmcs + i * VMCS_ENTRY_SIZE;
 
 		vcpu->vcpu_irq = ioctl(vm->vm_fd, IOCTL_CREATE_VMCS_IRQ, i);
@@ -357,6 +358,7 @@ static int vm_create_vcpus(struct vm *vm)
 
 		arg[0] = vcpu->event_fd;
 		arg[1] = vcpu->vcpu_irq;
+		// 注册 vcpu
 		ret = ioctl(vm->vm_fd, IOCTL_REGISTER_VCPU, arg);
 		if (ret) {
 			pr_err("register vcpu fail\n");
@@ -717,7 +719,7 @@ static int mvm_main(void)
 	signal(SIGSTOP, signal_handler);
 	signal(SIGTSTP, signal_handler);
 	signal(SIGINT, signal_handler);
-	// 创建 vm 结构体，这里的 vm 结构体是用户态自己的
+	// 创建 vm 结构体，这里的 vm 结构体是用户态自己的，而且是 hvm 维护的
 	vm = mvm_vm = (struct vm *)calloc(1, sizeof(struct vm));
 	if (!vm)
 		return -ENOMEM;

@@ -194,6 +194,7 @@ int vm_create_vmcs_irq(struct vm *vm, int vcpu_id)
 	if (!vcpu)
 		return -ENOENT;
 
+	// 在 hvm 中注册一个 virq
 	vcpu->vmcs_irq = alloc_hvm_virq();
 	if (vcpu->vmcs_irq < 0)
 		pr_err("alloc virq for vmcs failed\n");

@@ -356,7 +356,8 @@ static int register_vm_event(struct vm_device *vm, int eventfd, int irq)
 		pr_err("can not get the eventfd ctx\n");
 		return -ENOENT;
 	}
-
+	// irq 这里对于 vm 来说就是一个物理中断号，irq 在 Linux 中断子系统中会对应一个 virq，通过 get_dynamic_virq 获取
+	// 在 Linux 中断子系统中，因为物理中断号复杂多变，Linux 使用全局唯一的 virq，注意这里并不是虚拟中断号的含义，可以当做是物理中断好 irq 的一个别名
 	virq = get_dynamic_virq(irq);
 	if (!irq) {
 		pr_err("can not get the irq of device\n");
@@ -376,6 +377,7 @@ static int register_vm_event(struct vm_device *vm, int eventfd, int irq)
 	event->event_fd = eventfd;
 	sprintf(event->name, "vm%d-irq%d", vm->vmid, irq);
 
+	// 注册 Linux 中断
 	ret = request_irq(virq, vm_event_handler,
 			0, event->name, (void *)event);
 	if (ret) {

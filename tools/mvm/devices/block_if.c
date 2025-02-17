@@ -495,6 +495,7 @@ blockif_open(const char *optstr, const char *ident)
 	off_t sub_file_start_lba, sub_file_size;
 	int sub_file_assign;
 
+	// 多线程情况下，blockif_open() 只被调用一次
 	pthread_once(&blockif_once, blockif_init);
 
 	fd = -1;
@@ -707,6 +708,7 @@ blockif_request(struct blockif_ctxt *bc, struct blockif_req *breq,
 		 * Enqueue and inform the block i/o thread
 		 * that there is work available
 		 */
+		// enqueue 一个 node，然后通知 io thread 来干活儿
 		if (blockif_enqueue(bc, breq, op))
 			pthread_cond_signal(&bc->cond);
 	} else {
