@@ -140,7 +140,7 @@ static int detach_timer(struct raw_timer *timers, struct timer *timer)
 	return 0;
 }
 
-//将该 vtimer 加入到 ptimer 的队列上
+//将该 soft timer 加入到 ptimer 的队列上
 static int __mod_timer(struct timer *timer)
 {
 	struct raw_timer *timers = NULL;

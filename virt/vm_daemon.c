@@ -36,6 +36,8 @@ struct vm_request {
 	struct vm *vm;
 };
 
+// 发送 vm 请求，如 reboot，shutdown
+// 将请求放入 queue 中，由 vm daemon 线程处理
 static int send_vm_request(struct vm *vm, int req)
 {
 	struct vm_request *vr;;
@@ -92,17 +94,19 @@ int vm_daemon_main(void *data)
 	pr_notice("start VM daemon\n");
 
 	for (;;) {
+		// 获取一个 queue entry
 		vs = queue_pend(&vm_request_queue, -1);
 		if (!vs) {
 			pr_err("something is wrong to receive vm request\n");
 			continue;
 		}
-
+		// 处理请求，如 reboot，shutdown
 		handle_vm_request(vs);
 		free(vs);
 	}
 }
 
+// 创建 vm daemon 线程，用来管理 vm 的 reboot，shutdown 等请求
 void vm_daemon_init(void)
 {
 	queue_init(&vm_request_queue, VM_SIGNAL_QUEUE_SIZE, NULL);

@@ -41,7 +41,7 @@
 
 static struct vm *host_vm;
 
-// 定义 64 个虚拟机指针实例指针 
+// 定义 64 个虚拟机指针实例指针
 struct vm *vms[CONFIG_MAX_VM];
 int total_vms = 0;
 LIST_HEAD(vm_list);
@@ -75,7 +75,7 @@ static void vcpu_online(struct vcpu *vcpu)
 	task_ready(vcpu->task, 0);
 }
 
-// affinity 转换为 vcpu_id 
+// affinity 转换为 vcpu_id
 static int inline affinity_to_vcpuid(struct vm *vm, unsigned long affinity)
 {
 	int aff0, aff1;
@@ -99,7 +99,7 @@ static int inline affinity_to_vcpuid(struct vm *vm, unsigned long affinity)
 
 // power on vcpu
 int vcpu_power_on(struct vcpu *caller, unsigned long affinity,
-		unsigned long entry, unsigned long unsed)
+		  unsigned long entry, unsigned long unsed)
 {
 	int cpuid;
 	struct vcpu *vcpu;
@@ -109,20 +109,20 @@ int vcpu_power_on(struct vcpu *caller, unsigned long affinity,
 	// 获取 vm 中第 cpuid 个 vcpu
 	vcpu = get_vcpu_in_vm(caller->vm, cpuid);
 	if (!vcpu) {
-		pr_err("no such:%d->0x%x vcpu for this VM %s\n",
-				cpuid, affinity, caller->vm->name);
+		pr_err("no such:%d->0x%x vcpu for this VM %s\n", cpuid,
+		       affinity, caller->vm->name);
 		return -ENOENT;
 	}
 
 	// 正确状态：如果当前 vcpu 处于离线状态
 	if (vcpu_is_offline(vcpu)) {
-		pr_notice("vcpu-%d of vm-%d power on 0x%p\n",
-				vcpu->vcpu_id, vcpu->vm->vmid, entry);
+		pr_notice("vcpu-%d of vm-%d power on 0x%p\n", vcpu->vcpu_id,
+			  vcpu->vm->vmid, entry);
 		// 调用 os->ops->vcpu_power_on 方法，NOTE 不是 platform 的方法
 		os_vcpu_power_on(vcpu, ULONG(entry));
 		// vcpu task 挂入 pcpu
 		vcpu_online(vcpu);
-	// 错误状态：当前 vcpu 处于非离线状态
+		// 错误状态：当前 vcpu 处于非离线状态
 	} else {
 		pr_err("vcpu_power_on : invalid vcpu state %d\n");
 		return -EINVAL;
@@ -146,7 +146,7 @@ void vcpu_context_restore(struct task *task)
 // 当前 vcpu 是否可以 idle
 // 不能 idle 的情况：处于非离线状态、task 需要 freeze | stop、vcpu 中有 irq 正处于 pending | active
 static int vcpu_can_idle(struct vcpu *vcpu)
-{	
+{
 	if (vcpu->vm->state != VM_STATE_ONLINE)
 		return 0;
 
@@ -166,8 +166,8 @@ int vcpu_idle(struct vcpu *vcpu)
 }
 
 // vcpu suspend，也就是 idle
-int vcpu_suspend(struct vcpu *vcpu, gp_regs *c,
-		uint32_t state, unsigned long entry)
+int vcpu_suspend(struct vcpu *vcpu, gp_regs *c, uint32_t state,
+		 unsigned long entry)
 {
 	/*
 	 * just call vcpu idle to put vcpu to suspend state
@@ -190,7 +190,7 @@ static int vm_check_vcpu_affinity(int vmid, uint32_t *aff, int nr)
 	int i;
 	uint64_t mask = 0;
 
-	// 
+	//
 	for (i = 0; i < nr; i++) {
 		if (aff[i] >= VM_MAX_VCPU)
 			return -EINVAL;
@@ -225,7 +225,7 @@ struct vcpu *get_vcpu_by_id(uint32_t vmid, uint32_t vcpu_id)
 	return get_vcpu_in_vm(vm, vcpu_id);
 }
 
-// 
+//
 int kick_vcpu(struct vcpu *vcpu, int reason)
 {
 	int mode, ret = 0;
@@ -274,7 +274,7 @@ int kick_vcpu(struct vcpu *vcpu, int reason)
 	return ret;
 }
 
-// 释放 vcpu 
+// 释放 vcpu
 static void inline release_vcpu(struct vcpu *vcpu)
 {
 	/*
@@ -309,7 +309,7 @@ static struct vcpu *alloc_vcpu(void)
 	vcpu = zalloc(sizeof(*vcpu));
 	if (!vcpu)
 		return NULL;
-	
+
 	// 分配 virq_struct 结构体
 	vcpu->virq_struct = zalloc(sizeof(struct virq_struct));
 	if (!vcpu->virq_struct)
@@ -330,14 +330,15 @@ static void vcpu_return_to_user(struct task *task, gp_regs *regs)
 {
 	struct vcpu *vcpu = (struct vcpu *)task->pdata;
 
-	vcpu->mode = OUTSIDE_ROOT_MODE;  // 此时仍然在处于 EL2 hypervisor 中，设置为 ROOT mode
+	vcpu->mode =
+		OUTSIDE_ROOT_MODE; // 此时仍然在处于 EL2 hypervisor 中，设置为 ROOT mode
 	smp_wmb();
 
 	// 执行 OS_HOOK_ENTER_TO_GUEST 类型的 hook 函数
 	do_hooks(vcpu, (void *)regs, OS_HOOK_ENTER_TO_GUEST);
 
 	smp_wmb();
-	vcpu->mode = IN_GUEST_MODE;      // 将要进入虚机，设置为 GUEST mode
+	vcpu->mode = IN_GUEST_MODE; // 将要进入虚机，设置为 GUEST mode
 }
 
 static void vcpu_exit_from_user(struct task *task, gp_regs *regs)
@@ -365,7 +366,7 @@ static struct vcpu *create_vcpu(struct vm *vm, uint32_t vcpu_id)
 	sprintf(name, "%s-vcpu-%d", vm->name, vcpu_id);
 	// 创建 vcpu 线程
 	task = create_vcpu_task(name, vm->entry_point,
-			vm->vcpu_affinity[vcpu_id], 0, NULL);
+				vm->vcpu_affinity[vcpu_id], 0, NULL);
 	if (task == NULL)
 		return NULL;
 
@@ -381,11 +382,11 @@ static struct vcpu *create_vcpu(struct vm *vm, uint32_t vcpu_id)
 	}
 
 	// 初始化 vcpu 字段
-	task->pdata = vcpu;    // struct task 的私有数据设置为 vcpu 结构
+	task->pdata = vcpu; // struct task 的私有数据设置为 vcpu 结构
 	vcpu->task = task;
 	vcpu->vcpu_id = vcpu_id;
 	vcpu->vm = vm;
-	vcpu->mode = IN_ROOT_MODE;  // 表示正位于 EL2
+	vcpu->mode = IN_ROOT_MODE; // 表示正位于 EL2
 
 	if (vm->flags & VM_FLAGS_32BIT)
 		task->flags |= TASK_FLAGS_32BIT;
@@ -399,7 +400,7 @@ static struct vcpu *create_vcpu(struct vm *vm, uint32_t vcpu_id)
 	vcpu->next = NULL;
 	if (vcpu_id != 0)
 		vm->vcpus[vcpu_id - 1]->next = vcpu;
-	
+
 	return vcpu;
 }
 
@@ -421,7 +422,6 @@ out:
 	return vmid;
 }
 
-
 static int vcpu_affinity_init(void)
 {
 	int i;
@@ -431,7 +431,8 @@ static int vcpu_affinity_init(void)
 	bitmap_clear(vcpu_aff_bitmap, 0, NR_CPUS);
 
 	// 遍历所有的 vm
-	for_each_vm(vm) {
+	for_each_vm(vm)
+	{
 		// 如果某个 vm 的 vcpu 亲和 pcpu，那么将 pcpu 对应的位置 1
 		for (i = 0; i < vm->vcpu_nr; i++)
 			set_bit(vm->vcpu_affinity[i], vcpu_aff_bitmap);
@@ -498,7 +499,7 @@ static int vmtag_check_and_config(struct vmtag *tag)
 	size = tag->mem_size;
 	if (tag->mem_base == 0)
 		tag->mem_base = GVM_NORMAL_MEM_START;
-	
+
 	if (!vmm_has_enough_memory(size)) {
 		pr_err("no enough memory for guest\n");
 		return -ENOMEM;
@@ -521,13 +522,13 @@ static int vmtag_check_and_config(struct vmtag *tag)
 int request_vm_virqs(struct vm *vm, int base, int nr)
 {
 	if (!vm || (base < GVM_IRQ_BASE) || (nr <= 0) ||
-			(base + nr >= GVM_IRQ_END))
+	    (base + nr >= GVM_IRQ_END))
 		return -EINVAL;
 
 	while (nr > 0) {
 		if (request_virq(vm, base, 0)) {
-			pr_err("request virq %d in GVM %s failed\n",
-					base, vm->name);
+			pr_err("request virq %d in GVM %s failed\n", base,
+			       vm->name);
 			return -ENOENT;
 		}
 		base++;
@@ -547,13 +548,14 @@ static int load_vm_image(struct vm *vm)
 	if (!vm->kernel_file)
 		return 0;
 
+	// 加载镜像文件（kernel 镜像）到 load_address(entry)
 	pr_notice("copying %s to 0x%x\n", ramdisk_file_name(vm->kernel_file),
-			vm->load_address);
+		  vm->load_address);
 
 	// 获取镜像文件大小
 	size = ramdisk_file_size(vm->kernel_file);
 	ret = create_host_mapping(ULONG(addr), ULONG(vm->load_address),
-			PAGE_BALIGN(size), VM_NORMAL | VM_HUGE);
+				  PAGE_BALIGN(size), VM_NORMAL | VM_HUGE);
 	ASSERT(ret == 0);
 
 	ret = ramdisk_read(vm->kernel_file, addr, size, 0);
@@ -596,8 +598,7 @@ int start_guest_vm(struct vm *vm)
 	}
 
 	// 切换 vm 状态
-	state = cmpxchg(&vm->state, VM_STATE_OFFLINE,
-			VM_STATE_ONLINE);
+	state = cmpxchg(&vm->state, VM_STATE_OFFLINE, VM_STATE_ONLINE);
 	if (state != VM_STATE_OFFLINE) {
 		pr_err("VM %s already stared\n", vm->name);
 		return -EINVAL;
@@ -627,8 +628,8 @@ static int guest_mm_init(struct vm *vm, uint64_t base, uint64_t size)
 	return 0;
 }
 
-int create_vm_mmap(int vmid,  unsigned long offset,
-		unsigned long size, unsigned long *addr)
+int create_vm_mmap(int vmid, unsigned long offset, unsigned long size,
+		   unsigned long *addr)
 {
 	struct vm *vm = get_vm_by_id(vmid);
 	struct vmm_area *va;
@@ -710,19 +711,25 @@ static void __setup_native_vm(struct vm *vm)
 	 * map the memory into hypervisor's space. The memory
 	 * of setup data can not beyond 2M.
 	 */
+	// arm 平台的设备树文件中记录了 setup_data 的地址
+	// 这里将 setup_data 地址映射到 hyp 的地址空间
+	// 然后将设备树文件拷贝到 setup_data 地址处
 	if (vm->dtb_file) {
-		pr_notice("copying %s to 0x%x\n", ramdisk_file_name(vm->dtb_file),
-				vm->setup_data);
+		pr_notice("copying %s to 0x%x\n",
+			  ramdisk_file_name(vm->dtb_file), vm->setup_data);
 		size = ramdisk_file_size(vm->dtb_file);
-		ret = create_host_mapping(ULONG(setup_addr), ULONG(vm->setup_data),
-				MAX_DTB_SIZE, VM_NORMAL | VM_HUGE);
+		// 创建映射，是的 hyp 能够访问 setup_addr
+		ret = create_host_mapping(ULONG(setup_addr),
+					  ULONG(vm->setup_data), MAX_DTB_SIZE,
+					  VM_NORMAL | VM_HUGE);
 		ASSERT(ret == 0);
 
 		ret = ramdisk_read(vm->dtb_file, setup_addr, size, 0);
 		ASSERT(ret == 0);
 	} else {
-		ret = create_host_mapping(ULONG(setup_addr), ULONG(vm->setup_data),
-				MAX_DTB_SIZE, VM_NORMAL | VM_HUGE);
+		ret = create_host_mapping(ULONG(setup_addr),
+					  ULONG(vm->setup_data), MAX_DTB_SIZE,
+					  VM_NORMAL | VM_HUGE);
 		ASSERT(ret == 0);
 	}
 
@@ -742,8 +749,10 @@ static void __setup_native_vm(struct vm *vm)
 	 * just do these step only when the VM has not been
 	 * online.
 	 */
+	// 根据 qemu-arm64.dts 创建 vm 需要的资源，比如 pdev, vdev
 	create_vm_resource(vm);
 
+	// 根据 qemu-arm64.dts 创建 memory cpu 等资源
 	os_setup_vm(vm);
 	do_hooks(vm, NULL, OS_HOOK_SETUP_VM);
 
@@ -777,7 +786,7 @@ void destroy_vm(struct vm *vm)
 	 * 5 : update the vmid bitmap
 	 * 6 : do vmodule deinit
 	 */
-	list_for_each_entry_safe(vdev, n, &vm->vdev_list, list) {
+	list_for_each_entry_safe (vdev, n, &vm->vdev_list, list) {
 		list_del(&vdev->list);
 		if (vdev->deinit)
 			vdev->deinit(vdev);
@@ -813,13 +822,14 @@ int vm_vcpus_init(struct vm *vm)
 {
 	struct vcpu *vcpu;
 
-	vm_for_each_vcpu(vm, vcpu) {
-		pr_notice("vm-%d vcpu-%d affnity to pcpu-%d\n",
-				vm->vmid, vcpu->vcpu_id,
-				vcpu_affinity(vcpu));
+	vm_for_each_vcpu(vm, vcpu)
+	{
+		pr_notice("vm-%d vcpu-%d affnity to pcpu-%d\n", vm->vmid,
+			  vcpu->vcpu_id, vcpu_affinity(vcpu));
 		/*
 		 * init the vcpu context here.
 		 */
+		// 初始化 vcpu 上下文
 		vcpu_vmodules_init(vcpu);
 
 		if (!vm_is_native(vm)) {
@@ -829,8 +839,10 @@ int vm_vcpus_init(struct vm *vm)
 	}
 
 	// 对该 vm 中所有的 vcpu 执行相应的 hook
-	vm_for_each_vcpu(vm, vcpu) {
+	vm_for_each_vcpu(vm, vcpu)
+	{
 		do_hooks(vcpu, NULL, OS_HOOK_VCPU_INIT);
+		// 准备 vcpu 线程堆栈，当该 vcpu 线程被调度执行时，就会从 pc 指向的 entry 开始执行
 		os_vcpu_power_on(vcpu, (unsigned long)vm->entry_point);
 	}
 
@@ -860,7 +872,7 @@ static int create_vcpus(struct vm *vm)
 	return 0;
 }
 
-// vm 
+// vm
 static void vm_open_ramdisk_file(struct vm *vm, struct vmtag *vme)
 {
 	// mvm 创建的 vm，不是 native
@@ -878,7 +890,7 @@ static void vm_open_ramdisk_file(struct vm *vm, struct vmtag *vme)
 		ASSERT(vm->dtb_file != NULL);
 		ASSERT(ramdisk_open(vme->dtb_file, vm->dtb_file) == 0);
 	}
-		
+
 	if (vme->initrd_file) {
 		vm->initrd_file = malloc(sizeof(struct ramdisk_file));
 		ASSERT(vm->initrd_file != NULL);
@@ -892,7 +904,7 @@ static struct vm *__create_vm(struct vmtag *vme)
 	struct vm *vm;
 
 	if (vm_check_vcpu_affinity(vme->vmid, vme->vcpu_affinity,
-				vme->nr_vcpu)) {
+				   vme->nr_vcpu)) {
 		pr_err("vcpu affinity for vm not correct\n");
 		return NULL;
 	}
@@ -922,13 +934,13 @@ static struct vm *__create_vm(struct vmtag *vme)
 	vm->state = VM_STATE_OFFLINE;
 	init_list(&vm->vdev_list);
 	memcpy(vm->vcpu_affinity, vme->vcpu_affinity,
-			sizeof(uint32_t) * VM_MAX_VCPU);
+	       sizeof(uint32_t) * VM_MAX_VCPU);
 
 	/*
 	 * open the ramdisk file if the vm need load from
 	 * the ramdisk.
 	 */
-	
+
 	vm_open_ramdisk_file(vm, vme);
 
 	spin_lock(&vms_lock);
@@ -947,21 +959,21 @@ struct vm *create_vm(struct vmtag *vme, struct device_node *node)
 {
 	int ret = 0;
 	struct vm *vm;
-	// 
-	if (vme->vmid != 0)  {
+	//
+	if (vme->vmid != 0) {
 		pr_notice("request vmid %d\n", vme->vmid);
 		if (test_and_set_bit(vme->vmid, vmid_bitmap))
 			return NULL;
-	// MARK，调试的时候发现 mvm 走这里，vmid 应该为 -1 ？？？？？？？
+		// MARK，调试的时候发现 mvm 走这里，vmid 应该为 -1 ？？？？？？？
 	} else {
-		vme->vmid = alloc_new_vmid();  // 从 vmid bitmap 中分配一个 vmid
+		vme->vmid = alloc_new_vmid(); // 从 vmid bitmap 中分配一个 vmid
 		if (vme->vmid == 0)
 			return NULL;
 	}
 	// 初始化 vm 结构体信息
 	vm = __create_vm(vme);
 	if (!vm)
-		return NULL; 
+		return NULL;
 
 	vm->dev_node = node;
 
@@ -1035,16 +1047,20 @@ static void *create_native_vm_of(struct device_node *node, void *arg)
 	pr_notice("    entry: 0x%p\n", vmtag.entry);
 	pr_notice("    setup_data: 0x%p\n", vmtag.setup_data);
 	pr_notice("    load-address: 0x%p\n", vmtag.load_address);
-	pr_notice("    kernel-file: %s\n", vmtag.kernel_file ? vmtag.kernel_file : "NULL");
-	pr_notice("    dtb-file: %s\n", vmtag.dtb_file ? vmtag.dtb_file : "NULL");
-	pr_notice("    initrd-file: %s\n", vmtag.initrd_file ? vmtag.initrd_file : "NULL");
-	pr_notice("    %s-bit vm\n", vmtag.flags & VM_FLAGS_32BIT ? "32" : "64");
+	pr_notice("    kernel-file: %s\n",
+		  vmtag.kernel_file ? vmtag.kernel_file : "NULL");
+	pr_notice("    dtb-file: %s\n",
+		  vmtag.dtb_file ? vmtag.dtb_file : "NULL");
+	pr_notice("    initrd-file: %s\n",
+		  vmtag.initrd_file ? vmtag.initrd_file : "NULL");
+	pr_notice("    %s-bit vm\n",
+		  vmtag.flags & VM_FLAGS_32BIT ? "32" : "64");
 	pr_notice("    flags: 0x%x\n", vmtag.flags);
 	pr_notice("    affinity: %d %d %d %d %d %d %d %d\n",
-			vmtag.vcpu_affinity[0], vmtag.vcpu_affinity[1],
-			vmtag.vcpu_affinity[2], vmtag.vcpu_affinity[3],
-			vmtag.vcpu_affinity[4], vmtag.vcpu_affinity[5],
-			vmtag.vcpu_affinity[6], vmtag.vcpu_affinity[7]);
+		  vmtag.vcpu_affinity[0], vmtag.vcpu_affinity[1],
+		  vmtag.vcpu_affinity[2], vmtag.vcpu_affinity[3],
+		  vmtag.vcpu_affinity[4], vmtag.vcpu_affinity[5],
+		  vmtag.vcpu_affinity[6], vmtag.vcpu_affinity[7]);
 
 	return create_vm(&vmtag, node);
 }
@@ -1056,7 +1072,7 @@ static void parse_and_create_vms(void)
 	struct device_node *node;
 	node = of_find_node_by_name(of_root_node, "vms");
 	if (node)
-	// 对设备树中出现的 vm 节点，调用 create_native_vm_of 来创建新的vm
+		// 对设备树中出现的 vm 节点，调用 create_native_vm_of 来创建新的vm
 		of_iterate_all_node_loop(node, create_native_vm_of, NULL);
 #endif
 }
@@ -1071,11 +1087,13 @@ static int of_create_vmboxs(void)
 		return -ENOENT;
 
 	/* parse each mailbox entry and create it */
-	of_node_for_each_child(mailboxes, child) {
+	of_node_for_each_child(mailboxes, child)
+	{
 		if (of_create_vmbox(child))
 			pr_err("create vmbox [%s] fail\n", child->name);
 		else
-			pr_notice("create vmbox [%s] successful\n", child->name);
+			pr_notice("create vmbox [%s] successful\n",
+				  child->name);
 	}
 
 	return 0;
@@ -1099,8 +1117,7 @@ int start_native_vm(struct vm *vm)
 		return -ENOENT;
 	}
 
-	state = cmpxchg(&vm->state, VM_STATE_OFFLINE,
-			VM_STATE_ONLINE);
+	state = cmpxchg(&vm->state, VM_STATE_OFFLINE, VM_STATE_ONLINE);
 	if (state != VM_STATE_OFFLINE) {
 		pr_err("VM %s already stared\n", vm->name);
 		return -EINVAL;
@@ -1155,7 +1172,7 @@ void start_all_vm(void)
 {
 	struct vm *vm;
 
-	list_for_each_entry(vm, &vm_list, vm_list)
+	list_for_each_entry (vm, &vm_list, vm_list)
 		start_native_vm(vm);
 }
 
@@ -1176,5 +1193,4 @@ static int vm_command_hdl(int argc, char **argv)
 
 	return 0;
 }
-DEFINE_SHELL_COMMAND(vm, "vm", "virtual machine cmd",
-		vm_command_hdl, 2);
+DEFINE_SHELL_COMMAND(vm, "vm", "virtual machine cmd", vm_command_hdl, 2);

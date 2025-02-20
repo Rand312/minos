@@ -332,6 +332,7 @@ int create_vm_resource_of(struct vm *vm, void *data)
 	 * first of all need to create the virq controller
 	 * of this vm
 	 */
+	// 创建 vm 的 virqchip
 	of_iterate_all_node(node, create_vm_irqchip_of, vm);
 	if (!vm->virq_chip) {
 		if (vm_is_native(vm))
@@ -340,7 +341,7 @@ int create_vm_resource_of(struct vm *vm, void *data)
 			pr_err("create virq chip failed for vm\n");
 		return -ENOENT;
 	}
-
+	// 创建 vm 的 pdev、vdev
 	of_iterate_all_node_loop(node, __create_vm_resource_of, vm);
 
 	/* here we can free all the device node to save memory */

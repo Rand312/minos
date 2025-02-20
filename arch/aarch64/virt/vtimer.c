@@ -205,6 +205,7 @@ asoc_handle_cntp_ctl(struct vcpu *vcpu, struct vtimer *vtimer)
 // CNTP_CTL_EL0, Counter-timer Physical Timer Control register
 // Control register for the EL1 physical timer.
 // 写的情况：控制使能
+// guest 想要访问 CNTP_CTL_EL0 的 trap handler
 static void vtimer_handle_cntp_ctl(struct vcpu *vcpu, int access,
 		int read, unsigned long *value)
 {

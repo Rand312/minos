@@ -55,13 +55,13 @@
 static int epoll_fd;
 static pthread_t mevent_tid;
 static int mevent_pipefd[2];
-static pthread_mutex_t mevent_lmutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mevent_lmutex = PTHREAD_MUTEX_INITIALIZER;  // 全局锁，保护全局事件链表
 
 struct mevent {
-	void	(*me_func)(int, enum ev_type, void *);
-	int	me_fd;
-	enum ev_type me_type;
-	void *me_param;
+	void	(*me_func)(int, enum ev_type, void *);  // 事件触发时的回调函数
+	int	me_fd;  // 监听的文件描述符
+	enum ev_type me_type;  // 时间类型
+	void *me_param;  // 传递给回调函数的参数
 	int	me_cq;
 	int	me_state;
 	int	me_closefd;
@@ -69,7 +69,7 @@ struct mevent {
 	LIST_ENTRY(mevent) me_list;
 };
 
-static LIST_HEAD(listhead, mevent) global_head;
+static LIST_HEAD(listhead, mevent) global_head;   // 全局事件链表
 
 static void
 mevent_qlock(void)
@@ -114,6 +114,7 @@ mevent_notify(void)
 	return 0;
 }
 
+// 将事件类型转换为epoll的事件标志，比如将EVF_READ转换为EPOLLIN，EVF_WRITE转换为EPOLLOUT
 static int
 mevent_kq_filter(struct mevent *mevp)
 {
@@ -166,6 +167,7 @@ mevent_handle(struct epoll_event *kev, int numev)
 	}
 }
 
+// pipev = mevent_add(mevent_pipefd[0], EVF_READ, mevent_pipe_read, NULL);
 struct mevent *
 mevent_add(int tfd, enum ev_type type,
 	   void (*func)(int, enum ev_type, void *), void *param)
@@ -182,6 +184,7 @@ mevent_add(int tfd, enum ev_type type,
 
 	mevent_qlock();
 	/* Verify that the fd/type tuple is not present in the list */
+	// 确保 fd/type 没有被添加到链表中
 	LIST_FOREACH(lp, &global_head, me_list) {
 		if (lp->me_fd == tfd && lp->me_type == type) {
 			mevent_qunlock();
@@ -193,6 +196,7 @@ mevent_add(int tfd, enum ev_type type,
 	/*
 	 * Allocate an entry, populate it, and add it to the list.
 	 */
+	// 分配并初始化一个 mevent 结构体
 	mevp = calloc(1, sizeof(struct mevent));
 	if (mevp == NULL)
 		return NULL;
@@ -202,9 +206,14 @@ mevent_add(int tfd, enum ev_type type,
 	mevp->me_func = func;
 	mevp->me_param = param;
 
+	// 将 mevent 转换为 epoll event
 	ee.events = mevent_kq_filter(mevp);
 	ee.data.ptr = mevp;
+
+	// 注册到 epoll
 	ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, mevp->me_fd, &ee);
+
+	// 插入到全局链表中
 	if (ret == 0) {
 		mevent_qlock();
 		LIST_INSERT_HEAD(&global_head, mevp, me_list);

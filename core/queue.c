@@ -128,6 +128,7 @@ void *queue_pend(queue_t *qt, uint32_t timeout)
 
 	spin_lock_irqsave(&qt->lock, flags);
 	q = (struct queue *)qt->data;
+	// 当前队列有数据，pop 一个然后返回
 	if (q->q_cnt > 0) {
 		pmsg = queue_pop(q);
 		spin_unlock_irqrestore(&qt->lock, flags);
@@ -135,7 +136,7 @@ void *queue_pend(queue_t *qt, uint32_t timeout)
 	}
 	// 获取当前 task
 	task = get_current_task();
-	// 将当前 task 加入 EVENT(qt) 的 wait_list
+	// 将当前 task 加入 EVENT(qt) 的 wait_list，等待有 data 时唤醒
 	__wait_event(TO_EVENT(qt), OS_EVENT_TYPE_QUEUE, timeout);
 	spin_unlock_irqrestore(&qt->lock, flags);
 	
@@ -164,6 +165,7 @@ void *queue_pend(queue_t *qt, uint32_t timeout)
 	return pmsg;
 }
 
+// push 一个 entry
 static int __queue_post(queue_t *qt, void *pmsg, int front)
 {
 	struct queue *q;

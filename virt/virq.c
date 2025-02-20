@@ -514,7 +514,7 @@ static int __request_virq(struct vcpu *vcpu, struct virq_desc *desc,
 	desc->pr = 0xa0; // 优先级
 	desc->vmid = get_vmid(vcpu); // vmid
 	desc->id = VIRQ_INVALID_ID; // LR 编号，send_virq 的时候分配
-	desc->state = VIRQ_STATE_INACTIVE; //刚注册，inactive
+	desc->state = VIRQ_STATE_INACTIVE; // 刚注册，inactive
 
 	/* mask the bits in spi_irq_bitmap, if it is a SPI */
 	// 如果大于 VM_LOCAL_VIRQ_NR，则为 SPI 类型的中断

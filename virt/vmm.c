@@ -877,6 +877,7 @@ int vm_mm_struct_init(struct vm *vm)
 	return vm_memory_init(vm);
 }
 
+// 对 vmm_area_used 建立 stage2 映射
 int vm_mm_init(struct vm *vm)
 {
 	int ret;

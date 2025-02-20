@@ -388,6 +388,7 @@ static int linux_create_native_vm_resource(struct vm *vm)
 	 * check whether there are some resource need
 	 * to created from the hypervisor's dts
 	 */
+	// 不会走到这里
 	create_native_vm_resource_common(vm);
 
 	return 0;
